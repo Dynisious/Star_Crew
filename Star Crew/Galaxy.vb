@@ -66,7 +66,7 @@
 
         clientShip.Parent = Me
         xList(0) = clientShip
-        xList(1) = New Ship(Me, New Clunker)
+        xList(1) = New PirateShip(Me, New Clunker)
         xList(1).Position = New Point(200, 200)
         xList(2) = New PirateShip(Me, New Clunker)
         xList(2).Position = New Point(-600, -600)
