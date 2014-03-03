@@ -1,4 +1,5 @@
-﻿Public MustInherit Class Station
+﻿<Serializable()>
+Public MustInherit Class Station
     Public WithEvents Parent As Ship
     Public PlayerControled As Boolean = False
     Public Enum StationTypes
@@ -13,7 +14,7 @@
     Public Influx As Integer
 
     Public Sub New(ByRef nParent As Ship)
-        parent = nParent
+        Parent = nParent
     End Sub
 
     Public MustOverride Sub Update()

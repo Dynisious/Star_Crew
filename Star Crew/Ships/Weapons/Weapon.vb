@@ -1,4 +1,5 @@
-﻿Public Class Weapon
+﻿<Serializable()>
+Public Class Weapon
     Public Parent As Battery
     Public Enum DamageTypes
         Slug
@@ -17,22 +18,26 @@
     Public TurnSpeed As Stat
     Public WeaponStats(Stats.Max - 1) As Stat
 
-    Public Sub New(ByVal nWeaponLayout As weaponLayout)
+    Public Sub New(ByVal nWeaponLayout As WeaponLayout)
         nWeaponLayout.SetLayout(Me)
     End Sub
 
     Public Sub UpdateWeapon()
-        '-----Costs-----
         If WeaponStats(Stats.Ready).current < WeaponStats(Stats.Ready).max Then
             Parent.Parent.Engineering.batteriesDraw =
                 Parent.Parent.Engineering.batteriesDraw + (WeaponStats(Stats.Damage).current / 10)
+            If Parent.Power >= (WeaponStats(Stats.Damage).current / 10) Then
+                WeaponStats(Stats.Ready).current = WeaponStats(Stats.Ready).current + 1
+                Parent.Power = Parent.Power - WeaponStats(Stats.Damage).current
+            End If
         End If
-        '---------------
-        If WeaponStats(Stats.Ready).current < WeaponStats(Stats.Ready).max And
-            Parent.Power >= WeaponStats(Stats.Damage).current Then
-            WeaponStats(Stats.Ready).current = WeaponStats(Stats.Ready).current + 1
-            Parent.Power = Parent.Power - WeaponStats(Stats.Damage).current
-        End If
+    End Sub
+
+    Public Sub ChangeStats()
+        Dim fraction As Double = (WeaponStats(Stats.Integrety).current / WeaponStats(Stats.Integrety).max)
+        WeaponStats(Stats.Damage).current = WeaponStats(Stats.Damage).max * fraction
+        WeaponStats(Stats.Range).current = WeaponStats(Stats.Range).max * fraction
+        TurnSpeed.current = TurnSpeed.max * fraction
     End Sub
 
     Public Sub FireWeapon(ByVal distance As Integer)
@@ -42,7 +47,7 @@
             WeaponStats(Stats.Ready).current = WeaponStats(Stats.Ready).max Then
             WeaponStats(Stats.Ready).current = 0
             WeaponStats(Stats.Ammo).current = WeaponStats(Stats.Ammo).current - 1
-            Parent.Parent.Target.TakeDamage(Me)
+            Parent.batteriesTarget.TakeDamage(Me, Parent.Parent)
         End If
     End Sub
 

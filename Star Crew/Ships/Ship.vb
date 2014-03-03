@@ -1,10 +1,11 @@
-﻿Public MustInherit Class Ship
+﻿<Serializable()>
+Public MustInherit Class Ship
+    <NonSerialized()>
     Public Parent As Galaxy
     Public hit As Boolean = False
     Public Enum Allegence
         Player
         Pirate
-        Neutral
     End Enum
     Public MyAllegence As Allegence
     Public Event ShipUpdate()
@@ -30,12 +31,12 @@
         nShipStats.SetLayout(Me)
     End Sub
 
-    Public Sub TakeDamage(ByRef nWeapon As Weapon)
+    Public Sub TakeDamage(ByRef nWeapon As Weapon, ByRef shooter As Ship)
         Dim sideHit As Shields.Sides
         Dim adjacent As Integer = (Position.X - nWeapon.Parent.Parent.Position.X)
         Dim opposite As Integer = (Position.Y - nWeapon.Parent.Parent.Position.Y)
         Dim incomingVector As Double = Math.Tanh(opposite / adjacent)
-        If adjacent < 0 Then
+        If adjacent > 0 Then
             incomingVector = incomingVector + Math.PI
         End If
         incomingVector = Helm.NormalizeDirection(incomingVector)
@@ -49,21 +50,70 @@
         ElseIf incomingVector >= ((7 * Math.PI) / 4) And incomingVector <= (Math.PI / 4) Then
             sideHit = Shields.Sides.RightShield
         End If
-        Hull.current = Hull.current - Shielding.DeflectHit(sideHit, nWeapon)
-        Hit = True
+        Dim incomingDamage As Integer = Shielding.DeflectHit(sideHit, nWeapon)
+        Hull.current = Hull.current - incomingDamage
+        Select Case sideHit
+            Case Shields.Sides.FrontShield
+                Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).current = Int(Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).current - (incomingDamage / 10))
+                If Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).current < 0 Then
+                    Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).current = 0
+                End If
+                Batteries.Primary.ChangeStats()
+                Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).current = Int(Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).current - (incomingDamage / 10))
+                If Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).current < 0 Then
+                    Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).current = 0
+                End If
+                Batteries.Secondary.ChangeStats()
+            Case Shields.Sides.RightShield Or Shields.Sides.LeftShield
+                If Int(2 * Rnd()) = 0 Then
+                    Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).current = Int(Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).current - (incomingDamage / 10))
+                    If Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).current < 0 Then
+                        Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).current = 0
+                    End If
+                    Batteries.Primary.ChangeStats()
+                    Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).current = Int(Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).current - (incomingDamage / 10))
+                    If Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).current < 0 Then
+                        Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).current = 0
+                    End If
+                    Batteries.Secondary.ChangeStats()
+                End If
+                If Int(2 * Rnd()) = 0 Then
+                    Engineering.Engines.current = Int(Engineering.Engines.current - (incomingDamage * 0.05))
+                    If Engineering.Engines.current < 0 Then
+                        Engineering.Engines.current = 0
+                    End If
+                    Engineering.PowerCore.current = Int(Engineering.PowerCore.current - (incomingDamage * 0.05))
+                    If Engineering.PowerCore.current < 1 Then
+                        Engineering.PowerCore.current = 1
+                    End If
+                End If
+            Case Shields.Sides.BackShield
+                Engineering.Engines.current = Int(Engineering.Engines.current - (incomingDamage * 0.05))
+                If Engineering.Engines.current < 0 Then
+                    Engineering.Engines.current = 0
+                End If
+                Engineering.PowerCore.current = Int(Engineering.PowerCore.current - (incomingDamage * 0.05))
+                If Engineering.PowerCore.current < 1 Then
+                    Engineering.PowerCore.current = 1
+                End If
+        End Select
+        hit = True
         If Hull.current <= 0 Then
             DestroyShip()
         End If
     End Sub
 
     Public Sub DestroyShip()
-        Helm.Parent = Nothing
-        Batteries.Parent = Nothing
-        Batteries.primary.Parent = Nothing
-        Batteries.secondary.Parent = Nothing
-        Shielding.Parent = Nothing
-        Engineering.Parent = Nothing
-        Parent.RemoveShip(Me)
+        If Parent IsNot Nothing Then
+            Parent.RemoveShip(Me)
+            Helm.Parent = Nothing
+            Batteries.Parent = Nothing
+            Batteries.Primary.Parent = Nothing
+            Batteries.Secondary.Parent = Nothing
+            Shielding.Parent = Nothing
+            Engineering.Parent = Nothing
+            Parent = Nothing
+        End If
     End Sub
 
     Public Overridable Sub UpdateShip()
