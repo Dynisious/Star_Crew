@@ -120,15 +120,23 @@ Module Server
             Case commands.Start
                 StartServer()
             Case commands.Suspend
-                If comms.IsAlive = True Then
+                If comms.ThreadState = Threading.ThreadState.Running Then
                     comms.Suspend()
-                Else
+                    Console.WriteLine("Game has been paused")
+                ElseIf comms.IsAlive = False Then
                     Console.WriteLine("Server is not active type '/start' to start")
+                ElseIf comms.ThreadState = Threading.ThreadState.SuspendRequested Then
+                    Console.WriteLine("Game is already paused")
                 End If
             Case commands.Play
-                If comms.IsAlive = True Then
+                If comms.ThreadState = Threading.ThreadState.SuspendRequested Then
                     comms.Resume()
-                Else
+                    Console.WriteLine("Game has been resumed")
+                ElseIf comms.IsAlive = False Then
+                    Console.WriteLine("Server is not active type '/start' to start")
+                ElseIf comms.ThreadState = Threading.ThreadState.Running Then
+                    Console.WriteLine("Game is already running")
+                ElseIf comms.IsAlive = False Then
                     Console.WriteLine("Server is not active type '/start' to start")
                 End If
             Case commands.KickPlayer
@@ -150,7 +158,7 @@ Module Server
                             Console.WriteLine("Kicking canceled")
                             Exit Sub
                         Case Else
-                            WriteLine("Station not recognised. Check for capitals and spelling")
+                            Console.WriteLine("Station not recognised. Check for capitals and spelling")
                     End Select
                     For Each i As ServerSideClient In Clients
                         If i.mystation = stationType Then
@@ -159,6 +167,10 @@ Module Server
                             Exit Sub
                         End If
                     Next
+                    If stationType <> Station.StationTypes.Max Then
+                        Console.WriteLine("That player was not found")
+                        stationType = Station.StationTypes.Max
+                    End If
                 End While
             Case commands.Clear
                 Console.Clear()
