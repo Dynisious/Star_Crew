@@ -7,12 +7,12 @@
     </ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{E0DCC309-5459-4F47-86B9-334676DF3B49}</ProjectGuid>
-    <OutputType>WinExe</OutputType>
-    <StartupObject>Star_Crew.My.MyApplication</StartupObject>
+    <OutputType>Exe</OutputType>
+    <StartupObject>Sub Main</StartupObject>
     <RootNamespace>Star_Crew</RootNamespace>
     <AssemblyName>Star Crew</AssemblyName>
     <FileAlignment>512</FileAlignment>
-    <MyType>WindowsForms</MyType>
+    <MyType>Console</MyType>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkProfile>Client</TargetFrameworkProfile>
     <IsWebBootstrapper>false</IsWebBootstrapper>
@@ -26,7 +26,7 @@
     <UpdatePeriodically>false</UpdatePeriodically>
     <UpdateRequired>false</UpdateRequired>
     <MapFileExtensions>true</MapFileExtensions>
-    <ApplicationRevision>2</ApplicationRevision>
+    <ApplicationRevision>0</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
@@ -102,12 +102,6 @@
   <ItemGroup>
     <Compile Include="Client.vb" />
     <Compile Include="Galaxy.vb" />
-    <Compile Include="Server Obj\OutputConsole.Designer.vb">
-      <DependentUpon>OutputConsole.vb</DependentUpon>
-    </Compile>
-    <Compile Include="Server Obj\OutputConsole.vb">
-      <SubType>Form</SubType>
-    </Compile>
     <Compile Include="Server Obj\Server.vb" />
     <Compile Include="Screen.vb">
       <SubType>Form</SubType>
@@ -155,9 +149,6 @@
       <CustomToolNamespace>My.Resources</CustomToolNamespace>
       <SubType>Designer</SubType>
     </EmbeddedResource>
-    <EmbeddedResource Include="Server Obj\OutputConsole.resx">
-      <DependentUpon>OutputConsole.vb</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="Screen.resx">
       <DependentUpon>Screen.vb</DependentUpon>
     </EmbeddedResource>
@@ -172,7 +163,6 @@
       <CustomToolNamespace>My</CustomToolNamespace>
       <LastGenOutput>Settings.Designer.vb</LastGenOutput>
     </None>
-    <None Include="Star Crew_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="obj\" />

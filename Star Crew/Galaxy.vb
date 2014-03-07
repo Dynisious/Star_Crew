@@ -224,7 +224,7 @@
             '-------------------
             If clientShip.Parent Is Nothing Then
                 GalaxyTimer.Enabled = False
-                Screen.ConsoleWindow.WriteLine("Client is Dead")
+                Console.WriteLine("Client is Dead")
             End If
             CanSend = True
         End If

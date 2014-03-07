@@ -1,5 +1,6 @@
 ﻿Public Class Client
     Public canSend As Boolean = False
+    Public connected As Boolean = False
     Public MyConnector As Net.Sockets.TcpClient
     Public myStation As Station.StationTypes = Station.StationTypes.Max
     Public Message As ServerMessage
@@ -7,8 +8,16 @@
 
     Public Sub New(ByVal nIP As String, ByVal nStation As Integer)
         myStation = nStation
-        MyConnector = New Net.Sockets.TcpClient(nIP, 1225)
-        comms.Start()
+        Try
+            MyConnector = New Net.Sockets.TcpClient(nIP, 1225)
+            connected = True
+            comms.Start()
+        Catch ex As Net.Sockets.SocketException
+            Console.WriteLine()
+            Console.WriteLine("Error: Could not connect to server")
+            Console.WriteLine("Check address and make sure a station is selected")
+            Console.WriteLine(ex)
+        End Try
     End Sub
 
     Private Sub Communications()

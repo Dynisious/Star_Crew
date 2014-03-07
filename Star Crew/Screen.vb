@@ -1,6 +1,5 @@
 ﻿Public Class Screen
     Private WithEvents tick As New Timer With {.Interval = 10, .Enabled = False}
-    Public Shared ConsoleWindow As New OutputConsole
     Public Shared MyClient As Client
 
     Public Class MenuScreenLayout
@@ -9,7 +8,7 @@
         Public Shared WithEvents btnExit As System.Windows.Forms.Button
 
         Public Sub New()
-            Screen.Controls.Clear()
+            Server.OutputScreen.Controls.Clear()
             btnStartServer = New System.Windows.Forms.Button()
             btnStartClient = New System.Windows.Forms.Button()
             btnExit = New System.Windows.Forms.Button()
@@ -45,9 +44,9 @@
             btnExit.TabIndex = 2
             btnExit.Text = "Exit"
             btnExit.UseVisualStyleBackColor = True
-            Screen.Controls.Add(btnExit)
-            Screen.Controls.Add(btnStartClient)
-            Screen.Controls.Add(btnStartServer)
+            Server.OutputScreen.Controls.Add(btnExit)
+            Server.OutputScreen.Controls.Add(btnStartClient)
+            Server.OutputScreen.Controls.Add(btnStartServer)
         End Sub
 
         Private Shared Sub btnStartServer_Click() Handles btnStartServer.Click
@@ -76,7 +75,7 @@
         Public Shared WithEvents DomainUpDown1 As System.Windows.Forms.DomainUpDown
 
         Public Sub New()
-            Screen.Controls.Clear()
+            Server.OutputScreen.Controls.Clear()
             txtIP = New System.Windows.Forms.TextBox()
             lblIP = New System.Windows.Forms.Label()
             btnEnter = New System.Windows.Forms.Button()
@@ -132,11 +131,11 @@
             DomainUpDown1.Size = New System.Drawing.Size(200, 23)
             DomainUpDown1.TabIndex = 4
 
-            Screen.Controls.Add(DomainUpDown1)
-            Screen.Controls.Add(btnMenu)
-            Screen.Controls.Add(btnEnter)
-            Screen.Controls.Add(lblIP)
-            Screen.Controls.Add(txtIP)
+            Server.OutputScreen.Controls.Add(DomainUpDown1)
+            Server.OutputScreen.Controls.Add(btnMenu)
+            Server.OutputScreen.Controls.Add(btnEnter)
+            Server.OutputScreen.Controls.Add(lblIP)
+            Server.OutputScreen.Controls.Add(txtIP)
         End Sub
 
         Private Shared Sub btnMenu_Click() Handles btnMenu.Click
@@ -146,17 +145,21 @@
         Private Shared Sub btnEnter_Click() Handles btnEnter.Click
             Dim count As Integer
             Dim lastIndex As Integer
-            For i As Integer = 1 To 3
-                Dim e As Integer = txtIP.Text.IndexOf(".", e)
-                If e <> -1 Then
+            While True
+                Dim e As Integer = txtIP.Text.IndexOf(".", lastIndex + 1)
+                If e <> -1 And e < txtIP.TextLength Then
                     lastIndex = e
                     count = count + 1
+                Else
+                    Exit While
                 End If
-            Next
+            End While
 
-            If count = 3 Then
-                Dim temp As New GamePlayLayout
+            If count = 3 And DomainUpDown1.SelectedIndex <> -1 Then
                 MyClient = New Client(txtIP.Text, DomainUpDown1.SelectedIndex)
+                If MyClient.connected = True Then
+                    Dim temp As New GamePlayLayout
+                End If
             End If
         End Sub
 
@@ -178,7 +181,7 @@
         Public Shared WithEvents lblEngines As System.Windows.Forms.Label
 
         Public Sub New()
-            Screen.Controls.Clear()
+            Server.OutputScreen.Controls.Clear()
             Displaying = True
             picDisplay = New System.Windows.Forms.PictureBox()
             pnlStats = New System.Windows.Forms.Panel()
@@ -328,20 +331,22 @@
             lblEngines.Text = "Engines: 0/0"
             lblEngines.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
 
-            Screen.Controls.Add(Me.pnlControls)
-            Screen.Controls.Add(Me.pnlStats)
-            Screen.Controls.Add(Me.picDisplay)
+            Server.OutputScreen.Controls.Add(Me.pnlControls)
+            Server.OutputScreen.Controls.Add(Me.pnlStats)
+            Server.OutputScreen.Controls.Add(Me.picDisplay)
             CType(Me.picDisplay, System.ComponentModel.ISupportInitialize).EndInit()
             Me.pnlStats.ResumeLayout(False)
-            Screen.tick.Enabled = True
+            Server.OutputScreen.tick.Enabled = True
         End Sub
 
     End Class
 
+    Public Sub Open()
+        Application.Run(Me)
+    End Sub
+
     Public Sub New()
         InitializeComponent()
-        ConsoleWindow.CreateControl()
-        ConsoleWindow.Visible = True
         MenuScreenLayout.btnStartServer = New System.Windows.Forms.Button()
         MenuScreenLayout.btnStartClient = New System.Windows.Forms.Button()
         MenuScreenLayout.btnExit = New System.Windows.Forms.Button()

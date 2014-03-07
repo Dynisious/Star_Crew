@@ -2,15 +2,46 @@
 Imports System.Net.Sockets
 
 Module Server
+    Private Enum commands
+        Close
+        Help
+        Start
+        Suspend
+        Play
+        KickPlayer
+        Clear
+        max
+    End Enum
+    Private commandList As New Dictionary(Of commands, String) From {
+        {commands.Close, "/cls"},
+        {commands.Help, "/help"},
+        {commands.Start, "/start"},
+        {commands.Suspend, "/stop"},
+        {commands.Play, "/play"},
+        {commands.KickPlayer, "/kick"},
+        {commands.Clear, "/clr"}
+    }
+    Private helpList As New Dictionary(Of commands, String) From {
+        {commands.Close, "/cls :      Closes the application"},
+        {commands.Help, "/help :     Displays help with console commands"},
+        {commands.Start, "/start :      Starts the server"},
+        {commands.Suspend, "/stop :     Pauses the execution of the game"},
+        {commands.Play, "/play :        Resumes the execution of the game"},
+        {commands.KickPlayer, "/kick :      Removes the player from the game"},
+        {commands.Clear, "/clr :        Clears the screen"}
+    }
     Private MyListener As New TcpListener("1225")
     Private Ports(0) As Socket
     Private Clients(-1) As ServerSideClient
     Public GameWorld As New Galaxy
+    Public OutputScreen As New Screen
+    Public Running As Boolean = True
+    Public client As New Threading.Thread(AddressOf OutputScreen.open)
     Public comms As New Threading.Thread(AddressOf StartComms)
 
     Private Class ServerSideClient
         Public MySocket As Socket
-        Private MyStation As Station.StationTypes = Station.StationTypes.Max
+        Public MyStation As Station.StationTypes = Station.StationTypes.Max
 
         Public Sub New(ByRef nSocket As Socket)
             MySocket = nSocket
@@ -25,7 +56,7 @@ Module Server
                 If CInt(str) < Station.StationTypes.Max Then
                     MyStation = CInt(str)
                 End If
-                Screen.ConsoleWindow.WriteLine((MyStation.ToString() + ": Has been connected"))
+                Console.WriteLine((MyStation.ToString() + ": Has been connected"))
                 'Select Case MyStation
                 '    Case Station.StationTypes.Helm
                 '        Galaxy.clientShip.Helm.PlayerControled = True
@@ -54,18 +85,104 @@ Module Server
         End Sub
     End Class
 
+    Public Sub Main()
+        client.Start()
+        Console.WriteLine("-----Star Crew-----")
+        Console.WriteLine("for help with commands type '/help'")
+        Console.WriteLine()
+        While Running = True
+            Dim str As String = Console.ReadLine().Trim(ChrW(0))
+            If str.StartsWith("/") Then
+                RunCommand(str)
+            End If
+        End While
+    End Sub
+
+    Private Sub RunCommand(ByVal nCommand As String)
+        Console.WriteLine()
+        Dim command As commands = commands.max
+        For Each i As KeyValuePair(Of commands, String) In commandList
+            If i.Value = nCommand Then
+                command = i.Key
+                Exit For
+            End If
+        Next
+
+        Select Case command
+            Case commands.Close
+                End
+            Case commands.Help
+                Console.WriteLine("All commands must be lowercase")
+                For Each i As KeyValuePair(Of commands, String) In helpList
+                    Console.WriteLine(i.Value)
+                Next
+                Console.WriteLine()
+            Case commands.Start
+                StartServer()
+            Case commands.Suspend
+                If comms.IsAlive = True Then
+                    comms.Suspend()
+                Else
+                    Console.WriteLine("Server is not active type '/start' to start")
+                End If
+            Case commands.Play
+                If comms.IsAlive = True Then
+                    comms.Resume()
+                Else
+                    Console.WriteLine("Server is not active type '/start' to start")
+                End If
+            Case commands.KickPlayer
+                Console.WriteLine("Type 'helm' 'batteries' 'shielding' 'engineering' or 'cancel'")
+                Dim stationType As Station.StationTypes = Station.StationTypes.Max
+                Dim str As String
+                While stationType = Station.StationTypes.Max
+                    str = Console.ReadLine().Trim(ChrW(0))
+                    Select Case str
+                        Case "helm"
+                            stationType = Station.StationTypes.Helm
+                        Case "batteries"
+                            stationType = Station.StationTypes.Batteries
+                        Case "shielding"
+                            stationType = Station.StationTypes.Shielding
+                        Case "engineering"
+                            stationType = Station.StationTypes.Engineering
+                        Case "cancel"
+                            Console.WriteLine("Kicking canceled")
+                            Exit Sub
+                        Case Else
+                            WriteLine("Station not recognised. Check for capitals and spelling")
+                    End Select
+                    For Each i As ServerSideClient In Clients
+                        If i.mystation = stationType Then
+                            removeClient(i.MySocket)
+                            WriteLine(str + " Has been kicked")
+                            Exit Sub
+                        End If
+                    Next
+                End While
+            Case commands.Clear
+                Console.Clear()
+                Console.WriteLine("-----Star Crew-----")
+                Console.WriteLine("for help with commands type '/help'")
+                Console.WriteLine()
+            Case commands.max
+                Console.WriteLine("Error: Command not recognised")
+                Console.WriteLine("Check spelling and capitals and try again")
+        End Select
+    End Sub
+
     Public Sub StartServer()
         GameWorld.CreateWorld()
-        Screen.ConsoleWindow.WriteLine("Game is now running")
+        Console.WriteLine("Game is now running")
         If comms.IsAlive = False Then
             comms.Start()
         End If
-        Screen.ConsoleWindow.WriteLine("Server is listening on port 1225")
     End Sub
 
     Private Sub StartComms()
         Ports(0) = MyListener.Server
         MyListener.Start()
+        Console.WriteLine("Server is listening on " + MyListener.Server.LocalEndPoint.ToString())
 
         While True
             ListenForMessage()
@@ -130,9 +247,9 @@ Module Server
         Else
             MyListener.Stop()
             MyListener.Start()
-            Screen.ConsoleWindow.WriteLine()
-            Screen.ConsoleWindow.WriteLine("Client could not connect: Server full")
-            Screen.ConsoleWindow.WriteLine()
+            Console.WriteLine()
+            Console.WriteLine("Client could not connect: Server full")
+            Console.WriteLine()
         End If
     End Sub
 
