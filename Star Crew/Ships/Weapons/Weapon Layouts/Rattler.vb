@@ -2,7 +2,7 @@
     Inherits WeaponLayout
 
     Public Sub New()
-        stats(Weapon.Stats.Damage) = New Stat(40, 40)
+        stats(Weapon.Stats.Damage) = New Stat(15, 15)
         stats(Weapon.Stats.DamageType) = New Stat(Weapon.DamageTypes.Slug, Weapon.DamageTypes.Slug)
         stats(Weapon.Stats.Ammo) = New Stat(5000, 5000)
         stats(Weapon.Stats.Integrety) = New Stat(100, 100)

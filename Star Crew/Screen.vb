@@ -157,7 +157,7 @@
 
             If count = 3 And DomainUpDown1.SelectedIndex <> -1 Then
                 MyClient = New Client(txtIP.Text, DomainUpDown1.SelectedIndex)
-                If MyClient.connected = True Then
+                If MyClient.comms.IsAlive = True Then
                     Dim temp As New GamePlayLayout
                 End If
             End If
@@ -167,176 +167,233 @@
 
     Public Class GamePlayLayout
         Public Shared Displaying As Boolean = False
-        Public Shared WithEvents picDisplay As System.Windows.Forms.PictureBox
-        Public Shared WithEvents pnlStats As System.Windows.Forms.Panel
-        Public Shared WithEvents pnlControls As System.Windows.Forms.Panel
+        Public Shared WithEvents picDisplayGraphics As System.Windows.Forms.PictureBox
+        Public Shared WithEvents pnlDisplays As System.Windows.Forms.Panel
         Public Shared WithEvents lblHull As System.Windows.Forms.Label
-        Public Shared WithEvents lblLeftShield As System.Windows.Forms.Label
-        Public Shared WithEvents lblRightShield As System.Windows.Forms.Label
-        Public Shared WithEvents lblForwardShield As System.Windows.Forms.Label
-        Public Shared WithEvents lblRearShield As System.Windows.Forms.Label
-        Public Shared WithEvents lblPrimary As System.Windows.Forms.Label
-        Public Shared WithEvents lblSecondary As System.Windows.Forms.Label
-        Public Shared WithEvents lblPowerCore As System.Windows.Forms.Label
         Public Shared WithEvents lblEngines As System.Windows.Forms.Label
+        Public Shared WithEvents lblPowerCore As System.Windows.Forms.Label
+        Public Shared WithEvents lblSecondary As System.Windows.Forms.Label
+        Public Shared WithEvents lblPrimary As System.Windows.Forms.Label
+        Public Shared WithEvents lblForward As System.Windows.Forms.Label
+        Public Shared WithEvents lblRear As System.Windows.Forms.Label
+        Public Shared WithEvents lblRight As System.Windows.Forms.Label
+        Public Shared WithEvents lblLeft As System.Windows.Forms.Label
+        Public Shared WithEvents pnlMenuButtons As System.Windows.Forms.Panel
+        Public WithEvents btnMainMenu As System.Windows.Forms.Button
+        Public WithEvents btnEndGame As System.Windows.Forms.Button
 
         Public Sub New()
             Server.OutputScreen.Controls.Clear()
-            Displaying = True
-            picDisplay = New System.Windows.Forms.PictureBox()
-            pnlStats = New System.Windows.Forms.Panel()
-            pnlControls = New System.Windows.Forms.Panel()
-            lblHull = New System.Windows.Forms.Label()
-            lblLeftShield = New System.Windows.Forms.Label()
-            lblRightShield = New System.Windows.Forms.Label()
-            lblForwardShield = New System.Windows.Forms.Label()
-            lblRearShield = New System.Windows.Forms.Label()
-            lblPrimary = New System.Windows.Forms.Label()
-            lblSecondary = New System.Windows.Forms.Label()
-            lblPowerCore = New System.Windows.Forms.Label()
+            '-----Initialize Controls-----
+            picDisplayGraphics = New System.Windows.Forms.PictureBox()
+            pnlDisplays = New System.Windows.Forms.Panel()
             lblEngines = New System.Windows.Forms.Label()
-            CType(picDisplay, System.ComponentModel.ISupportInitialize).BeginInit()
-            pnlStats.SuspendLayout()
+            lblPowerCore = New System.Windows.Forms.Label()
+            lblSecondary = New System.Windows.Forms.Label()
+            lblPrimary = New System.Windows.Forms.Label()
+            lblForward = New System.Windows.Forms.Label()
+            lblRear = New System.Windows.Forms.Label()
+            lblRight = New System.Windows.Forms.Label()
+            lblLeft = New System.Windows.Forms.Label()
+            lblHull = New System.Windows.Forms.Label()
+            pnlMenuButtons = New System.Windows.Forms.Panel()
+            btnEndGame = New System.Windows.Forms.Button()
+            btnMainMenu = New System.Windows.Forms.Button()
+            CType(picDisplayGraphics, System.ComponentModel.ISupportInitialize).BeginInit()
+            pnlDisplays.SuspendLayout()
+            pnlMenuButtons.SuspendLayout()
+            '------------------------
+            Displaying = True
+
+            '-----Control Settings-----
             '
-            'picDisplay
+            'picDisplayGraphics
             '
-            picDisplay.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
-            picDisplay.Location = New System.Drawing.Point(12, 12)
-            picDisplay.Name = "picDisplay"
-            picDisplay.Size = New System.Drawing.Size(600, 600)
-            picDisplay.TabIndex = 0
-            picDisplay.TabStop = False
+            picDisplayGraphics.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
+            picDisplayGraphics.Location = New System.Drawing.Point(6, 6)
+            picDisplayGraphics.Name = "picDisplayGraphics"
+            picDisplayGraphics.Size = New System.Drawing.Size(600, 600)
+            picDisplayGraphics.TabIndex = 0
+            picDisplayGraphics.TabStop = False
             '
-            'pnlStats
+            'pnlDisplays
             '
-            pnlStats.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
-            pnlStats.Controls.Add(lblEngines)
-            pnlStats.Controls.Add(lblPowerCore)
-            pnlStats.Controls.Add(lblSecondary)
-            pnlStats.Controls.Add(lblPrimary)
-            pnlStats.Controls.Add(lblRearShield)
-            pnlStats.Controls.Add(lblForwardShield)
-            pnlStats.Controls.Add(lblRightShield)
-            pnlStats.Controls.Add(lblLeftShield)
-            pnlStats.Controls.Add(lblHull)
-            pnlStats.Location = New System.Drawing.Point(618, 12)
-            pnlStats.Name = "pnlStats"
-            pnlStats.Size = New System.Drawing.Size(554, 320)
-            pnlStats.TabIndex = 1
+            pnlDisplays.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
+            pnlDisplays.Controls.Add(lblEngines)
+            pnlDisplays.Controls.Add(lblPowerCore)
+            pnlDisplays.Controls.Add(lblSecondary)
+            pnlDisplays.Controls.Add(lblPrimary)
+            pnlDisplays.Controls.Add(lblForward)
+            pnlDisplays.Controls.Add(lblRear)
+            pnlDisplays.Controls.Add(lblRight)
+            pnlDisplays.Controls.Add(lblLeft)
+            pnlDisplays.Controls.Add(lblHull)
+            pnlDisplays.Location = New System.Drawing.Point(612, 6)
+            pnlDisplays.Name = "pnlDisplays"
+            pnlDisplays.Size = New System.Drawing.Size(560, 338)
+            pnlDisplays.TabIndex = 1
             '
-            'pnlControls
+            'lblEngineering
             '
-            pnlControls.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
-            pnlControls.Location = New System.Drawing.Point(618, 338)
-            pnlControls.Name = "pnlControls"
-            pnlControls.Size = New System.Drawing.Size(554, 274)
-            pnlControls.TabIndex = 2
-            '
-            'lblHull
-            '
-            lblHull.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
-            lblHull.Font = New System.Drawing.Font("Microsoft Sans Serif", 10.0!)
-            lblHull.Location = New System.Drawing.Point(3, 5)
-            lblHull.Name = "lblHull"
-            lblHull.Size = New System.Drawing.Size(166, 27)
-            lblHull.TabIndex = 0
-            lblHull.Text = "Hull: 0/0"
-            lblHull.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
-            '
-            'lblLeftShield
-            '
-            lblLeftShield.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
-            lblLeftShield.Font = New System.Drawing.Font("Microsoft Sans Serif", 10.0!)
-            lblLeftShield.Location = New System.Drawing.Point(17, 228)
-            lblLeftShield.Name = "lblLeftShield"
-            lblLeftShield.Size = New System.Drawing.Size(166, 27)
-            lblLeftShield.TabIndex = 1
-            lblLeftShield.Text = "Left: 0/0"
-            lblLeftShield.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
-            '
-            'lblRightShield
-            '
-            lblRightShield.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
-            lblRightShield.Font = New System.Drawing.Font("Microsoft Sans Serif", 10.0!)
-            lblRightShield.Location = New System.Drawing.Point(189, 228)
-            lblRightShield.Name = "lblRightShield"
-            lblRightShield.Size = New System.Drawing.Size(166, 27)
-            lblRightShield.TabIndex = 2
-            lblRightShield.Text = "Right: 0/0"
-            lblRightShield.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
-            '
-            'lblForwardShield
-            '
-            lblForwardShield.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
-            lblForwardShield.Font = New System.Drawing.Font("Microsoft Sans Serif", 10.0!)
-            lblForwardShield.Location = New System.Drawing.Point(103, 182)
-            lblForwardShield.Name = "lblForwardShield"
-            lblForwardShield.Size = New System.Drawing.Size(166, 27)
-            lblForwardShield.TabIndex = 3
-            lblForwardShield.Text = "Forward: 0/0"
-            lblForwardShield.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
-            '
-            'lblRearShield
-            '
-            lblRearShield.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
-            lblRearShield.Font = New System.Drawing.Font("Microsoft Sans Serif", 10.0!)
-            lblRearShield.Location = New System.Drawing.Point(103, 280)
-            lblRearShield.Name = "lblRearShield"
-            lblRearShield.Size = New System.Drawing.Size(166, 27)
-            lblRearShield.TabIndex = 4
-            lblRearShield.Text = "Rear: 0/0"
-            lblRearShield.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
-            '
-            'lblPrimary
-            '
-            lblPrimary.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
-            lblPrimary.Font = New System.Drawing.Font("Microsoft Sans Serif", 10.0!)
-            lblPrimary.Location = New System.Drawing.Point(114, 69)
-            lblPrimary.Name = "lblPrimary"
-            lblPrimary.Size = New System.Drawing.Size(166, 27)
-            lblPrimary.TabIndex = 5
-            lblPrimary.Text = "Primary: 0/0"
-            lblPrimary.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
-            '
-            'lblSecondary
-            '
-            lblSecondary.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
-            lblSecondary.Font = New System.Drawing.Font("Microsoft Sans Serif", 10.0!)
-            lblSecondary.Location = New System.Drawing.Point(114, 106)
-            lblSecondary.Name = "lblSecondary"
-            lblSecondary.Size = New System.Drawing.Size(166, 27)
-            lblSecondary.TabIndex = 6
-            lblSecondary.Text = "Secondary: 0/0"
-            lblSecondary.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+            lblEngines.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
+            lblEngines.Font = New System.Drawing.Font("Lucida Console", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+            lblEngines.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft
+            lblEngines.Location = New System.Drawing.Point(295, 267)
+            lblEngines.Name = "lblEngineering"
+            lblEngines.Size = New System.Drawing.Size(200, 30)
+            lblEngines.TabIndex = 8
+            lblEngines.Text = "Engines: 0/0"
+            lblEngines.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
             '
             'lblPowerCore
             '
             lblPowerCore.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
-            lblPowerCore.Font = New System.Drawing.Font("Microsoft Sans Serif", 10.0!)
-            lblPowerCore.Location = New System.Drawing.Point(327, 69)
+            lblPowerCore.Font = New System.Drawing.Font("Lucida Console", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+            lblPowerCore.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft
+            lblPowerCore.Location = New System.Drawing.Point(295, 232)
             lblPowerCore.Name = "lblPowerCore"
-            lblPowerCore.Size = New System.Drawing.Size(166, 27)
+            lblPowerCore.Size = New System.Drawing.Size(200, 30)
             lblPowerCore.TabIndex = 7
             lblPowerCore.Text = "Power Core: 0/0"
-            lblPowerCore.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+            lblPowerCore.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
             '
-            'lblEngines
+            'lblSecondary
             '
-            lblEngines.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
-            lblEngines.Font = New System.Drawing.Font("Microsoft Sans Serif", 10.0!)
-            lblEngines.Location = New System.Drawing.Point(327, 106)
-            lblEngines.Name = "lblEngines"
-            lblEngines.Size = New System.Drawing.Size(166, 27)
-            lblEngines.TabIndex = 8
-            lblEngines.Text = "Engines: 0/0"
-            lblEngines.TextAlign = System.Drawing.ContentAlignment.MiddleCenter
+            lblSecondary.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
+            lblSecondary.Font = New System.Drawing.Font("Lucida Console", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+            lblSecondary.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft
+            lblSecondary.Location = New System.Drawing.Point(85, 267)
+            lblSecondary.Name = "lblSecondary"
+            lblSecondary.Size = New System.Drawing.Size(200, 30)
+            lblSecondary.TabIndex = 6
+            lblSecondary.Text = "Secondary: 0/0"
+            lblSecondary.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
+            '
+            'lblPrimary
+            '
+            lblPrimary.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
+            lblPrimary.Font = New System.Drawing.Font("Lucida Console", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+            lblPrimary.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft
+            lblPrimary.Location = New System.Drawing.Point(85, 232)
+            lblPrimary.Name = "lblPrimary"
+            lblPrimary.Size = New System.Drawing.Size(200, 30)
+            lblPrimary.TabIndex = 5
+            lblPrimary.Text = "Primary: 0/0"
+            lblPrimary.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
+            '
+            'lblForward
+            '
+            lblForward.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
+            lblForward.Font = New System.Drawing.Font("Lucida Console", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+            lblForward.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft
+            lblForward.Location = New System.Drawing.Point(180, 86)
+            lblForward.Name = "lblForward"
+            lblForward.Size = New System.Drawing.Size(200, 30)
+            lblForward.TabIndex = 4
+            lblForward.Text = "Fore: 0/0"
+            lblForward.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
+            '
+            'lblRear
+            '
+            lblRear.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
+            lblRear.Font = New System.Drawing.Font("Lucida Console", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+            lblRear.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft
+            lblRear.Location = New System.Drawing.Point(180, 166)
+            lblRear.Name = "lblRear"
+            lblRear.Size = New System.Drawing.Size(200, 30)
+            lblRear.TabIndex = 3
+            lblRear.Text = "Aft: 0/0"
+            lblRear.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
+            '
+            'lblRight
+            '
+            lblRight.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
+            lblRight.Font = New System.Drawing.Font("Lucida Console", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+            lblRight.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft
+            lblRight.Location = New System.Drawing.Point(295, 126)
+            lblRight.Name = "lblRight"
+            lblRight.Size = New System.Drawing.Size(200, 30)
+            lblRight.TabIndex = 2
+            lblRight.Text = "Starbord: 0/0"
+            lblRight.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
+            '
+            'lblLeft
+            '
+            lblLeft.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
+            lblLeft.Font = New System.Drawing.Font("Lucida Console", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+            lblLeft.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft
+            lblLeft.Location = New System.Drawing.Point(85, 126)
+            lblLeft.Name = "lblLeft"
+            lblLeft.Size = New System.Drawing.Size(200, 30)
+            lblLeft.TabIndex = 1
+            lblLeft.Text = "Port: 0/0"
+            lblLeft.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
+            '
+            'lblHull
+            '
+            lblHull.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
+            lblHull.Font = New System.Drawing.Font("Lucida Console", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+            lblHull.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft
+            lblHull.Location = New System.Drawing.Point(180, 24)
+            lblHull.Name = "lblHull"
+            lblHull.Size = New System.Drawing.Size(200, 30)
+            lblHull.TabIndex = 0
+            lblHull.Text = "Hull: 0/0"
+            lblHull.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
+            '
+            'pnlMenuButtons
+            '
+            pnlMenuButtons.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
+            pnlMenuButtons.Controls.Add(btnEndGame)
+            pnlMenuButtons.Controls.Add(btnMainMenu)
+            pnlMenuButtons.Location = New System.Drawing.Point(612, 350)
+            pnlMenuButtons.Name = "pnlMenuButtons"
+            pnlMenuButtons.Size = New System.Drawing.Size(560, 256)
+            pnlMenuButtons.TabIndex = 2
+            '
+            'btnEndGame
+            '
+            btnEndGame.Font = New System.Drawing.Font("Lucida Console", 14.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+            btnEndGame.Location = New System.Drawing.Point(285, 19)
+            btnEndGame.Name = "btnEndGame"
+            btnEndGame.Size = New System.Drawing.Size(140, 40)
+            btnEndGame.TabIndex = 1
+            btnEndGame.Text = "Close Game"
+            btnEndGame.UseVisualStyleBackColor = True
+            '
+            'btnMainMenu
+            '
+            btnMainMenu.Font = New System.Drawing.Font("Lucida Console", 14.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+            btnMainMenu.Location = New System.Drawing.Point(135, 19)
+            btnMainMenu.Name = "btnMainMenu"
+            btnMainMenu.Size = New System.Drawing.Size(140, 40)
+            btnMainMenu.TabIndex = 0
+            btnMainMenu.Text = "Main Menu"
+            btnMainMenu.UseVisualStyleBackColor = True
+            '--------------------------
 
-            Server.OutputScreen.Controls.Add(Me.pnlControls)
-            Server.OutputScreen.Controls.Add(Me.pnlStats)
-            Server.OutputScreen.Controls.Add(Me.picDisplay)
-            CType(Me.picDisplay, System.ComponentModel.ISupportInitialize).EndInit()
-            Me.pnlStats.ResumeLayout(False)
+            '-----Add Controls-----
+            Server.OutputScreen.Controls.Add(pnlMenuButtons)
+            Server.OutputScreen.Controls.Add(pnlDisplays)
+            Server.OutputScreen.Controls.Add(picDisplayGraphics)
+            '----------------------
+
+            '-----Display Controls-----
+            CType(picDisplayGraphics, System.ComponentModel.ISupportInitialize).EndInit()
+            pnlDisplays.ResumeLayout(False)
+            pnlMenuButtons.ResumeLayout(False)
+            pnlMenuButtons.PerformLayout()
+            '---------------------------
             Server.OutputScreen.tick.Enabled = True
+        End Sub
+
+        Private Sub btnMainMenu_Click() Handles btnMainMenu.Click
+            Screen.MyClient.comms.Abort()
+            Dim temp As New MenuScreenLayout
+        End Sub
+
+        Private Sub btnEndGame_Click() Handles btnEndGame.Click
+            End
         End Sub
 
     End Class
@@ -382,19 +439,19 @@
         MenuScreenLayout.btnExit.TabIndex = 2
         MenuScreenLayout.btnExit.Text = "Exit"
         MenuScreenLayout.btnExit.UseVisualStyleBackColor = True
-        Me.Controls.Add(MenuScreenLayout.btnExit)
-        Me.Controls.Add(MenuScreenLayout.btnStartClient)
-        Me.Controls.Add(MenuScreenLayout.btnStartServer)
+        Controls.Add(MenuScreenLayout.btnExit)
+        Controls.Add(MenuScreenLayout.btnStartClient)
+        Controls.Add(MenuScreenLayout.btnStartServer)
     End Sub
 
     Private Sub DisplayStats() Handles tick.Tick
         If GamePlayLayout.Displaying = True And MyClient.Message IsNot Nothing Then
-            Screen.GamePlayLayout.picDisplay.Image = MyClient.Message.bmp
+            Screen.GamePlayLayout.picDisplayGraphics.Image = MyClient.Message.bmp
             Screen.GamePlayLayout.lblHull.Text = "Hull: " + CStr(MyClient.Message.ship.Hull.current) + "/" + CStr(MyClient.Message.ship.Hull.max)
-            Screen.GamePlayLayout.lblForwardShield.Text = "Forward: " + CStr(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.FrontShield).current) + "/" + CStr(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.FrontShield).max)
-            Screen.GamePlayLayout.lblRightShield.Text = "Right: " + CStr(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.RightShield).current) + "/" + CStr(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.RightShield).max)
-            Screen.GamePlayLayout.lblRearShield.Text = "Rear: " + CStr(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.BackShield).current) + "/" + CStr(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.BackShield).max)
-            Screen.GamePlayLayout.lblLeftShield.Text = "Left: " + CStr(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.LeftShield).current) + "/" + CStr(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.LeftShield).max)
+            Screen.GamePlayLayout.lblForward.Text = "Fore: " + CStr(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.FrontShield).current) + "/" + CStr(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.FrontShield).max)
+            Screen.GamePlayLayout.lblRight.Text = "Starboard: " + CStr(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.RightShield).current) + "/" + CStr(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.RightShield).max)
+            Screen.GamePlayLayout.lblRear.Text = "Aft: " + CStr(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.BackShield).current) + "/" + CStr(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.BackShield).max)
+            Screen.GamePlayLayout.lblLeft.Text = "Port: " + CStr(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.LeftShield).current) + "/" + CStr(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.LeftShield).max)
             Screen.GamePlayLayout.lblPrimary.Text = "Primary: " + CStr(MyClient.Message.ship.Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).current) + "/" + CStr(MyClient.Message.ship.Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).max)
             Screen.GamePlayLayout.lblSecondary.Text = "Secondary: " + CStr(MyClient.Message.ship.Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).current) + "/" + CStr(MyClient.Message.ship.Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).max)
             Screen.GamePlayLayout.lblPowerCore.Text = "Power Core: " + CStr(MyClient.Message.ship.Engineering.PowerCore.current) + "/" + CStr(MyClient.Message.ship.Engineering.PowerCore.max)

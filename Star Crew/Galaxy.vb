@@ -1,14 +1,14 @@
 ﻿Public Class Galaxy
     Public WithEvents GalaxyTimer As New Timer With {.Interval = 100, .Enabled = False}
     Public Shared clientShip As PlayerShip
-    Public xList(100) As Ship
-    Public Shared Bmp As New Bitmap(600, 600)
-    Public Shared BaseBmp As New Bitmap(600, 600)
+    Public xList(200) As Ship
+    Private Shared Bmp As New Bitmap(600, 600)
+    Private Shared BaseBmp As New Bitmap(600, 600)
     Private shipPositions(-1) As Point
     Private directionPositions(-1) As Point
     Private scanner As Double
     Private stars(50) As Star
-    Public CanSend As Boolean = False
+    Private Event NewClientMessage(ByVal nMessage As Station, ByVal nStation As Station.StationTypes)
 
     Private Class Star
         Public Position As Point
@@ -36,14 +36,14 @@
             Dim direction As Double = Helm.NormalizeDirection(clientShip.Helm.Direction + Math.PI)
             Position = New Point(Position.X + (speed * clientShip.Helm.Throttle.current * Math.Cos(direction)), Position.Y + (speed * clientShip.Helm.Throttle.current * Math.Sin(direction)))
             If Position.X <= 2 Then
-                Position = New Point(Bmp.Width - 3, Position.Y)
+                Position = New Point(Position.X + Bmp.Width - 5, Position.Y)
             ElseIf Position.X >= Bmp.Width - 3 Then
-                Position = New Point(2, Position.Y)
+                Position = New Point(Position.X - Bmp.Width + 5, Position.Y)
             End If
             If Position.Y <= 2 Then
-                Position = New Point(Position.X, Bmp.Height - 3)
+                Position = New Point(Position.X, Position.Y + Bmp.Height - 5)
             ElseIf Position.Y >= Bmp.Height - 3 Then
-                Position = New Point(Position.X, 2)
+                Position = New Point(Position.X, Position.Y - Bmp.Height + 5)
             End If
         End Sub
     End Class
@@ -100,134 +100,150 @@
         ReDim Preserve xList(UBound(xList) - 1)
     End Sub
 
-    Public Sub UpdateGalaxy() Handles GalaxyTimer.Tick
-        If CanSend = False Then
-            Dim friendly As Integer
-            Dim enemy As Integer
-            For Each i As Ship In xList
-                i.UpdateShip()
-                Select Case i.MyAllegence
-                    Case Ship.Allegence.Player
-                        friendly = friendly + 1
-                    Case Ship.Allegence.Pirate
-                        enemy = enemy + 1
-                End Select
-            Next
+    Public Sub NewClientMessage_Call(ByVal nMessage As Station, ByVal nStation As Station.StationTypes)
+        RaiseEvent NewClientMessage(nMessage, nStation)
+    End Sub
 
-            '-----Rendering-----
-            '-----Clear old-----
-            For Each i As Point In shipPositions
-                For x As Integer = -3 To 3
-                    For y As Integer = -3 To 3
-                        Bmp.SetPixel(i.X + x, i.Y + y, BaseBmp.GetPixel(i.X + x, i.Y + y))
-                    Next
+    Private Sub NewClientMessage_Handle(ByVal nMessage As Station, ByVal nStation As Station.StationTypes) Handles Me.NewClientMessage
+        Select Case nStation
+            Case Station.StationTypes.Helm
+                clientShip.Helm = nMessage
+            Case Station.StationTypes.Batteries
+                clientShip.Batteries = nMessage
+            Case Station.StationTypes.Shielding
+                clientShip.Shielding = nMessage
+            Case Station.StationTypes.Engineering
+                clientShip.Engineering = nMessage
+        End Select
+    End Sub
+
+    Public Sub UpdateGalaxy() Handles GalaxyTimer.Tick
+        Dim friendly As Integer
+        Dim enemy As Integer
+        For Each i As Ship In xList
+            i.UpdateShip()
+            Select Case i.MyAllegence
+                Case Ship.Allegence.Player
+                    friendly = friendly + 1
+                Case Ship.Allegence.Pirate
+                    enemy = enemy + 1
+            End Select
+        Next
+
+        '-----Rendering-----
+        '-----Clear old-----
+        For Each i As Point In shipPositions
+            For x As Integer = -3 To 3
+                For y As Integer = -3 To 3
+                    Bmp.SetPixel(i.X + x, i.Y + y, BaseBmp.GetPixel(i.X + x, i.Y + y))
                 Next
             Next
-            For Each i As Point In directionPositions
-                Bmp.SetPixel(i.X, i.Y, BaseBmp.GetPixel(i.X, i.Y))
+        Next
+        For Each i As Point In directionPositions
+            Bmp.SetPixel(i.X, i.Y, BaseBmp.GetPixel(i.X, i.Y))
+        Next
+        For Each i As Star In stars
+            For x As Integer = -2 To 2
+                For y As Integer = -2 To 2
+                    Bmp.SetPixel(i.Position.X + x, i.Position.Y + y, BaseBmp.GetPixel(i.Position.X + x, i.Position.Y + y))
+                Next
             Next
-            For Each i As Star In stars
+        Next
+        For i As Integer = 1 To 200
+            Dim x As Integer = ((Bmp.Width / 2) - 1) + (Math.Cos(scanner) * i)
+            Dim y As Integer = ((Bmp.Width / 2) - 1) + (Math.Sin(scanner) * i)
+            Bmp.SetPixel(x, y, BaseBmp.GetPixel(x, y))
+        Next
+        ReDim shipPositions(UBound(xList))
+        ReDim directionPositions(UBound(xList))
+        '-------------------
+
+        '-----Set new positions-----
+        For i As Integer = 0 To UBound(xList)
+            shipPositions(i) = New Point(
+                xList(i).Position.X - clientShip.Position.X + ((Bmp.Width / 2) - 1),
+                xList(i).Position.Y - clientShip.Position.Y + ((Bmp.Height / 2) - 1))
+            Dim opposite As Integer = shipPositions(i).Y - ((Bmp.Width / 2) - 1)
+            Dim adjacent As Integer = shipPositions(i).X - ((Bmp.Height / 2) - 1)
+            Dim distance As Integer = Math.Sqrt((opposite * opposite) + (adjacent * adjacent))
+            Dim scale As Double = distance / 200
+            If distance > 200 Then
+                Dim x As Integer = (adjacent / scale) + ((Bmp.Width / 2) - 1)
+                Dim y As Integer = (opposite / scale) + ((Bmp.Height / 2) - 1)
+                shipPositions(i) = New Point(x, y)
+            End If
+            directionPositions(i) = New Point(
+                shipPositions(i).X + (Math.Cos(xList(i).Helm.Direction) * 10),
+                shipPositions(i).Y + (Math.Sin(xList(i).Helm.Direction) * 10))
+        Next
+        scanner = scanner + ((100 * Math.PI) / 1256)
+        For Each i As Star In stars
+            i.Update()
+        Next
+        '---------------------------
+
+        '-----Render-----
+        For Each i As Star In stars
+            If i.Flash = True Then
                 For x As Integer = -2 To 2
                     For y As Integer = -2 To 2
-                        Bmp.SetPixel(i.Position.X + x, i.Position.Y + y, BaseBmp.GetPixel(i.Position.X + x, i.Position.Y + y))
+                        Bmp.SetPixel(i.Position.X + x, i.Position.Y + y, Color.White)
                     Next
                 Next
-            Next
-            For i As Integer = 1 To 200
-                Dim x As Integer = ((Bmp.Width / 2) - 1) + (Math.Cos(scanner) * i)
-                Dim y As Integer = ((Bmp.Width / 2) - 1) + (Math.Sin(scanner) * i)
-                Bmp.SetPixel(x, y, BaseBmp.GetPixel(x, y))
-            Next
-            ReDim shipPositions(UBound(xList))
-            ReDim directionPositions(UBound(xList))
-            '-------------------
-
-            '-----Set new positions-----
-            For i As Integer = 0 To UBound(xList)
-                shipPositions(i) = New Point(
-                    xList(i).Position.X - clientShip.Position.X + ((Bmp.Width / 2) - 1),
-                    xList(i).Position.Y - clientShip.Position.Y + ((Bmp.Height / 2) - 1))
-                Dim opposite As Integer = shipPositions(i).Y - ((Bmp.Width / 2) - 1)
-                Dim adjacent As Integer = shipPositions(i).X - ((Bmp.Height / 2) - 1)
-                Dim distance As Integer = Math.Sqrt((opposite * opposite) + (adjacent * adjacent))
-                Dim scale As Double = distance / 200
-                If distance > 200 Then
-                    Dim x As Integer = (adjacent / scale) + ((Bmp.Width / 2) - 1)
-                    Dim y As Integer = (opposite / scale) + ((Bmp.Height / 2) - 1)
-                    shipPositions(i) = New Point(x, y)
-                End If
-                directionPositions(i) = New Point(
-                    shipPositions(i).X + (Math.Cos(xList(i).Helm.Direction) * 10),
-                    shipPositions(i).Y + (Math.Sin(xList(i).Helm.Direction) * 10))
-            Next
-            scanner = scanner + ((100 * Math.PI) / 1256)
-            For Each i As Star In stars
-                i.Update()
-            Next
-            '---------------------------
-
-            '-----Render-----
-            For Each i As Star In stars
-                If i.Flash = True Then
-                    For x As Integer = -2 To 2
-                        For y As Integer = -2 To 2
-                            Bmp.SetPixel(i.Position.X + x, i.Position.Y + y, Color.White)
-                        Next
-                    Next
-                Else
-                    Bmp.SetPixel(i.Position.X, i.Position.Y, Color.White)
-                End If
-            Next
-            For Each i As Point In shipPositions
-                Dim index As Integer = Array.IndexOf(shipPositions, i)
-                Dim direction As Double = Math.Tanh(i.Y / i.X)
-                If i.X < ((Bmp.Width / 2) - 1) Then
-                    direction = (direction + Math.PI) Mod (2 * Math.PI)
-                End If
-                Dim nX As Integer = (Math.Cos(direction) * 200) + ((Bmp.Width / 2) - 1)
-                Dim nY As Integer = (Math.Sin(direction) * 200) + ((Bmp.Height / 2) - 1)
-                Dim nColour As Color
-                If xList(index).hit = True Then
-                    nColour = Color.White
-                    xList(index).hit = False
-                Else
-                    Select Case xList(index).MyAllegence
-                        Case Ship.Allegence.Pirate
-                            nColour = Color.Red
-                        Case Ship.Allegence.Player
-                            nColour = Color.Green
-                    End Select
-                End If
-                For x As Integer = -3 To 3
-                    For y As Integer = -3 To 3
-                        Bmp.SetPixel(i.X + x, i.Y + y, nColour)
-                    Next
-                Next
-            Next
-            For Each i As Point In directionPositions
-                Dim index As Integer = Array.IndexOf(directionPositions, i)
-                Dim nColour As Color
+            Else
+                Bmp.SetPixel(i.Position.X, i.Position.Y, Color.White)
+            End If
+        Next
+        For Each i As Point In shipPositions
+            Dim index As Integer = Array.IndexOf(shipPositions, i)
+            Dim direction As Double = Math.Tanh(i.Y / i.X)
+            If i.X < ((Bmp.Width / 2) - 1) Then
+                direction = (direction + Math.PI) Mod (2 * Math.PI)
+            End If
+            Dim nX As Integer = (Math.Cos(direction) * 200) + ((Bmp.Width / 2) - 1)
+            Dim nY As Integer = (Math.Sin(direction) * 200) + ((Bmp.Height / 2) - 1)
+            Dim nColour As Color
+            If xList(index).hit = True Then
+                nColour = Color.White
+                xList(index).hit = False
+            Else
                 Select Case xList(index).MyAllegence
                     Case Ship.Allegence.Pirate
                         nColour = Color.Red
                     Case Ship.Allegence.Player
                         nColour = Color.Green
                 End Select
-                Bmp.SetPixel(i.X, i.Y, nColour)
-            Next
-            For i As Integer = 1 To 200
-                Dim x As Integer = ((Bmp.Width / 2) - 1) + (Math.Cos(scanner) * i)
-                Dim y As Integer = ((Bmp.Width / 2) - 1) + (Math.Sin(scanner) * i)
-                Bmp.SetPixel(x, y, Color.Yellow)
-            Next
-            '----------------
-            '-------------------
-            If clientShip.Parent Is Nothing Then
-                GalaxyTimer.Enabled = False
-                Console.WriteLine("Client is Dead")
             End If
-            CanSend = True
+            For x As Integer = -3 To 3
+                For y As Integer = -3 To 3
+                    Bmp.SetPixel(i.X + x, i.Y + y, nColour)
+                Next
+            Next
+        Next
+        For Each i As Point In directionPositions
+            Dim index As Integer = Array.IndexOf(directionPositions, i)
+            Dim nColour As Color
+            Select Case xList(index).MyAllegence
+                Case Ship.Allegence.Pirate
+                    nColour = Color.Red
+                Case Ship.Allegence.Player
+                    nColour = Color.Green
+            End Select
+            Bmp.SetPixel(i.X, i.Y, nColour)
+        Next
+        For i As Integer = 1 To 200
+            Dim x As Integer = ((Bmp.Width / 2) - 1) + (Math.Cos(scanner) * i)
+            Dim y As Integer = ((Bmp.Width / 2) - 1) + (Math.Sin(scanner) * i)
+            Bmp.SetPixel(x, y, Color.Yellow)
+        Next
+        '----------------
+        '-------------------
+        If clientShip.Parent Is Nothing Then
+            GalaxyTimer.Enabled = False
+            Console.WriteLine("Client is Dead")
         End If
+        Dim temp As New Bitmap(Bmp)
+        Server.Communications.UpdateServerMessage_Call(clientShip, temp)
     End Sub
 
 End Class

@@ -30,60 +30,12 @@ Module Server
         {commands.KickPlayer, "/kick :      Removes the player from the game"},
         {commands.Clear, "/clr :        Clears the screen"}
     }
-    Private MyListener As New TcpListener("1225")
-    Private Ports(0) As Socket
-    Private Clients(-1) As ServerSideClient
     Public GameWorld As New Galaxy
-    Public OutputScreen As New Screen
     Public Running As Boolean = True
-    Public client As New Threading.Thread(AddressOf OutputScreen.open)
-    Public comms As New Threading.Thread(AddressOf StartComms)
-
-    Private Class ServerSideClient
-        Public MySocket As Socket
-        Public MyStation As Station.StationTypes = Station.StationTypes.Max
-
-        Public Sub New(ByRef nSocket As Socket)
-            MySocket = nSocket
-        End Sub
-
-        Public Sub DecodeMessage()
-            Dim receiveBuff(MySocket.ReceiveBufferSize) As Byte
-            Dim receivedBuffLength As Integer = MySocket.Receive(receiveBuff, receiveBuff.Length, SocketFlags.None)
-            ReDim Preserve receiveBuff(receivedBuffLength)
-            If MyStation = Station.StationTypes.Max Then
-                Dim str As String = System.Text.Encoding.ASCII.GetString(receiveBuff, 0, receivedBuffLength).Trim(ChrW(0))
-                If CInt(str) < Station.StationTypes.Max Then
-                    MyStation = CInt(str)
-                End If
-                Console.WriteLine((MyStation.ToString() + ": Has been connected"))
-                'Select Case MyStation
-                '    Case Station.StationTypes.Helm
-                '        Galaxy.clientShip.Helm.PlayerControled = True
-                '    Case Station.StationTypes.Batteries
-                '        Galaxy.clientShip.Batteries.PlayerControled = True
-                '    Case Station.StationTypes.Shielding
-                '        Galaxy.clientShip.Shielding.PlayerControled = True
-                '    Case Station.StationTypes.Engineering
-                '        Galaxy.clientShip.Engineering.PlayerControled = True
-                'End Select
-            Else
-                Using fs As New IO.MemoryStream(receiveBuff)
-                    Dim bf As System.Runtime.Serialization.Formatters.Binary.BinaryFormatter = New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
-                    Select Case MyStation
-                        Case Station.StationTypes.Helm
-                            Galaxy.clientShip.HelmMessage(bf.Deserialize(fs))
-                        Case Station.StationTypes.Batteries
-                            Galaxy.clientShip.BatteriesMessage(bf.Deserialize(fs))
-                        Case Station.StationTypes.Shielding
-                            Galaxy.clientShip.ShieldingMessage(bf.Deserialize(fs))
-                        Case Station.StationTypes.Engineering
-                            Galaxy.clientShip.EngineeringMessage(bf.Deserialize(fs))
-                    End Select
-                End Using
-            End If
-        End Sub
-    End Class
+    Public OutputScreen As New Screen
+    Public client As New Threading.Thread(AddressOf OutputScreen.Open)
+    Public Communications As New ServerComms
+    Public comms As New Threading.Thread(AddressOf Communications.StartCommunications)
 
     Public Sub Main()
         client.Start()
@@ -160,9 +112,9 @@ Module Server
                         Case Else
                             Console.WriteLine("Station not recognised. Check for capitals and spelling")
                     End Select
-                    For Each i As ServerSideClient In Clients
-                        If i.mystation = stationType Then
-                            removeClient(i.MySocket)
+                    For Each i As ServerSideClient In Communications.Clients
+                        If i.MyStation = stationType Then
+                            Communications.removeClient(i.MySocket)
                             WriteLine(str + " Has been kicked")
                             Exit Sub
                         End If
@@ -191,104 +143,156 @@ Module Server
         End If
     End Sub
 
-    Private Sub StartComms()
-        Ports(0) = MyListener.Server
-        MyListener.Start()
-        Console.WriteLine("Server is listening on " + MyListener.Server.LocalEndPoint.ToString())
+    Public Class ServerSideClient
+        Public MySocket As Socket
+        Public MyStation As Station.StationTypes = Station.StationTypes.Max
 
-        While True
-            ListenForMessage()
-        End While
-    End Sub
+        Public Sub New(ByRef nSocket As Socket)
+            MySocket = nSocket
+        End Sub
 
-    Private Sub ListenForMessage()
-        Dim socketList As New ArrayList
-        For i As Integer = 0 To UBound(Ports)
-            socketList.Add(Ports(i))
-        Next
-        Socket.Select(socketList, Nothing, Nothing, -1)
-
-        For Each i As Socket In socketList
-            If ReferenceEquals(i, MyListener.Server) = True Then
-                AddClient()
-            Else
-                For e As Integer = 0 To UBound(Clients)
-                    If ReferenceEquals(i, Clients(e).MySocket) Then
-                        Clients(e).DecodeMessage()
-                        Exit For
-                    End If
-                Next
-            End If
-        Next
-
-        Server.GameWorld.CanSend = False
-        socketList.Clear()
-        For i As Integer = 0 To UBound(Ports)
-            socketList.Add(Ports(i))
-        Next
-        Socket.Select(Nothing, Nothing, socketList, 50000)
-        For Each i As Socket In socketList
-            removeClient(i)
-        Next
-        socketList.Clear()
-        For i As Integer = 0 To UBound(Ports)
-            socketList.Add(Ports(i))
-        Next
-        Socket.Select(Nothing, socketList, Nothing, -1)
-        While Server.GameWorld.CanSend = False
-        End While
-
-        For Each i As Socket In socketList
-            If ReferenceEquals(i, MyListener.Server) = False Then
-                Try
-                    i.Send(ServerMessage.NewMessage())
-                Catch ex As Net.Sockets.SocketException
-                    removeClient(i)
-                End Try
-            End If
-        Next
-
-    End Sub
-
-    Private Sub AddClient()
-        If UBound(Ports) < 4 Then
-            ReDim Preserve Ports(Ports.Length)
-            Ports(UBound(Ports)) = MyListener.AcceptSocket()
-            ReDim Preserve Clients(Clients.Length)
-            Clients(UBound(Clients)) = New ServerSideClient(Ports(UBound(Ports)))
-        Else
-            MyListener.Stop()
-            MyListener.Start()
-            Console.WriteLine()
-            Console.WriteLine("Client could not connect: Server full")
-            Console.WriteLine()
-        End If
-    End Sub
-
-    Private Sub removeClient(ByRef nSocket As Socket)
-        nSocket.Close()
-        Dim index As Integer = Array.IndexOf(Ports, nSocket)
-        If index <> UBound(Ports) Then
-            For e As Integer = index To UBound(Ports)
-                If e <> UBound(Ports) Then
-                    Ports(e) = Ports(e + 1)
+        Public Sub DecodeMessage()
+            If MyStation = Station.StationTypes.Max Then
+                Dim receiveBuff(0) As Byte
+                Dim receivedBuffLength As Integer = MySocket.Receive(receiveBuff, 0, receiveBuff.Length, SocketFlags.None)
+                Dim str As String = System.Text.Encoding.ASCII.GetString(receiveBuff, 0, receivedBuffLength).Trim(ChrW(0))
+                If CInt(str) < Station.StationTypes.Max Then
+                    MyStation = CInt(str)
                 End If
+                Console.WriteLine((MyStation.ToString() + ": Has been connected"))
+                'Select Case MyStation
+                '    Case Station.StationTypes.Helm
+                '        Galaxy.clientShip.Helm.PlayerControled = True
+                '    Case Station.StationTypes.Batteries
+                '        Galaxy.clientShip.Batteries.PlayerControled = True
+                '    Case Station.StationTypes.Shielding
+                '        Galaxy.clientShip.Shielding.PlayerControled = True
+                '    Case Station.StationTypes.Engineering
+                '        Galaxy.clientShip.Engineering.PlayerControled = True
+                'End Select
+            Else
+                Using fs As New NetworkStream(MySocket)
+                    Dim bf As System.Runtime.Serialization.Formatters.Binary.BinaryFormatter = New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+                    GameWorld.NewClientMessage_Call(bf.Deserialize(fs), MyStation)
+                End Using
+            End If
+        End Sub
+    End Class
+
+    Public Class ServerComms
+        Public MessageToSend As ServerMessage
+        Public MessageBuff() As Byte
+        Public MyListener As New TcpListener("1225")
+        Public Ports(0) As Socket
+        Public Clients(-1) As ServerSideClient
+        Public Event UpdateServerMessage(ByVal nShip As PlayerShip, ByVal nBmp As Bitmap)
+
+        Public Sub UpdateServerMessage_Call(ByVal nShip As PlayerShip, ByVal nBmp As Bitmap)
+            RaiseEvent UpdateServerMessage(nShip, nBmp)
+        End Sub
+
+        Private Sub UpdateServerMessage_Handle(ByVal nShip As PlayerShip, ByVal nBmp As Bitmap) Handles Me.UpdateServerMessage
+            MessageToSend = New ServerMessage(nShip, nBmp)
+        End Sub
+
+        Public Sub StartCommunications()
+            Ports(0) = MyListener.Server
+            MyListener.Start()
+            Console.WriteLine("Server is now listening on " + MyListener.Server.LocalEndPoint.ToString)
+
+            While True
+                Listen()
+            End While
+        End Sub
+
+        Private Sub Listen()
+            '-----Creat List-----
+            Dim socketList As New ArrayList
+            For Each i As Socket In Ports
+                socketList.Add(i)
             Next
-        End If
-        ReDim Preserve Ports(UBound(Ports) - 1)
-        For e As Integer = 0 To UBound(Clients)
-            If ReferenceEquals(Clients(e).MySocket, nSocket) = True Then
-                If e <> UBound(Clients) Then
-                    For f As Integer = e To UBound(Clients)
-                        If f <> UBound(Clients) Then
-                            Clients(f) = Clients(f + 1)
+            '--------------------
+
+            '-----Recieve Messages-----
+            Socket.Select(socketList, Nothing, Nothing, -1)
+            For Each i As Socket In socketList
+                If ReferenceEquals(i, MyListener.Server) = True Then
+                    AddClient(MyListener.AcceptSocket())
+                Else
+                    For Each e As ServerSideClient In Clients
+                        If ReferenceEquals(i, e.MySocket) Then
+                            e.DecodeMessage()
+                            Exit For
                         End If
                     Next
-                    ReDim Preserve Clients(UBound(Clients) - 1)
                 End If
-                Exit For
+            Next
+            '--------------------------
+
+            '-----Send Messages to Clients-----
+            socketList.Clear()
+            MessageBuff = MessageToSend.ConstructMessage()
+            For Each i As ServerSideClient In Clients
+                socketList.Add(i.MySocket)
+            Next
+            If socketList.Count > 0 Then
+                Socket.Select(Nothing, socketList, Nothing, -1)
+                For Each i As Socket In socketList
+                    Try
+                        i.Send(MessageBuff)
+                    Catch ex As SocketException
+                        RemoveClient(i)
+                    End Try
+                Next
             End If
-        Next
-    End Sub
+            '----------------------------------
+        End Sub
+
+        Public Sub AddClient(ByRef nSocket As Socket)
+            If Clients.Length < 4 Then
+                ReDim Preserve Clients(Clients.Length)
+                Clients(UBound(Clients)) = New ServerSideClient(nSocket)
+                ReDim Preserve Ports(Ports.Length)
+                Ports(UBound(Ports)) = nSocket
+                Dim socketList As New ArrayList
+                socketList.Add(Clients(UBound(Clients)).MySocket)
+                Socket.Select(socketList, Nothing, Nothing, -1)
+                Clients(UBound(Clients)).DecodeMessage()
+            Else
+                Dim temp As Socket = MyListener.AcceptSocket()
+                Console.WriteLine(temp.RemoteEndPoint.ToString + ": Could not be connected. Server is full")
+                temp.Close()
+            End If
+        End Sub
+
+        Public Sub RemoveClient(ByRef nSocket As Socket)
+            For Each i As ServerSideClient In Clients
+                If ReferenceEquals(i.MySocket, nSocket) = True Then
+                    Console.WriteLine(i.MyStation.ToString + ": Client was disconnected")
+                    Dim index = Array.IndexOf(Clients, i)
+                    If index < UBound(Clients) Then
+                        For e As Integer = index To UBound(Clients) - 1
+                            Clients(e) = Clients(e + 1)
+                        Next
+                    End If
+                    ReDim Preserve Clients(UBound(Clients) - 1)
+                    Exit For
+                End If
+            Next
+            For Each i As Socket In Ports
+                If ReferenceEquals(i, nSocket) = True Then
+                    Dim index = Array.IndexOf(Ports, i)
+                    If index < UBound(Ports) Then
+                        For e As Integer = index To UBound(Ports) - 1
+                            Ports(e) = Ports(e + 1)
+                        Next
+                    End If
+                    ReDim Preserve Ports(UBound(Ports) - 1)
+                    Exit For
+                End If
+            Next
+            nSocket.Close()
+        End Sub
+    End Class
 
 End Module
