@@ -42,7 +42,8 @@ Public Class Weapon
 
     Public Sub FireWeapon(ByVal distance As Integer)
         Randomize()
-        If WeaponStats(Stats.Ammo).current > 0 And
+        If distance <= WeaponStats(Stats.Range).current And
+            WeaponStats(Stats.Ammo).current <> 0 And
             WeaponStats(Stats.Integrety).current > 0 And
             WeaponStats(Stats.Ready).current = WeaponStats(Stats.Ready).max Then
             WeaponStats(Stats.Ready).current = 0

@@ -101,7 +101,8 @@
     <Import Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Client.vb" />
+    <Compile Include="Client Obj\Client.vb" />
+    <Compile Include="Client Obj\ClientMessage.vb" />
     <Compile Include="Galaxy.vb" />
     <Compile Include="Server Obj\Server.vb" />
     <Compile Include="Screen.vb">

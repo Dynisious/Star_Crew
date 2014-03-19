@@ -10,6 +10,13 @@ Public Class Shields
         LeftShield
         Max
     End Enum
+    Public Enum ShieldingCommands
+        ChangeForward
+        ChangeRight
+        ChangeRear
+        ChangeLeft
+        Tune
+    End Enum
     Public ShipShields(Sides.Max - 1) As Stat
     Public DamagePerSide(Sides.Max - 1) As Integer
     Public IncomingDamageTypes(Weapon.DamageTypes.Max - 1) As Integer

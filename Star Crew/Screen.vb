@@ -389,6 +389,7 @@
 
         Private Sub btnMainMenu_Click() Handles btnMainMenu.Click
             Screen.MyClient.comms.Abort()
+            Screen.MyClient.MyConnector.Close()
             Dim temp As New MenuScreenLayout
         End Sub
 

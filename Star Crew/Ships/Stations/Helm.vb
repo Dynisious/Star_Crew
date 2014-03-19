@@ -8,6 +8,7 @@ Public Class Helm
     Private EvadeRight As Boolean = True
     Private Brakes As Boolean = False
     Private minimumSpeed As Integer = 5
+    Public Shared ReadOnly MinimumDistance As Integer = 30
 
     Public Sub New(ByRef nParent As Ship)
         MyBase.New(nParent)
@@ -15,6 +16,9 @@ Public Class Helm
 
     Public Overrides Sub Update()
         If Parent IsNot Nothing Then
+            If ReferenceEquals(Parent, Parent.Target) Then
+                Dim a = 1
+            End If
             Dim opposite As Double = (Parent.Target.Position.Y + (Math.Sin(Parent.Target.Helm.Direction) * Parent.Target.Helm.Throttle.current)) - Parent.Position.Y
             Dim tangent As Double = (Parent.Target.Position.X + (Math.Cos(Parent.Target.Helm.Direction) * Parent.Target.Helm.Throttle.current)) - Parent.Position.X
             Dim distance As Integer = Math.Sqrt((opposite * opposite) + (tangent * tangent))
@@ -66,7 +70,7 @@ Public Class Helm
                             Throttle.current = minimumSpeed
                         End If
 
-                    ElseIf distance < 30 Then 'Slow down from the enemy
+                    ElseIf distance < MinimumDistance Then 'Slow down from the enemy
 
                         '-----Steering-----
                         Randomize()
@@ -140,7 +144,7 @@ Public Class Helm
                 Else
 
                     '-----Steering-----
-                    If distance < 30 Then
+                    If distance < MinimumDistance Then
                         If Helm.NormalizeDirection(targetDirection - Direction) > Math.PI Then
                             Direction = NormalizeDirection(Direction + TurnSpeed.current)
                         Else

@@ -136,7 +136,7 @@ Module Server
     End Sub
 
     Public Sub StartServer()
-        GameWorld.CreateWorld()
+        GameWorld.StartGame_Call()
         Console.WriteLine("Game is now running")
         If comms.IsAlive = False Then
             comms.Start()
@@ -171,10 +171,14 @@ Module Server
                 '        Galaxy.clientShip.Engineering.PlayerControled = True
                 'End Select
             Else
-                Using fs As New NetworkStream(MySocket)
-                    Dim bf As System.Runtime.Serialization.Formatters.Binary.BinaryFormatter = New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
-                    GameWorld.NewClientMessage_Call(bf.Deserialize(fs), MyStation)
-                End Using
+                Try
+                    Using fs As New NetworkStream(MySocket)
+                        Dim bf As System.Runtime.Serialization.Formatters.Binary.BinaryFormatter = New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+                        GameWorld.NewClientMessage_Call(bf.Deserialize(fs), MyStation)
+                    End Using
+                Catch ex As Exception
+                    Server.Communications.RemoveClient(MySocket)
+                End Try
             End If
         End Sub
     End Class
