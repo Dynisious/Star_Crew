@@ -25,6 +25,10 @@ Partial Class Screen
         '-----Initialize Controls-----
         '-----------------------------
         Me.SuspendLayout()
+
+        '-----Control Settings-----
+        '--------------------------
+
         '
         'Screen
         '
@@ -42,5 +46,6 @@ Partial Class Screen
         Me.ResumeLayout(False)
 
     End Sub
+    Friend WithEvents Button1 As System.Windows.Forms.Button
 
 End Class

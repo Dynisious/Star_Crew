@@ -145,20 +145,22 @@
         Private Shared Sub btnEnter_Click() Handles btnEnter.Click
             Dim count As Integer
             Dim lastIndex As Integer
-            While True
-                Dim e As Integer = txtIP.Text.IndexOf(".", lastIndex + 1)
-                If e <> -1 And e < txtIP.TextLength Then
-                    lastIndex = e
-                    count = count + 1
-                Else
-                    Exit While
-                End If
-            End While
+            If txtIP.Text <> "" Then
+                While True
+                    Dim e As Integer = txtIP.Text.IndexOf(".", lastIndex + 1)
+                    If e <> -1 And e < txtIP.TextLength Then
+                        lastIndex = e
+                        count = count + 1
+                    Else
+                        Exit While
+                    End If
+                End While
 
-            If count = 3 And DomainUpDown1.SelectedIndex <> -1 Then
-                MyClient = New Client(txtIP.Text, DomainUpDown1.SelectedIndex)
-                If MyClient.comms.IsAlive = True Then
-                    Dim temp As New GamePlayLayout
+                If count = 3 And DomainUpDown1.SelectedIndex <> -1 Then
+                    MyClient = New Client(txtIP.Text, DomainUpDown1.SelectedIndex)
+                    If MyClient.comms.IsAlive = True Then
+                        Dim temp As New GamePlayLayout
+                    End If
                 End If
             End If
         End Sub
@@ -170,6 +172,7 @@
         Public Shared WithEvents picDisplayGraphics As System.Windows.Forms.PictureBox
         Public Shared WithEvents pnlDisplays As System.Windows.Forms.Panel
         Public Shared WithEvents lblHull As System.Windows.Forms.Label
+        Public Shared WithEvents lblThrottle As System.Windows.Forms.Label
         Public Shared WithEvents lblEngines As System.Windows.Forms.Label
         Public Shared WithEvents lblPowerCore As System.Windows.Forms.Label
         Public Shared WithEvents lblSecondary As System.Windows.Forms.Label
@@ -179,8 +182,8 @@
         Public Shared WithEvents lblRight As System.Windows.Forms.Label
         Public Shared WithEvents lblLeft As System.Windows.Forms.Label
         Public Shared WithEvents pnlMenuButtons As System.Windows.Forms.Panel
-        Public WithEvents btnMainMenu As System.Windows.Forms.Button
-        Public WithEvents btnEndGame As System.Windows.Forms.Button
+        Public Shared WithEvents btnMainMenu As System.Windows.Forms.Button
+        Public Shared WithEvents btnEndGame As System.Windows.Forms.Button
 
         Public Sub New()
             Server.OutputScreen.Controls.Clear()
@@ -199,10 +202,11 @@
             pnlMenuButtons = New System.Windows.Forms.Panel()
             btnEndGame = New System.Windows.Forms.Button()
             btnMainMenu = New System.Windows.Forms.Button()
+            lblThrottle = New System.Windows.Forms.Label()
             CType(picDisplayGraphics, System.ComponentModel.ISupportInitialize).BeginInit()
             pnlDisplays.SuspendLayout()
             pnlMenuButtons.SuspendLayout()
-            '------------------------
+            '-----------------------------
             Displaying = True
 
             '-----Control Settings-----
@@ -219,6 +223,7 @@
             'pnlDisplays
             '
             pnlDisplays.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
+            pnlDisplays.Controls.Add(lblThrottle)
             pnlDisplays.Controls.Add(lblEngines)
             pnlDisplays.Controls.Add(lblPowerCore)
             pnlDisplays.Controls.Add(lblSecondary)
@@ -233,13 +238,13 @@
             pnlDisplays.Size = New System.Drawing.Size(560, 338)
             pnlDisplays.TabIndex = 1
             '
-            'lblEngineering
+            'lblEngines
             '
             lblEngines.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
             lblEngines.Font = New System.Drawing.Font("Lucida Console", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
             lblEngines.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft
             lblEngines.Location = New System.Drawing.Point(295, 267)
-            lblEngines.Name = "lblEngineering"
+            lblEngines.Name = "lblEngines"
             lblEngines.Size = New System.Drawing.Size(200, 30)
             lblEngines.TabIndex = 8
             lblEngines.Text = "Engines: 0/0"
@@ -334,12 +339,24 @@
             lblHull.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
             lblHull.Font = New System.Drawing.Font("Lucida Console", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
             lblHull.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft
-            lblHull.Location = New System.Drawing.Point(180, 24)
+            lblHull.Location = New System.Drawing.Point(85, 25)
             lblHull.Name = "lblHull"
             lblHull.Size = New System.Drawing.Size(200, 30)
             lblHull.TabIndex = 0
             lblHull.Text = "Hull: 0/0"
             lblHull.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
+            '
+            'lblThrottle
+            '
+            lblThrottle.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
+            lblThrottle.Font = New System.Drawing.Font("Lucida Console", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+            lblThrottle.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft
+            lblThrottle.Location = New System.Drawing.Point(295, 25)
+            lblThrottle.Name = "lblThrottle"
+            lblThrottle.Size = New System.Drawing.Size(200, 30)
+            lblThrottle.TabIndex = 9
+            lblThrottle.Text = "Throttle: 0/0"
+            lblThrottle.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
             '
             'pnlMenuButtons
             '
@@ -373,27 +390,26 @@
             '--------------------------
 
             '-----Add Controls-----
-            Server.OutputScreen.Controls.Add(pnlMenuButtons)
-            Server.OutputScreen.Controls.Add(pnlDisplays)
             Server.OutputScreen.Controls.Add(picDisplayGraphics)
+            Server.OutputScreen.Controls.Add(pnlDisplays)
+            Server.OutputScreen.Controls.Add(pnlMenuButtons)
             '----------------------
 
             '-----Display Controls-----
             CType(picDisplayGraphics, System.ComponentModel.ISupportInitialize).EndInit()
             pnlDisplays.ResumeLayout(False)
             pnlMenuButtons.ResumeLayout(False)
-            pnlMenuButtons.PerformLayout()
-            '---------------------------
+            '--------------------------
             Server.OutputScreen.tick.Enabled = True
         End Sub
 
-        Private Sub btnMainMenu_Click() Handles btnMainMenu.Click
+        Private Shared Sub btnMainMenu_Click() Handles btnMainMenu.Click
             Screen.MyClient.comms.Abort()
             Screen.MyClient.MyConnector.Close()
             Dim temp As New MenuScreenLayout
         End Sub
 
-        Private Sub btnEndGame_Click() Handles btnEndGame.Click
+        Private Shared Sub btnEndGame_Click() Handles btnEndGame.Click
             End
         End Sub
 
@@ -449,10 +465,11 @@
         If GamePlayLayout.Displaying = True And MyClient.Message IsNot Nothing Then
             Screen.GamePlayLayout.picDisplayGraphics.Image = MyClient.Message.bmp
             Screen.GamePlayLayout.lblHull.Text = "Hull: " + CStr(MyClient.Message.ship.Hull.current) + "/" + CStr(MyClient.Message.ship.Hull.max)
-            Screen.GamePlayLayout.lblForward.Text = "Fore: " + CStr(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.FrontShield).current) + "/" + CStr(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.FrontShield).max)
-            Screen.GamePlayLayout.lblRight.Text = "Starboard: " + CStr(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.RightShield).current) + "/" + CStr(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.RightShield).max)
-            Screen.GamePlayLayout.lblRear.Text = "Aft: " + CStr(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.BackShield).current) + "/" + CStr(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.BackShield).max)
-            Screen.GamePlayLayout.lblLeft.Text = "Port: " + CStr(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.LeftShield).current) + "/" + CStr(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.LeftShield).max)
+            Screen.GamePlayLayout.lblThrottle.Text = "Throttle: " + CStr(CInt(MyClient.Message.ship.Helm.Throttle.current)) + "/" + CStr(CInt(MyClient.Message.ship.Helm.Throttle.max))
+            Screen.GamePlayLayout.lblForward.Text = "Fore: " + CStr(CInt(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.FrontShield).current)) + "/" + CStr(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.FrontShield).max)
+            Screen.GamePlayLayout.lblRight.Text = "Starboard: " + CStr(CInt(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.RightShield).current)) + "/" + CStr(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.RightShield).max)
+            Screen.GamePlayLayout.lblRear.Text = "Aft: " + CStr(CInt(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.BackShield).current)) + "/" + CStr(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.BackShield).max)
+            Screen.GamePlayLayout.lblLeft.Text = "Port: " + CStr(CInt(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.LeftShield).current)) + "/" + CStr(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.LeftShield).max)
             Screen.GamePlayLayout.lblPrimary.Text = "Primary: " + CStr(MyClient.Message.ship.Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).current) + "/" + CStr(MyClient.Message.ship.Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).max)
             Screen.GamePlayLayout.lblSecondary.Text = "Secondary: " + CStr(MyClient.Message.ship.Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).current) + "/" + CStr(MyClient.Message.ship.Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).max)
             Screen.GamePlayLayout.lblPowerCore.Text = "Power Core: " + CStr(MyClient.Message.ship.Engineering.PowerCore.current) + "/" + CStr(MyClient.Message.ship.Engineering.PowerCore.max)

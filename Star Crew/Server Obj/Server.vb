@@ -162,13 +162,13 @@ Module Server
                 Console.WriteLine((MyStation.ToString() + ": Has been connected"))
                 'Select Case MyStation
                 '    Case Station.StationTypes.Helm
-                '        Galaxy.clientShip.Helm.PlayerControled = True
+                '        Galaxy.centerShip.Helm.PlayerControled = True
                 '    Case Station.StationTypes.Batteries
-                '        Galaxy.clientShip.Batteries.PlayerControled = True
+                '        Galaxy.centerShip.Batteries.PlayerControled = True
                 '    Case Station.StationTypes.Shielding
-                '        Galaxy.clientShip.Shielding.PlayerControled = True
+                '        Galaxy.centerShip.Shielding.PlayerControled = True
                 '    Case Station.StationTypes.Engineering
-                '        Galaxy.clientShip.Engineering.PlayerControled = True
+                '        Galaxy.centerShip.Engineering.PlayerControled = True
                 'End Select
             Else
                 Try
@@ -189,13 +189,13 @@ Module Server
         Public MyListener As New TcpListener("1225")
         Public Ports(0) As Socket
         Public Clients(-1) As ServerSideClient
-        Public Event UpdateServerMessage(ByVal nShip As PlayerShip, ByVal nBmp As Bitmap)
+        Public Event UpdateServerMessage(ByVal nShip As Ship, ByVal nBmp As Bitmap)
 
-        Public Sub UpdateServerMessage_Call(ByVal nShip As PlayerShip, ByVal nBmp As Bitmap)
+        Public Sub UpdateServerMessage_Call(ByVal nShip As Ship, ByVal nBmp As Bitmap)
             RaiseEvent UpdateServerMessage(nShip, nBmp)
         End Sub
 
-        Private Sub UpdateServerMessage_Handle(ByVal nShip As PlayerShip, ByVal nBmp As Bitmap) Handles Me.UpdateServerMessage
+        Private Sub UpdateServerMessage_Handle(ByVal nShip As Ship, ByVal nBmp As Bitmap) Handles Me.UpdateServerMessage
             MessageToSend = New ServerMessage(nShip, nBmp)
         End Sub
 

@@ -3,7 +3,7 @@
 
     Public Sub New()
         '-----Ship-----
-        NewHull = New Stat(150, 150)
+        NewHull = New Stat(200, 200)
         '--------------
         '-----Helm-----
         NewHelmStats(HelmStats.Acceleration) = New Stat(0.1, 0.1)
@@ -16,14 +16,14 @@
         '-------------------
         '-----Shielding-----
         NewShieldBonuses(Weapon.DamageTypes.Slug) = 1
-        NewShields(Shields.Sides.FrontShield) = New Stat(15, 15)
+        NewShields(Shields.Sides.FrontShield) = New Stat(30, 30)
         NewShields(Shields.Sides.LeftShield) = New Stat(15, 15)
         NewShields(Shields.Sides.BackShield) = New Stat(15, 15)
         NewShields(Shields.Sides.RightShield) = New Stat(15, 15)
         '-------------------
         '-----Engineering-----
         NewEngineeringStats(EngineeringStats.Engines) = New Stat(100, 100)
-        NewEngineeringStats(EngineeringStats.PowerCore) = New Stat(4, 4)
+        NewEngineeringStats(EngineeringStats.PowerCore) = New Stat(3, 3)
         '---------------------
     End Sub
 

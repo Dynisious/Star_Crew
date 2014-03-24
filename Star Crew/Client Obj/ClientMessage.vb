@@ -29,6 +29,7 @@
                 Dim buff() As Byte = fs.ToArray
                 nSocket.Send(buff, Net.Sockets.SocketFlags.None)
             End Using
+            Return True
         Catch ex As Exception
             Console.WriteLine("Error : There was an error while sending the message")
             Console.WriteLine(ex.ToString())

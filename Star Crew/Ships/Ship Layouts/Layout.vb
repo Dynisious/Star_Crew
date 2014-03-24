@@ -21,6 +21,7 @@
         Max
     End Enum
     Public NewBatteryWeapons(BatteryWeapons.Max - 1) As Weapon
+    Private TurnScale As Double = 1.25
     '-------------------
 
     '-----Shielding-----
@@ -48,6 +49,7 @@
         nShip.Helm.Acceleration = NewHelmStats(HelmStats.Acceleration)
         '--------------
         '-----Batteries-----
+        NewBatteryWeapons(BatteryWeapons.Primary).TurnDistance.max = NewBatteryWeapons(BatteryWeapons.Primary).TurnDistance.max * TurnScale
         nShip.Batteries.Primary = NewBatteryWeapons(BatteryWeapons.Primary)
         nShip.Batteries.Primary.Parent = nShip.Batteries
         nShip.Batteries.Secondary = NewBatteryWeapons(BatteryWeapons.Secondary)

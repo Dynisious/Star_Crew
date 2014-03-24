@@ -1,25 +1,32 @@
 ﻿Public Class Galaxy
     Public WithEvents GalaxyTimer As New Timer With {.Interval = 100, .Enabled = False}
-    Public Shared clientShip As PlayerShip
+    Public Shared centerShip As Ship
     Private primaryDirection As Double
     Private primaryRadius As Integer
     Private secondaryDirection As Double
     Private secondaryRadius As Integer
-    Public xList(300) As Ship
+    Public ReadOnly ShipCount As Integer = 10
+    Public xList(-1) As Ship
     Private Shared Bmp As New Bitmap(600, 600)
-    Private Shared BaseBmp As New Bitmap(600, 600)
     Private shipPositions(-1) As Point
     Private directionPositions(-1) As Point
     Private weaponDirections(1) As Double
-    Private scanner As Double
-    Private stars(50) As Star
+    Private stars(150) As Star
+    Public Enum Warp
+        None
+        Entering
+        Exiting
+        Warping
+    End Enum
+    Public Shared Warping As Warp = Warp.None
     Private Event NewClientMessage(ByVal nMessage As Station, ByVal nStation As Station.StationTypes)
     Private Event StartGame()
 
-    Private Class Star
+    Public Class Star
         Public Position As Point
         Public Flash As Boolean = False
         Private count As Integer
+        Public Shared Speed As Double = 1
 
         Public Sub New(ByVal nPosition As Point)
             Position = nPosition
@@ -38,8 +45,9 @@
                 count = count - 1
             End If
 
-            Dim direction As Double = Helm.NormalizeDirection(clientShip.Helm.Direction + Math.PI)
-            Position = New Point(Position.X + (clientShip.Helm.Throttle.current * Math.Cos(direction)), Position.Y + (clientShip.Helm.Throttle.current * Math.Sin(direction)))
+
+            Dim direction As Double = centerShip.Helm.Direction + Math.PI
+            Position = New Point(Position.X + (centerShip.Helm.Throttle.current * Math.Cos(direction) * Speed), Position.Y + (centerShip.Helm.Throttle.current * Math.Sin(direction) * Speed))
             If Position.X <= 2 Then
                 Position = New Point(Position.X + Bmp.Width - 5, Position.Y)
             ElseIf Position.X >= Bmp.Width - 3 Then
@@ -57,29 +65,16 @@
         RaiseEvent StartGame()
     End Sub
 
-    Public Sub CreateWorld() Handles Me.StartGame
+    Public Sub StartGame_Handle() Handles Me.StartGame
+        ReDim xList(ShipCount - 1)
         Randomize()
-        For x As Integer = 0 To Bmp.Width - 1
-            For y As Integer = 0 To Bmp.Height - 1
-                Bmp.SetPixel(x, y, Color.Black)
-                BaseBmp.SetPixel(x, y, Color.Black)
-            Next
-        Next
-        For i As Integer = 1 To 3768
-            Dim radian As Double = (2 * Math.PI * 1256) / i
-            Dim x As Integer = ((Bmp.Width / 2) - 1) + (Math.Cos(radian) * 200)
-            Dim y As Integer = ((Bmp.Height / 2) - 1) + (Math.Sin(radian) * 200)
-            Bmp.SetPixel(x, y, Color.LightBlue)
-            BaseBmp.SetPixel(x, y, Color.LightBlue)
-        Next
         For i As Integer = 0 To UBound(stars)
             stars(i) = New Star(New Point(Int((594 * Rnd()) + 3), Int((594 * Rnd())) + 3))
         Next
 
-        Randomize()
-        clientShip = New PlayerShip(New Clunker)
-        clientShip.Parent = Me
-        xList(0) = clientShip
+        centerShip = New FriendlyShip(Me, New Clunker)
+        centerShip.Parent = Me
+        xList(0) = centerShip
         xList(0).Position = New Point((6000 * Rnd()) - 3000, (6000 * Rnd()) - 3000)
         For i As Integer = 1 To UBound(xList)
             If Int(2 * Rnd()) = 0 Then
@@ -89,10 +84,10 @@
             End If
             xList(i).Position = New Point((6000 * Rnd()) - 3000, (6000 * Rnd()) - 3000)
         Next
-        primaryDirection = clientShip.Helm.Direction + clientShip.Batteries.Primary.TurnDistance.current
-        primaryRadius = clientShip.Batteries.Primary.WeaponStats(Weapon.Stats.Range).current
-        secondaryDirection = clientShip.Helm.Direction + clientShip.Batteries.Secondary.TurnDistance.current
-        secondaryRadius = clientShip.Batteries.Secondary.WeaponStats(Weapon.Stats.Range).current
+        primaryDirection = centerShip.Helm.Direction + centerShip.Batteries.Primary.TurnDistance.current
+        primaryRadius = centerShip.Batteries.Primary.WeaponStats(Weapon.Stats.Range).current
+        secondaryDirection = centerShip.Helm.Direction + centerShip.Batteries.Secondary.TurnDistance.current
+        secondaryRadius = centerShip.Batteries.Secondary.WeaponStats(Weapon.Stats.Range).current
         GalaxyTimer.Enabled = True
     End Sub
 
@@ -113,12 +108,23 @@
         ReDim Preserve xList(UBound(xList) - 1)
     End Sub
 
+    Public Sub Recenter()
+        For Each i As Ship In xList
+            If i.MyAllegence = Ship.Allegence.Player Then
+                centerShip = i
+                Exit Sub
+            End If
+        Next
+        GalaxyTimer.Enabled = False
+        Console.WriteLine("Player is Defeated")
+    End Sub
+
     Public Sub NewClientMessage_Call(ByVal nMessage As Station, ByVal nStation As Station.StationTypes)
         RaiseEvent NewClientMessage(nMessage, nStation)
     End Sub
 
     Private Sub NewClientMessage_Handle(ByVal nMessage As Station, ByVal nStation As Station.StationTypes) Handles Me.NewClientMessage
-        
+
     End Sub
 
     Public Sub UpdateGalaxy() Handles GalaxyTimer.Tick
@@ -126,73 +132,25 @@
         Dim enemy As Integer
         For Each i As Ship In xList
             i.UpdateShip()
-            Select Case i.MyAllegence
-                Case Ship.Allegence.Player
-                    friendly = friendly + 1
-                Case Ship.Allegence.Pirate
-                    enemy = enemy + 1
-            End Select
+            If i.MyAllegence = Ship.Allegence.Player Then
+                friendly = friendly + 1
+            Else
+                enemy = enemy + 1
+            End If
         Next
-
-        '-----Primary Arc-----
-        For i As Integer = 1 To primaryRadius
-            Dim x As Integer = Math.Cos(primaryDirection + -(Battery.HitArc / 2)) * i
-            Dim y As Integer = Math.Sin(primaryDirection + -(Battery.HitArc / 2)) * i
-            Bmp.SetPixel(x + ((Bmp.Width / 2) - 1), y + ((Bmp.Height / 2) - 1), BaseBmp.GetPixel(x + ((Bmp.Width / 2) - 1), y + ((Bmp.Height / 2) - 1)))
-            x = Math.Cos(primaryDirection + (Battery.HitArc / 2)) * i
-            y = Math.Sin(primaryDirection + (Battery.HitArc / 2)) * i
-            Bmp.SetPixel(x + ((Bmp.Width / 2) - 1), y + ((Bmp.Height / 2) - 1), BaseBmp.GetPixel(x + ((Bmp.Width / 2) - 1), y + ((Bmp.Height / 2) - 1)))
-        Next
-        For i As Double = -(Battery.HitArc / 2) To (Battery.HitArc / 2) Step Battery.HitArc / (2 * Math.PI)
-            Dim x As Integer = Math.Cos(primaryDirection + i) * primaryRadius
-            Dim y As Integer = Math.Sin(primaryDirection + i) * primaryRadius
-            Bmp.SetPixel(x + ((Bmp.Width / 2) - 1), y + ((Bmp.Height / 2) - 1), BaseBmp.GetPixel(x + ((Bmp.Width / 2) - 1), y + ((Bmp.Height / 2) - 1)))
-        Next
-        '---------------------
-        '-----Secondary Arc-----
-        For i As Integer = 1 To secondaryRadius
-            Dim x As Integer = Math.Cos(secondaryDirection + -(Battery.HitArc / 2)) * i
-            Dim y As Integer = Math.Sin(secondaryDirection + -(Battery.HitArc / 2)) * i
-            Bmp.SetPixel(x + ((Bmp.Width / 2) - 1), y + ((Bmp.Height / 2) - 1), BaseBmp.GetPixel(x + ((Bmp.Width / 2) - 1), y + ((Bmp.Height / 2) - 1)))
-            x = Math.Cos(secondaryDirection + (Battery.HitArc / 2)) * i
-            y = Math.Sin(secondaryDirection + (Battery.HitArc / 2)) * i
-            Bmp.SetPixel(x + ((Bmp.Width / 2) - 1), y + ((Bmp.Height / 2) - 1), BaseBmp.GetPixel(x + ((Bmp.Width / 2) - 1), y + ((Bmp.Height / 2) - 1)))
-        Next
-        For i As Double = -(Battery.HitArc / 2) To (Battery.HitArc / 2) Step Battery.HitArc / (2 * Math.PI)
-            Dim x As Integer = Math.Cos(secondaryDirection + i) * secondaryRadius
-            Dim y As Integer = Math.Sin(secondaryDirection + i) * secondaryRadius
-            Bmp.SetPixel(x + ((Bmp.Width / 2) - 1), y + ((Bmp.Height / 2) - 1), BaseBmp.GetPixel(x + ((Bmp.Width / 2) - 1), y + ((Bmp.Height / 2) - 1)))
-        Next
-        '-----------------------
-        primaryDirection = clientShip.Helm.Direction + clientShip.Batteries.Primary.TurnDistance.current
-        primaryRadius = clientShip.Batteries.Primary.WeaponStats(Weapon.Stats.Range).current
-        secondaryDirection = clientShip.Helm.Direction + clientShip.Batteries.Secondary.TurnDistance.current
-        secondaryRadius = clientShip.Batteries.Secondary.WeaponStats(Weapon.Stats.Range).current
 
         '-----Rendering-----
         '-----Clear old-----
-        For Each i As Point In shipPositions
-            For x As Integer = -3 To 3
-                For y As Integer = -3 To 3
-                    Bmp.SetPixel(i.X + x, i.Y + y, BaseBmp.GetPixel(i.X + x, i.Y + y))
-                Next
-            Next
-        Next
-        For Each i As Point In directionPositions
-            Bmp.SetPixel(i.X, i.Y, BaseBmp.GetPixel(i.X, i.Y))
-        Next
-        For Each i As Star In stars
-            For x As Integer = -2 To 2
-                For y As Integer = -2 To 2
-                    Bmp.SetPixel(i.Position.X + x, i.Position.Y + y, BaseBmp.GetPixel(i.Position.X + x, i.Position.Y + y))
-                Next
-            Next
-        Next
-        For i As Integer = 1 To 200
-            Dim x As Integer = ((Bmp.Width / 2) - 1) + (Math.Cos(scanner) * i)
-            Dim y As Integer = ((Bmp.Width / 2) - 1) + (Math.Sin(scanner) * i)
-            Bmp.SetPixel(x, y, BaseBmp.GetPixel(x, y))
-        Next
+        Select Case Warping
+            Case Warp.None
+                Bmp = My.Resources.NormalSpace.Clone
+            Case Warp.Entering
+                Warping = Warp.Warping
+            Case Warp.Exiting
+                Warping = Warp.None
+            Case Warp.Warping
+                Bmp = My.Resources.Warping.Clone
+        End Select
         ReDim shipPositions(UBound(xList))
         ReDim directionPositions(UBound(xList))
         '-------------------
@@ -200,8 +158,8 @@
         '-----Set new positions-----
         For i As Integer = 0 To UBound(xList)
             shipPositions(i) = New Point(
-                xList(i).Position.X - clientShip.Position.X + ((Bmp.Width / 2) - 1),
-                xList(i).Position.Y - clientShip.Position.Y + ((Bmp.Height / 2) - 1))
+                xList(i).Position.X - centerShip.Position.X + ((Bmp.Width / 2) - 1),
+                xList(i).Position.Y - centerShip.Position.Y + ((Bmp.Height / 2) - 1))
             Dim opposite As Integer = shipPositions(i).Y - ((Bmp.Width / 2) - 1)
             Dim adjacent As Integer = shipPositions(i).X - ((Bmp.Height / 2) - 1)
             Dim distance As Integer = Math.Sqrt((opposite * opposite) + (adjacent * adjacent))
@@ -214,7 +172,6 @@
             directionPositions(i) = New Point((shipPositions(i).X + (Math.Cos(xList(i).Helm.Direction) * 10)),
                                          (shipPositions(i).Y + (Math.Sin(xList(i).Helm.Direction) * 10)))
         Next
-        scanner = scanner + ((100 * Math.PI) / 1256)
         For Each i As Star In stars
             i.Update()
         Next
@@ -232,74 +189,97 @@
                 Bmp.SetPixel(i.Position.X, i.Position.Y, Color.White)
             End If
         Next
-        '-----Batteries Arc-----
-        '-----Primary Arc-----
-        For i As Integer = 1 To primaryRadius
-            Dim x As Integer = Math.Cos(primaryDirection + -(Battery.HitArc / 2)) * i
-            Dim y As Integer = Math.Sin(primaryDirection + -(Battery.HitArc / 2)) * i
-            Bmp.SetPixel(x + ((Bmp.Width / 2) - 1), y + ((Bmp.Height / 2) - 1), Color.Yellow)
-            x = Math.Cos(primaryDirection + (Battery.HitArc / 2)) * i
-            y = Math.Sin(primaryDirection + (Battery.HitArc / 2)) * i
-            Bmp.SetPixel(x + ((Bmp.Width / 2) - 1), y + ((Bmp.Height / 2) - 1), Color.Yellow)
-        Next
-        For i As Double = -(Battery.HitArc / 2) To (Battery.HitArc / 2) Step Battery.HitArc / (2 * Math.PI)
-            Dim x As Integer = Math.Cos(primaryDirection + i) * primaryRadius
-            Dim y As Integer = Math.Sin(primaryDirection + i) * primaryRadius
-            Bmp.SetPixel(x + ((Bmp.Width / 2) - 1), y + ((Bmp.Height / 2) - 1), Color.Yellow)
-        Next
-        '---------------------
-        '-----Secondary Arc-----
-        For i As Integer = 1 To secondaryRadius
-            Dim x As Integer = Math.Cos(secondaryDirection + -(Battery.HitArc / 2)) * i
-            Dim y As Integer = Math.Sin(secondaryDirection + -(Battery.HitArc / 2)) * i
-            Bmp.SetPixel(x + ((Bmp.Width / 2) - 1), y + ((Bmp.Height / 2) - 1), Color.Yellow)
-            x = Math.Cos(secondaryDirection + (Battery.HitArc / 2)) * i
-            y = Math.Sin(secondaryDirection + (Battery.HitArc / 2)) * i
-            Bmp.SetPixel(x + ((Bmp.Width / 2) - 1), y + ((Bmp.Height / 2) - 1), Color.Yellow)
-        Next
-        For i As Double = -(Battery.HitArc / 2) To (Battery.HitArc / 2) Step Battery.HitArc / (2 * Math.PI)
-            Dim x As Integer = Math.Cos(secondaryDirection + i) * secondaryRadius
-            Dim y As Integer = Math.Sin(secondaryDirection + i) * secondaryRadius
-            Bmp.SetPixel(x + ((Bmp.Width / 2) - 1), y + ((Bmp.Height / 2) - 1), Color.Yellow)
-        Next
-        '-----------------------
-        '-----------------------
-        For Each i As Point In shipPositions
-            '-----Set Ship Colour-----
-            Dim index As Integer = Array.IndexOf(shipPositions, i)
-            Dim nColour As Color
-            If xList(index).hit = True Then
-                nColour = Color.Orange
-                xList(index).hit = False
-            Else
-                Select Case xList(index).MyAllegence
-                    Case Ship.Allegence.Pirate
-                        nColour = Color.Red
-                    Case Ship.Allegence.Player
-                        nColour = Color.Green
-                End Select
-            End If
-            '-------------------------
 
-            For x As Integer = -3 To 3
-                For y As Integer = -3 To 3
-                    Bmp.SetPixel(i.X + x, i.Y + y, nColour)
-                Next
+        If Warping <> Warp.Warping Then
+            '-----Batteries Arc-----
+            '-----Primary Arc-----
+            primaryDirection = centerShip.Helm.Direction + centerShip.Batteries.Primary.TurnDistance.current
+            primaryRadius = centerShip.Helm.Direction + centerShip.Batteries.Primary.WeaponStats(Weapon.Stats.Range).current
+            For i As Integer = 1 To primaryRadius
+                Dim x As Integer = Math.Cos(primaryDirection + -(Battery.PlayerArc / 2)) * i
+                Dim y As Integer = Math.Sin(primaryDirection + -(Battery.PlayerArc / 2)) * i
+                Bmp.SetPixel(x + ((Bmp.Width / 2) - 1), y + ((Bmp.Height / 2) - 1), Color.Yellow)
+                x = Math.Cos(primaryDirection + (Battery.PlayerArc / 2)) * i
+                y = Math.Sin(primaryDirection + (Battery.PlayerArc / 2)) * i
+                Bmp.SetPixel(x + ((Bmp.Width / 2) - 1), y + ((Bmp.Height / 2) - 1), Color.Yellow)
             Next
-            Bmp.SetPixel(directionPositions(index).X, directionPositions(index).Y, nColour)
+            For i As Double = -(Battery.PlayerArc / 2) To (Battery.PlayerArc / 2) Step Battery.PlayerArc / (2 * Math.PI)
+                Dim x As Integer = Math.Cos(primaryDirection + i) * primaryRadius
+                Dim y As Integer = Math.Sin(primaryDirection + i) * primaryRadius
+                Bmp.SetPixel(x + ((Bmp.Width / 2) - 1), y + ((Bmp.Height / 2) - 1), Color.Yellow)
+            Next
+            '---------------------
+            '-----Secondary Arc-----
+            secondaryDirection = centerShip.Helm.Direction + centerShip.Batteries.Secondary.TurnDistance.current
+            secondaryRadius = centerShip.Helm.Direction + centerShip.Batteries.Secondary.WeaponStats(Weapon.Stats.Range).current
+            For i As Integer = 1 To secondaryRadius
+                Dim x As Integer = Math.Cos(secondaryDirection + -(Battery.PlayerArc / 2)) * i
+                Dim y As Integer = Math.Sin(secondaryDirection + -(Battery.PlayerArc / 2)) * i
+                Bmp.SetPixel(x + ((Bmp.Width / 2) - 1), y + ((Bmp.Height / 2) - 1), Color.Yellow)
+                x = Math.Cos(secondaryDirection + (Battery.PlayerArc / 2)) * i
+                y = Math.Sin(secondaryDirection + (Battery.PlayerArc / 2)) * i
+                Bmp.SetPixel(x + ((Bmp.Width / 2) - 1), y + ((Bmp.Height / 2) - 1), Color.Yellow)
+            Next
+            For i As Double = -(Battery.PlayerArc / 2) To (Battery.PlayerArc / 2) Step Battery.PlayerArc / (2 * Math.PI)
+                Dim x As Integer = Math.Cos(secondaryDirection + i) * secondaryRadius
+                Dim y As Integer = Math.Sin(secondaryDirection + i) * secondaryRadius
+                Bmp.SetPixel(x + ((Bmp.Width / 2) - 1), y + ((Bmp.Height / 2) - 1), Color.Yellow)
+            Next
+            '-----------------------
+            '-----------------------
+        End If
+
+        Dim count As Integer
+        For Each i As Point In shipPositions
+            If (Warping = Warp.None) Or (Warping = Warp.Warping And ReferenceEquals(xList(count), centerShip)) Then
+                '-----Set Ship Colour-----
+                Dim index As Integer = Array.IndexOf(shipPositions, i)
+                Dim nColour As Color
+                If xList(index).Hit = True Then
+                    nColour = Color.Orange
+                Else
+                    Select Case xList(index).MyAllegence
+                        Case Ship.Allegence.Pirate
+                            nColour = Color.Red
+                        Case Ship.Allegence.Player
+                            nColour = Color.Green
+                    End Select
+                End If
+                '-------------------------
+                For x As Integer = -3 To 3
+                    For y As Integer = -3 To 3
+                        Bmp.SetPixel(i.X + x, i.Y + y, nColour)
+                    Next
+                Next
+                Bmp.SetPixel(directionPositions(index).X, directionPositions(index).Y, nColour)
+            End If
+            count = count + 1
         Next
 
+        '-----Batteries Target-----
+        If centerShip.Helm.Target IsNot Nothing Then
+            If centerShip.Helm.Target.Hit = False Then
+                Dim targetIndex = -1
+                While True
+                    targetIndex = targetIndex + 1
+                    If targetIndex = UBound(xList) Or ReferenceEquals(xList(targetIndex), centerShip.Helm.Target) = True Then
+                        Exit While
+                    End If
+                End While
+                If targetIndex <> -1 Then
+                    For x As Integer = -3 To 3
+                        For y As Integer = -3 To 3
+                            Bmp.SetPixel(shipPositions(targetIndex).X + x, shipPositions(targetIndex).Y + y, Color.Blue)
+                        Next
+                    Next
+                    Bmp.SetPixel(directionPositions(targetIndex).X, directionPositions(targetIndex).Y, Color.Blue)
+                End If
+            End If
+        End If
+        '--------------------------
         '-------------------
-        If clientShip.Parent Is Nothing Then
-            'GalaxyTimer.Enabled = False
-            Console.WriteLine("Client is Dead")
-        End If
-        If xList.Length = 1 Then
-            GalaxyTimer.Enabled = False
-            Console.WriteLine("Client is Last standing")
-        End If
         Dim temp As New Bitmap(Bmp)
-        Server.Communications.UpdateServerMessage_Call(clientShip, temp)
+        Server.Communications.UpdateServerMessage_Call(centerShip, temp)
     End Sub
 
 End Class

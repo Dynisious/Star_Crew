@@ -1,11 +1,11 @@
 ﻿<Serializable()>
 Public Class ServerMessage
     Public bmp As Bitmap
-    Public ship As PlayerShip
+    Public ship As Ship
 
-    Public Sub New(ByVal nClientShip As PlayerShip, ByVal nImage As Bitmap)
+    Public Sub New(ByVal ncenterShip As Ship, ByVal nImage As Bitmap)
         bmp = nImage
-        ship = nClientShip
+        ship = ncenterShip
     End Sub
 
     Public Function ConstructMessage() As Byte()

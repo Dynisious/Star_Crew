@@ -5,199 +5,146 @@ Public Class Helm
     Public TurnSpeed As Stat
     Public Throttle As Stat
     Public Acceleration As Stat
-    Private EvadeRight As Boolean = True
-    Private Brakes As Boolean = False
-    Private minimumSpeed As Integer = 5
+    Private evadeRight As Boolean = False
+    Private brakes As Boolean = False
+    Public Shared ReadOnly MinimumSpeed As Integer = 5
+    Public Shared ReadOnly StandardDistance As Integer = 70
     Public Shared ReadOnly MinimumDistance As Integer = 30
+    Public Target As Ship
+    Public evadeList(-1) As Double
 
     Public Sub New(ByRef nParent As Ship)
         MyBase.New(nParent)
     End Sub
 
     Public Overrides Sub Update()
-        If Parent IsNot Nothing Then
-            If ReferenceEquals(Parent, Parent.Target) Then
-                Dim a = 1
-            End If
-            Dim opposite As Double = (Parent.Target.Position.Y + (Math.Sin(Parent.Target.Helm.Direction) * Parent.Target.Helm.Throttle.current)) - Parent.Position.Y
-            Dim tangent As Double = (Parent.Target.Position.X + (Math.Cos(Parent.Target.Helm.Direction) * Parent.Target.Helm.Throttle.current)) - Parent.Position.X
-            Dim distance As Integer = Math.Sqrt((opposite * opposite) + (tangent * tangent))
+        If Parent IsNot Nothing And PlayerControled = False Then
             Dim targetDirection As Double
+            Dim finalSpeed As Double = MinimumSpeed
+            '-----Set Target Direction and Distance-----
+            If Target IsNot Nothing Then
+                Dim distance As Integer
+                Dim opposite As Double = (Target.Position.Y + (Math.Sin(Target.Helm.Direction) * Target.Helm.Throttle.current)) - Parent.Position.Y
+                Dim adjacent As Double = (Target.Position.X + (Math.Cos(Target.Helm.Direction) * Target.Helm.Throttle.current)) - Parent.Position.X
+                distance = Math.Sqrt((opposite * opposite) + (adjacent * adjacent))
 
-            If tangent <> 0 And PlayerControled = False Then
-                targetDirection = Math.Tanh(opposite / tangent)
-                If tangent < 0 Then
-                    targetDirection = targetDirection + Math.PI
+                If adjacent <> 0 Then
+                    targetDirection = Math.Tanh(opposite / adjacent)
+                    If adjacent < 0 Then
+                        targetDirection = targetDirection + Math.PI
+                    End If
+                    targetDirection = NormalizeDirection(targetDirection)
+                ElseIf opposite > 0 Then
+                    targetDirection = Math.PI / 2
+                Else
+                    targetDirection = (3 * Math.PI) / 2
                 End If
-                targetDirection = NormalizeDirection(targetDirection)
+                '-------------------------------------------
 
                 '-----Speed-----
-                If Parent.Target.MyAllegence <> Parent.MyAllegence Then
-                    If NormalizeDirection(targetDirection - Direction) >= (6 * Math.PI) / 8 And
-                        NormalizeDirection(targetDirection - Direction) <= (10 * Math.PI) / 8 And
-                        distance < 100 Then 'The enemy is behind you
-
-                        '-----Steering-----
-                        Randomize()
-                        If 0 = Int(30 * Rnd()) Then
-                            If EvadeRight = True Then
-                                EvadeRight = False
-                            Else
-                                EvadeRight = True
-                            End If
-                        End If
-                        If 0 = Int(30 * Rnd()) Then
-                            If Brakes = True Then
-                                Brakes = False
-                            Else
-                                Brakes = True
-                            End If
-                        End If
-                        If EvadeRight = True Then
-                            Direction = NormalizeDirection(Direction - TurnSpeed.current)
-                        Else
-                            Direction = NormalizeDirection(Direction + TurnSpeed.current)
-                        End If
-                        '------------------
-                        If Brakes = False Then
-                            Throttle.current = Throttle.current + Acceleration.current
-                        Else
-                            Throttle.current = Throttle.current - Acceleration.current
-                        End If
-                        If Throttle.current > Throttle.max Then
-                            Throttle.current = Throttle.max
-                        ElseIf Throttle.current < minimumSpeed Then
-                            Throttle.current = minimumSpeed
-                        End If
-
-                    ElseIf distance < MinimumDistance Then 'Slow down from the enemy
-
-                        '-----Steering-----
-                        Randomize()
-                        If Helm.NormalizeDirection(targetDirection - Direction) > Math.PI Then
-                            Direction = NormalizeDirection(Direction + TurnSpeed.current)
-                        Else
-                            Direction = NormalizeDirection(Direction - TurnSpeed.current)
-                        End If
-                        '------------------
-                        Throttle.current = Throttle.current - Acceleration.current
-                        If Throttle.current < minimumSpeed Then
-                            Throttle.current = minimumSpeed
-                        End If
-
-                    ElseIf Throttle.current <> Parent.Target.Helm.Throttle.current And
-                        distance < 70 Then 'Match the enemies speed
-
-                        '-----Steering-----
-                        Steering(targetDirection)
-                        '------------------
-                        If Throttle.current < Parent.Target.Helm.Throttle.current Then
-                            Throttle.current = Throttle.current + Acceleration.current
-                            If Throttle.current > Parent.Target.Helm.Throttle.current Then
-                                Throttle.current = Parent.Target.Helm.Throttle.current
-                            End If
-                        ElseIf Throttle.current > Parent.Target.Helm.Throttle.current Then
-                            Throttle.current = Throttle.current - Acceleration.current
-                            If Throttle.current < Parent.Target.Helm.Throttle.current Then
-                                Throttle.current = Parent.Target.Helm.Throttle.current
-                            End If
-                        End If
-
-                    ElseIf distance > 70 And
-                          (NormalizeDirection(targetDirection - Direction) <= (2 * Math.PI) / 5) Or
-                         (NormalizeDirection(targetDirection - Direction) >= (8 * Math.PI) / 5) Then 'Charge the enemy
-
-                        '-----Steering-----
-                        Steering(targetDirection)
-                        '------------------
-                        Throttle.current = Throttle.current + Acceleration.current
-                        If Throttle.current > Throttle.max Then
-                            Throttle.current = Throttle.max
-                        End If
-
-                    Else
-
-                        '-----Steering-----
-                        Steering(targetDirection)
-                        '------------------
-
-                        If Int(10 * Rnd()) = 0 Then
-                            If Brakes = True Then
-                                Brakes = False
-                            Else
-                                Brakes = True
-                            End If
-                        End If
-                        If Brakes = True Then
-                            Throttle.current = Throttle.current - Acceleration.current
-                        Else
-                            Throttle.current = Throttle.current + Acceleration.current
-                        End If
-                        If Throttle.current < minimumSpeed Then
-                            Throttle.current = minimumSpeed
-                        ElseIf Throttle.current > Throttle.max Then
-                            Throttle.current = Throttle.max
-                        End If
-
-                    End If
-                    '---------------
-                Else
-
+                If NormalizeDirection(targetDirection - Direction) > (3 * Math.PI) / 4 And
+                    NormalizeDirection(targetDirection - Direction) < (5 * Math.PI) / 4 And
+                    distance < 100 Then 'The enemy is behind you
                     '-----Steering-----
-                    If distance < MinimumDistance Then
-                        If Helm.NormalizeDirection(targetDirection - Direction) > Math.PI Then
-                            Direction = NormalizeDirection(Direction + TurnSpeed.current)
+                    Randomize()
+                    If 0 = Int(20 * Rnd()) Then
+                        If evadeRight = True Then
+                            evadeRight = False
                         Else
-                            Direction = NormalizeDirection(Direction - TurnSpeed.current)
+                            evadeRight = True
                         End If
+                    End If
+                    If evadeRight = True Then
+                        ReDim Preserve evadeList(evadeList.Length)
+                        evadeList(UBound(evadeList)) = (3 * Math.PI) / 2
                     Else
-                        Steering(targetDirection)
+                        ReDim Preserve evadeList(evadeList.Length)
+                        evadeList(UBound(evadeList)) = Math.PI / 2
                     End If
                     '------------------
 
-                    If Int(10 * Rnd()) = 0 Then
-                        If Brakes = True Then
-                            Brakes = False
+                    '-----Brakes-----
+                    If 0 = Int(30 * Rnd()) Then
+                        If brakes = True Then
+                            brakes = False
                         Else
-                            Brakes = True
+                            brakes = True
                         End If
                     End If
-                    If Brakes = True Then
-                        Throttle.current = Throttle.current - Acceleration.current
+                    If brakes = False Then
+                        finalSpeed = Throttle.max
+                    ElseIf Throttle.current <> MinimumSpeed Then
+                        finalSpeed = MinimumSpeed
                     Else
-                        Throttle.current = Throttle.current + Acceleration.current
+                        brakes = False
+                        finalSpeed = Throttle.max
                     End If
-                    If Throttle.current < minimumSpeed Then
-                        Throttle.current = minimumSpeed
-                    ElseIf Throttle.current > Throttle.max Then
-                        Throttle.current = Throttle.max
+                    '----------------
+                ElseIf Throttle.current <> Target.Helm.Throttle.current And
+                    distance < MinimumDistance + 20 And targetDirection - Direction < Math.PI / 2 And
+                    targetDirection - Direction > -Math.PI / 2 Then 'Match the enemies speed
+                    finalSpeed = Target.Helm.Throttle.current
+                ElseIf distance > StandardDistance And targetDirection - Direction < Math.PI / 2 And
+                    targetDirection - Direction > -Math.PI / 2 Then 'Charge the enemy
+                    If distance > 400 Then
+                        finalSpeed = Throttle.max * 1.25
+                    Else
+                        finalSpeed = Throttle.max
                     End If
-
+                End If
+                '---------------
+            Else
+                finalSpeed = MinimumSpeed
+                If Galaxy.centerShip.Helm.Throttle.current = MinimumSpeed And
+                    Galaxy.Warping <> Galaxy.Warp.Warping And
+                    Galaxy.centerShip.Helm.Direction = 0 Then
+                    Galaxy.Warping = Galaxy.Warp.Entering
+                    Galaxy.Star.Speed = 20
                 End If
             End If
-        End If
 
-        Direction = NormalizeDirection(Direction)
-    End Sub
+            '-----Evade-----
+            Dim offset As Double
+            For Each i As Double In evadeList
+                offset = i - offset
+            Next
+            offset = NormalizeDirection(offset)
+            targetDirection = NormalizeDirection(targetDirection - offset)
+            '---------------
 
-    Private Sub Steering(ByVal targetDirection As Double)
-        If NormalizeDirection(targetDirection - Direction) <= Math.PI Then
-            Direction = NormalizeDirection(Direction + TurnSpeed.current)
-        Else
-            Direction = NormalizeDirection(Direction - TurnSpeed.current)
-        End If
-    End Sub
-
-    Public Shared Function NormalizeDirection(ByVal nDirection As Double) As Double
-        Do Until nDirection >= 0 And
-            nDirection <= 2 * Math.PI
-            If nDirection < 0 Then
-                nDirection = nDirection + (2 * Math.PI)
-            ElseIf nDirection > 2 * Math.PI Then
-                nDirection = nDirection - (2 * Math.PI)
+            '-----Steering and Speed-----
+            If Math.Sqrt((targetDirection - Direction) ^ 2) < TurnSpeed.current Then
+                Direction = targetDirection
+            ElseIf NormalizeDirection(targetDirection - Direction) < Math.PI Then
+                Direction = NormalizeDirection(Direction + TurnSpeed.current)
+            Else
+                Direction = NormalizeDirection(Direction - TurnSpeed.current)
             End If
-        Loop
-        Return nDirection
+
+            If Throttle.current < finalSpeed Then
+                Throttle.current = Throttle.current + Acceleration.current
+                If Throttle.current > finalSpeed Then
+                    Throttle.current = finalSpeed
+                End If
+            Else
+                Throttle.current = Throttle.current - Acceleration.current
+                If Throttle.current < finalSpeed Then
+                    Throttle.current = finalSpeed
+                End If
+            End If
+            '----------------------------
+        End If
+    End Sub
+
+    Public Shared Function NormalizeDirection(ByVal nDirecion As Double) As Double
+        While nDirecion > (2 * Math.PI) Or nDirecion < 0
+            If nDirecion < 0 Then
+                nDirecion = nDirecion + (2 * Math.PI)
+            Else
+                nDirecion = nDirecion - (2 * Math.PI)
+            End If
+        End While
+        Return nDirecion
     End Function
 
 End Class

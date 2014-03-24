@@ -2,7 +2,9 @@
 Public MustInherit Class Ship
     <NonSerialized()>
     Public Parent As Galaxy
-    Public hit As Boolean = False
+    Public Hit As Boolean = False
+    Public Dead As Boolean = False
+    Public TargetLock As Boolean = False
     Public Enum Allegence
         Player
         Pirate
@@ -11,7 +13,6 @@ Public MustInherit Class Ship
     Public Event ShipUpdate()
     Public Hull As Stat
     Public Position As Point
-    Public Target As Ship
     '-----Helm-----
     Public Helm As New Helm(Me)
     '--------------
@@ -35,11 +36,20 @@ Public MustInherit Class Ship
         Dim sideHit As Shields.Sides
         Dim adjacent As Integer = (Position.X - nWeapon.Parent.Parent.Position.X)
         Dim opposite As Integer = (Position.Y - nWeapon.Parent.Parent.Position.Y)
-        Dim incomingVector As Double = Math.Tanh(opposite / adjacent)
-        If adjacent > 0 Then
-            incomingVector = incomingVector + Math.PI
+        Dim incomingVector As Double
+        If adjacent <> 0 Then
+            incomingVector = Math.Tanh(opposite / adjacent)
+            If adjacent > 0 Then
+                incomingVector = incomingVector + Math.PI
+            ElseIf incomingVector < 0 Then
+                incomingVector = incomingVector + (Math.PI * 2)
+            End If
+            incomingVector = Helm.NormalizeDirection(incomingVector)
+        ElseIf opposite > 0 Then
+            incomingVector = Math.PI / 2
+        Else
+            incomingVector = (3 * Math.PI) / 2
         End If
-        incomingVector = Helm.NormalizeDirection(incomingVector)
 
         If incomingVector >= (Math.PI / 4) And incomingVector <= ((3 * Math.PI) / 4) Then
             sideHit = Shields.Sides.FrontShield
@@ -97,13 +107,13 @@ Public MustInherit Class Ship
                     Engineering.PowerCore.current = 1
                 End If
         End Select
-        hit = True
+        Hit = True
         If Hull.current <= 0 Then
             DestroyShip()
         End If
     End Sub
 
-    Public Sub DestroyShip()
+    Public Overridable Sub DestroyShip()
         If Parent IsNot Nothing Then
             Parent.RemoveShip(Me)
             Helm.Parent = Nothing
@@ -113,10 +123,15 @@ Public MustInherit Class Ship
             Shielding.Parent = Nothing
             Engineering.Parent = Nothing
             Parent = Nothing
+            Dead = True
+            If ReferenceEquals(Galaxy.centerShip, Me) = True Then
+                GameWorld.Recenter()
+            End If
         End If
     End Sub
 
     Public Overridable Sub UpdateShip()
+        Hit = False
         Batteries.Update()
         Engineering.Update()
         Shielding.Update()
