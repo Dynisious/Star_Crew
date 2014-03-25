@@ -60,6 +60,7 @@ Public MustInherit Class Ship
         ElseIf incomingVector >= ((7 * Math.PI) / 4) And incomingVector <= (Math.PI / 4) Then
             sideHit = Shields.Sides.RightShield
         End If
+
         Dim incomingDamage As Integer = Shielding.DeflectHit(sideHit, nWeapon)
         Hull.current = Hull.current - incomingDamage
         Select Case sideHit
@@ -136,7 +137,7 @@ Public MustInherit Class Ship
         Engineering.Update()
         Shielding.Update()
         Helm.Update()
-        Dim fl As Decimal = Position.X + (Math.Cos(Helm.Direction) *
+        Dim fly As Decimal = Position.X + (Math.Cos(Helm.Direction) *
                                    (Helm.Throttle.current * (Engineering.Engines.current / Engineering.Engines.max)))
         Position.X = Position.X + (Math.Cos(Helm.Direction) *
                                    (Helm.Throttle.current * (Engineering.Engines.current / Engineering.Engines.max)))

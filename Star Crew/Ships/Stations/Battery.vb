@@ -5,6 +5,13 @@ Public Class Battery
     Public Secondary As Weapon
     Public Shared ReadOnly HitArc As Double = Math.PI / 5
     Public Shared ReadOnly PlayerArc As Double = HitArc * 1.5
+    Public Enum Commands
+        TurnRight
+        TurnLeft
+        FirePrimary
+        FireSecondary
+        SetTarget
+    End Enum
 
     Public Sub New(ByRef nParent As Ship)
         MyBase.New(nParent)
@@ -137,6 +144,8 @@ Public Class Battery
                     '-------------------
                     '------------------------
                 End If
+            Else
+                ReDim Parent.Helm.evadeList(-1)
             End If
         End If
     End Sub

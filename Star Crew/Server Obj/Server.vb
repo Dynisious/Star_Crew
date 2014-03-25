@@ -31,7 +31,6 @@ Module Server
         {commands.Clear, "/clr :        Clears the screen"}
     }
     Public GameWorld As New Galaxy
-    Public Running As Boolean = True
     Public OutputScreen As New Screen
     Public client As New Threading.Thread(AddressOf OutputScreen.Open)
     Public Communications As New ServerComms
@@ -42,7 +41,22 @@ Module Server
         Console.WriteLine("-----Star Crew-----")
         Console.WriteLine("for help with commands type '/help'")
         Console.WriteLine()
-        While Running = True
+        Console.WriteLine("-----Station Controls-----")
+        Console.WriteLine("Helm: Steer the helm with the 'Left' and 'Right' arrow keys." + Environment.NewLine +
+                          "Throttle Up and Down the the 'Up' and 'Down' arrow keys." + Environment.NewLine +
+                          "Have the computer Match your targets speed automatically with 'M'." + Environment.NewLine +
+                          "Once you have killed all Enemies press 'Control + J' to exit to Warp Speed." + Environment.NewLine +
+                          Environment.NewLine +
+                          "Batteries: Rotate both Guns with the 'Left' and 'Right' arrow keys." + Environment.NewLine +
+                          "Fire the Primary Gun with 'Control'." + Environment.NewLine +
+                          "Fire the Secondary Gun with 'Shift'." + Environment.NewLine +
+                          "Select a New Target with 'M'." + Environment.NewLine +
+                          Environment.NewLine +
+                          "Shielding: Set the Shield to Prioritise with the arrow keys." + Environment.NewLine +
+                          Environment.NewLine +
+                          "Engineering: -----Coming Soon-----")
+        Console.WriteLine()
+        While True
             Dim str As String = Console.ReadLine().Trim(ChrW(0))
             If str.StartsWith("/") Then
                 RunCommand(str)
@@ -114,7 +128,7 @@ Module Server
                     End Select
                     For Each i As ServerSideClient In Communications.Clients
                         If i.MyStation = stationType Then
-                            Communications.removeClient(i.MySocket)
+                            Communications.RemoveClient(i.MySocket, True)
                             WriteLine(str + " Has been kicked")
                             Exit Sub
                         End If
@@ -153,31 +167,35 @@ Module Server
 
         Public Sub DecodeMessage()
             If MyStation = Station.StationTypes.Max Then
-                Dim receiveBuff(0) As Byte
+                Dim receiveBuff(4) As Byte
                 Dim receivedBuffLength As Integer = MySocket.Receive(receiveBuff, 0, receiveBuff.Length, SocketFlags.None)
-                Dim str As String = System.Text.Encoding.ASCII.GetString(receiveBuff, 0, receivedBuffLength).Trim(ChrW(0))
-                If CInt(str) < Station.StationTypes.Max Then
-                    MyStation = CInt(str)
-                End If
+                Dim str As Integer = System.Text.Encoding.ASCII.GetString(receiveBuff, 0, receivedBuffLength).Trim(ChrW(0))
+                MyStation = CInt(str)
+                For Each i As ServerSideClient In Communications.Clients
+                    If ReferenceEquals(Me, i) = False And i.MyStation = MyStation Then
+                        Communications.RemoveClient(MySocket, False)
+                        Exit Sub
+                    End If
+                Next
                 Console.WriteLine((MyStation.ToString() + ": Has been connected"))
-                'Select Case MyStation
-                '    Case Station.StationTypes.Helm
-                '        Galaxy.centerShip.Helm.PlayerControled = True
-                '    Case Station.StationTypes.Batteries
-                '        Galaxy.centerShip.Batteries.PlayerControled = True
-                '    Case Station.StationTypes.Shielding
-                '        Galaxy.centerShip.Shielding.PlayerControled = True
-                '    Case Station.StationTypes.Engineering
-                '        Galaxy.centerShip.Engineering.PlayerControled = True
-                'End Select
+                Select Case MyStation
+                    Case Station.StationTypes.Helm
+                        Galaxy.centerShip.Helm.PlayerControled = True
+                    Case Station.StationTypes.Batteries
+                        Galaxy.centerShip.Batteries.PlayerControled = True
+                    Case Station.StationTypes.Shielding
+                        Galaxy.centerShip.Shielding.PlayerControled = True
+                    Case Station.StationTypes.Engineering
+                        'Galaxy.centerShip.Engineering.PlayerControled = True
+                End Select
             Else
                 Try
                     Using fs As New NetworkStream(MySocket)
-                        Dim bf As System.Runtime.Serialization.Formatters.Binary.BinaryFormatter = New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
-                        GameWorld.NewClientMessage_Call(bf.Deserialize(fs), MyStation)
+                        Dim bf As New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+                        GameWorld.RunCommand_Call(bf.Deserialize(fs))
                     End Using
                 Catch ex As Exception
-                    Server.Communications.RemoveClient(MySocket)
+                    Server.Communications.RemoveClient(MySocket, True)
                 End Try
             End If
         End Sub
@@ -245,7 +263,7 @@ Module Server
                     Try
                         i.Send(MessageBuff)
                     Catch ex As SocketException
-                        RemoveClient(i)
+                        RemoveClient(i, True)
                     End Try
                 Next
             End If
@@ -269,10 +287,20 @@ Module Server
             End If
         End Sub
 
-        Public Sub RemoveClient(ByRef nSocket As Socket)
+        Public Sub RemoveClient(ByRef nSocket As Socket, ByVal resetControl As Boolean)
             For Each i As ServerSideClient In Clients
                 If ReferenceEquals(i.MySocket, nSocket) = True Then
                     Console.WriteLine(i.MyStation.ToString + ": Client was disconnected")
+                    Select Case i.MyStation
+                        Case Station.StationTypes.Helm
+                            Galaxy.centerShip.Helm.PlayerControled = False
+                        Case Station.StationTypes.Batteries
+                            Galaxy.centerShip.Batteries.PlayerControled = False
+                        Case Station.StationTypes.Shielding
+                            Galaxy.centerShip.Shielding.PlayerControled = False
+                        Case Station.StationTypes.Engineering
+                            Galaxy.centerShip.Engineering.PlayerControled = False
+                    End Select
                     Dim index = Array.IndexOf(Clients, i)
                     If index < UBound(Clients) Then
                         For e As Integer = index To UBound(Clients) - 1

@@ -12,6 +12,15 @@ Public Class Helm
     Public Shared ReadOnly MinimumDistance As Integer = 30
     Public Target As Ship
     Public evadeList(-1) As Double
+    Public MatchSpeed As Boolean = False
+    Public Enum Commands
+        ThrottleUp
+        ThrottleDown
+        TurnLeft
+        TurnRight
+        WarpDrive
+        MatchSpeed
+    End Enum
 
     Public Sub New(ByRef nParent As Ship)
         MyBase.New(nParent)
@@ -23,6 +32,10 @@ Public Class Helm
             Dim finalSpeed As Double = MinimumSpeed
             '-----Set Target Direction and Distance-----
             If Target IsNot Nothing Then
+                If Target.Dead = True Then
+                    Target = Nothing
+                    Exit Sub
+                End If
                 Dim distance As Integer
                 Dim opposite As Double = (Target.Position.Y + (Math.Sin(Target.Helm.Direction) * Target.Helm.Throttle.current)) - Parent.Position.Y
                 Dim adjacent As Double = (Target.Position.X + (Math.Cos(Target.Helm.Direction) * Target.Helm.Throttle.current)) - Parent.Position.X
@@ -86,14 +99,15 @@ Public Class Helm
                     finalSpeed = Target.Helm.Throttle.current
                 ElseIf distance > StandardDistance And targetDirection - Direction < Math.PI / 2 And
                     targetDirection - Direction > -Math.PI / 2 Then 'Charge the enemy
-                    If distance > 400 Then
-                        finalSpeed = Throttle.max * 1.25
-                    Else
-                        finalSpeed = Throttle.max
-                    End If
+                    finalSpeed = Throttle.max
                 End If
                 '---------------
             Else
+                For Each i As Ship In Parent.Parent.xList
+                    If i.MyAllegence = Ship.Allegence.Pirate Then
+                        Exit Sub
+                    End If
+                Next
                 finalSpeed = MinimumSpeed
                 If Galaxy.centerShip.Helm.Throttle.current = MinimumSpeed And
                     Galaxy.Warping <> Galaxy.Warp.Warping And
@@ -120,6 +134,9 @@ Public Class Helm
             Else
                 Direction = NormalizeDirection(Direction - TurnSpeed.current)
             End If
+            If ReferenceEquals(Parent, Galaxy.centerShip) Then
+                Dim a = 1
+            End If
 
             If Throttle.current < finalSpeed Then
                 Throttle.current = Throttle.current + Acceleration.current
@@ -133,6 +150,27 @@ Public Class Helm
                 End If
             End If
             '----------------------------
+        ElseIf Parent IsNot Nothing Then
+            '-----Match Enemies Speed-----
+            If MatchSpeed = True And Target IsNot Nothing Then
+                If Throttle.current > Target.Helm.Throttle.current Then
+                    Throttle.current = Throttle.current - Acceleration.current
+                    If Throttle.current < Target.Helm.Throttle.current Then
+                        Throttle.current = Target.Helm.Throttle.current
+                    End If
+                ElseIf Throttle.current < Target.Helm.Throttle.current Then
+                    Throttle.current = Throttle.current + Acceleration.current
+                    If Throttle.current > Target.Helm.Throttle.current Then
+                        Throttle.current = Target.Helm.Throttle.current
+                    End If
+                    If Throttle.current > Throttle.max Then
+                        Throttle.current = Throttle.max
+                    End If
+                End If
+            Else
+                MatchSpeed = False
+            End If
+            '-----------------------------
         End If
     End Sub
 

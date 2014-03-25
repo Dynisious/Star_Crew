@@ -39,6 +39,12 @@
     Public NewEngineeringStats(EngineeringStats.Max-1) As Stat
     '---------------------
 
+    Public Sub New()
+        For i As Integer = 0 To Weapon.DamageTypes.Max - 1
+            NewShieldBonuses(i) = 1
+        Next
+    End Sub
+
     Public Sub SetLayout(ByRef nShip As Ship)
         '-----Ship-----
         nShip.Hull = NewHull

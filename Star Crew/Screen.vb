@@ -376,6 +376,7 @@
             btnEndGame.Size = New System.Drawing.Size(140, 40)
             btnEndGame.TabIndex = 1
             btnEndGame.Text = "Close Game"
+            btnEndGame.FlatStyle = FlatStyle.Flat
             btnEndGame.UseVisualStyleBackColor = True
             '
             'btnMainMenu
@@ -386,6 +387,7 @@
             btnMainMenu.Size = New System.Drawing.Size(140, 40)
             btnMainMenu.TabIndex = 0
             btnMainMenu.Text = "Main Menu"
+            btnMainMenu.FlatStyle = FlatStyle.Flat
             btnMainMenu.UseVisualStyleBackColor = True
             '--------------------------
 
@@ -401,6 +403,7 @@
             pnlMenuButtons.ResumeLayout(False)
             '--------------------------
             Server.OutputScreen.tick.Enabled = True
+            picDisplayGraphics.Focus()
         End Sub
 
         Private Shared Sub btnMainMenu_Click() Handles btnMainMenu.Click
@@ -411,6 +414,51 @@
 
         Private Shared Sub btnEndGame_Click() Handles btnEndGame.Click
             End
+        End Sub
+
+        Private Shared Sub picDisplayGraphics_PreviewKeyDown(ByVal sender As Object, ByVal e As PreviewKeyDownEventArgs) Handles picDisplayGraphics.PreviewKeyDown
+            Select Case MyClient.myMessage.Station
+                Case Station.StationTypes.Helm
+                    If e.KeyCode = Keys.Up Then 'Throttle Up
+                        MyClient.SendCommand_Call(Helm.Commands.ThrottleUp)
+                    ElseIf e.KeyCode = Keys.Down Then 'Throttle Down
+                        MyClient.SendCommand_Call(Helm.Commands.ThrottleDown)
+                    ElseIf e.KeyCode = Keys.Right Then 'Turn Right
+                        MyClient.SendCommand_Call(Helm.Commands.TurnRight)
+                    ElseIf e.KeyCode = Keys.Left Then 'Turn Left
+                        MyClient.SendCommand_Call(Helm.Commands.TurnLeft)
+                    ElseIf e.KeyCode = Keys.J And e.Control = True Then 'Warp Drive
+                        MyClient.SendCommand_Call(Helm.Commands.WarpDrive)
+                    ElseIf e.KeyCode = Keys.M Then 'Match Speed
+                        MyClient.SendCommand_Call(Helm.Commands.MatchSpeed)
+                    End If
+                Case Station.StationTypes.Batteries
+                    If e.KeyCode = Keys.Right Then 'Turn Right
+                        MyClient.SendCommand_Call(Battery.Commands.TurnRight)
+                    ElseIf e.KeyCode = Keys.Left Then 'Turn Left
+                        MyClient.SendCommand_Call(Battery.Commands.TurnLeft)
+                    ElseIf e.KeyCode = Keys.M Then 'Set Target
+                        MyClient.SendCommand_Call(Battery.Commands.SetTarget)
+                    End If
+                    If e.Control = True Then 'Fire Primary
+                        MyClient.SendCommand_Call(Battery.Commands.FirePrimary)
+                    End If
+                    If e.Shift = True Then 'Fire Secondary
+                        MyClient.SendCommand_Call(Battery.Commands.FireSecondary)
+                    End If
+                Case Station.StationTypes.Shielding
+                    If e.KeyCode = Keys.Up Then
+                        MyClient.SendCommand_Call(Shields.Commands.BoostForward)
+                    ElseIf e.KeyCode = Keys.Right Then
+                        MyClient.SendCommand_Call(Shields.Commands.BoostRight)
+                    ElseIf e.KeyCode = Keys.Back Then
+                        MyClient.SendCommand_Call(Shields.Commands.BoostBack)
+                    ElseIf e.KeyCode = Keys.Left Then
+                        MyClient.SendCommand_Call(Shields.Commands.BoostLeft)
+                    End If
+                Case Station.StationTypes.Engineering
+
+            End Select
         End Sub
 
     End Class
@@ -459,21 +507,22 @@
         Controls.Add(MenuScreenLayout.btnExit)
         Controls.Add(MenuScreenLayout.btnStartClient)
         Controls.Add(MenuScreenLayout.btnStartServer)
+        Focus()
     End Sub
 
-    Private Sub DisplayStats() Handles tick.Tick
-        If GamePlayLayout.Displaying = True And MyClient.Message IsNot Nothing Then
-            Screen.GamePlayLayout.picDisplayGraphics.Image = MyClient.Message.bmp
-            Screen.GamePlayLayout.lblHull.Text = "Hull: " + CStr(MyClient.Message.ship.Hull.current) + "/" + CStr(MyClient.Message.ship.Hull.max)
-            Screen.GamePlayLayout.lblThrottle.Text = "Throttle: " + CStr(CInt(MyClient.Message.ship.Helm.Throttle.current)) + "/" + CStr(CInt(MyClient.Message.ship.Helm.Throttle.max))
-            Screen.GamePlayLayout.lblForward.Text = "Fore: " + CStr(CInt(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.FrontShield).current)) + "/" + CStr(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.FrontShield).max)
-            Screen.GamePlayLayout.lblRight.Text = "Starboard: " + CStr(CInt(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.RightShield).current)) + "/" + CStr(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.RightShield).max)
-            Screen.GamePlayLayout.lblRear.Text = "Aft: " + CStr(CInt(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.BackShield).current)) + "/" + CStr(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.BackShield).max)
-            Screen.GamePlayLayout.lblLeft.Text = "Port: " + CStr(CInt(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.LeftShield).current)) + "/" + CStr(MyClient.Message.ship.Shielding.ShipShields(Shields.Sides.LeftShield).max)
-            Screen.GamePlayLayout.lblPrimary.Text = "Primary: " + CStr(MyClient.Message.ship.Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).current) + "/" + CStr(MyClient.Message.ship.Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).max)
-            Screen.GamePlayLayout.lblSecondary.Text = "Secondary: " + CStr(MyClient.Message.ship.Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).current) + "/" + CStr(MyClient.Message.ship.Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).max)
-            Screen.GamePlayLayout.lblPowerCore.Text = "Power Core: " + CStr(MyClient.Message.ship.Engineering.PowerCore.current) + "/" + CStr(MyClient.Message.ship.Engineering.PowerCore.max)
-            Screen.GamePlayLayout.lblEngines.Text = "Engines: " + CStr(MyClient.Message.ship.Engineering.Engines.current) + "/" + CStr(MyClient.Message.ship.Engineering.Engines.max)
+    Private Sub UpdateScreen() Handles tick.Tick
+        If GamePlayLayout.Displaying = True And MyClient.serversMessage IsNot Nothing Then
+            Screen.GamePlayLayout.picDisplayGraphics.Image = MyClient.serversMessage.bmp
+            Screen.GamePlayLayout.lblHull.Text = "Hull: " + CStr(MyClient.serversMessage.ship.Hull.current) + "/" + CStr(MyClient.serversMessage.ship.Hull.max)
+            Screen.GamePlayLayout.lblThrottle.Text = "Throttle: " + CStr(CInt(MyClient.serversMessage.ship.Helm.Throttle.current)) + "/" + CStr(CInt(MyClient.serversMessage.ship.Helm.Throttle.max))
+            Screen.GamePlayLayout.lblForward.Text = "Fore: " + CStr(CInt(MyClient.serversMessage.ship.Shielding.ShipShields(Shields.Sides.FrontShield).current)) + "/" + CStr(MyClient.serversMessage.ship.Shielding.ShipShields(Shields.Sides.FrontShield).max)
+            Screen.GamePlayLayout.lblRight.Text = "Starboard: " + CStr(CInt(MyClient.serversMessage.ship.Shielding.ShipShields(Shields.Sides.RightShield).current)) + "/" + CStr(MyClient.serversMessage.ship.Shielding.ShipShields(Shields.Sides.RightShield).max)
+            Screen.GamePlayLayout.lblRear.Text = "Aft: " + CStr(CInt(MyClient.serversMessage.ship.Shielding.ShipShields(Shields.Sides.BackShield).current)) + "/" + CStr(MyClient.serversMessage.ship.Shielding.ShipShields(Shields.Sides.BackShield).max)
+            Screen.GamePlayLayout.lblLeft.Text = "Port: " + CStr(CInt(MyClient.serversMessage.ship.Shielding.ShipShields(Shields.Sides.LeftShield).current)) + "/" + CStr(MyClient.serversMessage.ship.Shielding.ShipShields(Shields.Sides.LeftShield).max)
+            Screen.GamePlayLayout.lblPrimary.Text = "Primary: " + CStr(MyClient.serversMessage.ship.Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).current) + "/" + CStr(MyClient.serversMessage.ship.Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).max)
+            Screen.GamePlayLayout.lblSecondary.Text = "Secondary: " + CStr(MyClient.serversMessage.ship.Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).current) + "/" + CStr(MyClient.serversMessage.ship.Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).max)
+            Screen.GamePlayLayout.lblPowerCore.Text = "Power Core: " + CStr(MyClient.serversMessage.ship.Engineering.PowerCore.current) + "/" + CStr(MyClient.serversMessage.ship.Engineering.PowerCore.max)
+            Screen.GamePlayLayout.lblEngines.Text = "Engines: " + CStr(MyClient.serversMessage.ship.Engineering.Engines.current) + "/" + CStr(MyClient.serversMessage.ship.Engineering.Engines.max)
         End If
     End Sub
 

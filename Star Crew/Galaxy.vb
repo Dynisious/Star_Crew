@@ -5,7 +5,7 @@
     Private primaryRadius As Integer
     Private secondaryDirection As Double
     Private secondaryRadius As Integer
-    Public ReadOnly ShipCount As Integer = 10
+    Public ReadOnly ShipCount As Integer = 50
     Public xList(-1) As Ship
     Private Shared Bmp As New Bitmap(600, 600)
     Private shipPositions(-1) As Point
@@ -61,6 +61,160 @@
         End Sub
     End Class
 
+    Private Event RunCommand(ByVal clientCommand As ClientMessage)
+    Public Sub RunCommand_Call(ByVal clientCommand As ClientMessage)
+        RaiseEvent RunCommand(clientCommand)
+    End Sub
+    Private Sub RunCommand_Handle(ByVal clientCommand As ClientMessage) Handles Me.RunCommand
+        Select Case clientCommand.station
+            Case Star_Crew.Station.StationTypes.Helm
+                Select Case clientCommand.Command
+                    Case Helm.Commands.ThrottleUp
+                        centerShip.Helm.MatchSpeed = False
+                        centerShip.Helm.Throttle.current = centerShip.Helm.Throttle.current + centerShip.Helm.Acceleration.current
+                        If centerShip.Helm.Throttle.current > centerShip.Helm.Throttle.max Then
+                            centerShip.Helm.Throttle.current = centerShip.Helm.Throttle.max
+                        End If
+                    Case Helm.Commands.ThrottleDown
+                        centerShip.Helm.MatchSpeed = False
+                        centerShip.Helm.Throttle.current = centerShip.Helm.Throttle.current - centerShip.Helm.Acceleration.current
+                        If centerShip.Helm.Throttle.current < Helm.MinimumSpeed Then
+                            centerShip.Helm.Throttle.current = Helm.MinimumSpeed
+                        End If
+                    Case Helm.Commands.TurnRight
+                        centerShip.Helm.Direction = Helm.NormalizeDirection(centerShip.Helm.Direction + centerShip.Helm.TurnSpeed.current)
+                    Case Helm.Commands.TurnLeft
+                        centerShip.Helm.Direction = Helm.NormalizeDirection(centerShip.Helm.Direction - centerShip.Helm.TurnSpeed.current)
+                    Case Helm.Commands.WarpDrive
+                        For Each i As Ship In xList
+                            If i.MyAllegence <> Ship.Allegence.Player Then
+                                Exit Sub
+                            End If
+                        Next
+                        centerShip.Helm.PlayerControled = False
+                    Case Helm.Commands.MatchSpeed
+                        centerShip.Helm.MatchSpeed = True
+                End Select
+            Case Star_Crew.Station.StationTypes.Batteries
+                Select Case clientCommand.Command
+                    Case Battery.Commands.TurnRight
+                        '-----Primary-----
+                        centerShip.Batteries.Primary.TurnDistance.current =
+                            centerShip.Batteries.Primary.TurnDistance.current +
+                            centerShip.Batteries.Primary.TurnSpeed.current
+                        If centerShip.Batteries.Primary.TurnDistance.current > centerShip.Batteries.Primary.TurnDistance.max / 2 Then
+                            centerShip.Batteries.Primary.TurnDistance.current = centerShip.Batteries.Primary.TurnDistance.max / 2
+                        End If
+                        '-----------------
+                        '-----Secondary-----
+                        centerShip.Batteries.Secondary.TurnDistance.current =
+                            centerShip.Batteries.Secondary.TurnDistance.current +
+                            centerShip.Batteries.Secondary.TurnSpeed.current
+                        If centerShip.Batteries.Secondary.TurnDistance.current > centerShip.Batteries.Secondary.TurnDistance.max / 2 Then
+                            centerShip.Batteries.Secondary.TurnDistance.current = centerShip.Batteries.Secondary.TurnDistance.max / 2
+                        End If
+                        '-------------------
+                    Case Battery.Commands.TurnLeft
+                        '-----Primary-----
+                        centerShip.Batteries.Primary.TurnDistance.current =
+                            centerShip.Batteries.Primary.TurnDistance.current -
+                            centerShip.Batteries.Primary.TurnSpeed.current
+                        If centerShip.Batteries.Primary.TurnDistance.current < -centerShip.Batteries.Primary.TurnDistance.max / 2 Then
+                            centerShip.Batteries.Primary.TurnDistance.current = -centerShip.Batteries.Primary.TurnDistance.max / 2
+                        End If
+                        '-----------------
+                        '-----Secondary-----
+                        centerShip.Batteries.Secondary.TurnDistance.current =
+                            centerShip.Batteries.Secondary.TurnDistance.current -
+                            centerShip.Batteries.Secondary.TurnSpeed.current
+                        If centerShip.Batteries.Secondary.TurnDistance.current < -centerShip.Batteries.Secondary.TurnDistance.max / 2 Then
+                            centerShip.Batteries.Secondary.TurnDistance.current = -centerShip.Batteries.Secondary.TurnDistance.max / 2
+                        End If
+                        '-------------------
+                    Case Battery.Commands.FirePrimary
+                        For i As Integer = 0 To xList.Length - 1
+                            Dim adjacent As Integer = xList(i).Position.X - centerShip.Position.X
+                            Dim opposite As Integer = xList(i).Position.Y - centerShip.Position.Y
+                            Dim distance = Math.Sqrt((opposite ^ 2) + (adjacent ^ 2))
+                            Dim direction As Double
+                            If adjacent <> 0 Then
+                                direction = Math.Tanh(opposite / adjacent)
+                                If adjacent < 0 Then
+                                    direction = direction + Math.PI
+                                End If
+                                direction = Helm.NormalizeDirection(direction)
+                            ElseIf opposite > 0 Then
+                                direction = Math.PI / 2
+                            Else
+                                direction = (3 * Math.PI) / 2
+                            End If
+
+                            If distance < centerShip.Batteries.Primary.WeaponStats(Weapon.Stats.Range).current And distance <> 0 Then
+                                If direction - centerShip.Helm.Direction - centerShip.Batteries.Primary.TurnDistance.current < Battery.PlayerArc / 2 And
+                                    direction - centerShip.Helm.Direction - centerShip.Batteries.Primary.TurnDistance.current > -Battery.PlayerArc / 2 Then
+                                    centerShip.Batteries.Primary.FireWeapon(distance, xList(i))
+                                    Exit Sub
+                                End If
+                            End If
+                        Next
+                    Case Battery.Commands.FireSecondary
+                        For i As Integer = 0 To xList.Length - 1
+                            If xList(i).MyAllegence <> Ship.Allegence.Player Then
+                                Dim adjacent As Integer = xList(i).Position.X - centerShip.Position.X
+                                Dim opposite As Integer = xList(i).Position.Y - centerShip.Position.Y
+                                Dim distance = Math.Sqrt((opposite ^ 2) + (adjacent ^ 2))
+                                Dim direction As Double
+                                If adjacent <> 0 Then
+                                    direction = Math.Tanh(opposite / adjacent)
+                                    If adjacent < 0 Then
+                                        direction = direction + Math.PI
+                                    End If
+                                    direction = Helm.NormalizeDirection(direction)
+                                ElseIf opposite > 0 Then
+                                    direction = Math.PI / 2
+                                Else
+                                    direction = (3 * Math.PI) / 2
+                                End If
+
+                                If distance < centerShip.Batteries.Secondary.WeaponStats(Weapon.Stats.Range).current And distance <> 0 Then
+                                    If direction - centerShip.Helm.Direction - centerShip.Batteries.Secondary.TurnDistance.current < Battery.PlayerArc / 2 And
+                                        direction - centerShip.Helm.Direction - centerShip.Batteries.Secondary.TurnDistance.current > -Battery.PlayerArc / 2 Then
+                                        centerShip.Batteries.Secondary.FireWeapon(distance, xList(i))
+                                        Exit Sub
+                                    End If
+                                End If
+                            End If
+                        Next
+                    Case Battery.Commands.SetTarget
+                        Dim lastDistance As Integer
+                        For i As Integer = 0 To xList.Length - 1
+                            If xList(i).MyAllegence <> Ship.Allegence.Player Then
+                                Dim distance As Integer = Math.Sqrt(((xList(i).Position.X - centerShip.Position.X) ^ 2) + ((xList(i).Position.Y - centerShip.Position.Y) ^ 2))
+                                If (distance < lastDistance And distance <> 0) Or lastDistance = 0 Then
+                                    lastDistance = distance
+                                    centerShip.Helm.Target = xList(i)
+                                End If
+                            End If
+                        Next
+                End Select
+            Case Star_Crew.Station.StationTypes.Shielding
+                Select Case clientCommand.Command
+                    Case Shields.Commands.BoostForward
+                        centerShip.Shielding.LastHit = Shields.Sides.FrontShield
+                    Case Shields.Commands.BoostRight
+                        centerShip.Shielding.LastHit = Shields.Sides.RightShield
+                    Case Shields.Commands.BoostBack
+                        centerShip.Shielding.LastHit = Shields.Sides.BackShield
+                    Case Shields.Commands.BoostLeft
+                        centerShip.Shielding.LastHit = Shields.Sides.LeftShield
+                End Select
+            Case Star_Crew.Station.StationTypes.Engineering
+                Select Case clientCommand.Command
+
+                End Select
+        End Select
+    End Sub
+
     Public Sub StartGame_Call()
         RaiseEvent StartGame()
     End Sub
@@ -112,19 +266,23 @@
         For Each i As Ship In xList
             If i.MyAllegence = Ship.Allegence.Player Then
                 centerShip = i
+                For Each e As ServerSideClient In Server.Communications.Clients
+                    Select Case e.MyStation
+                        Case Station.StationTypes.Helm
+                            centerShip.Helm.PlayerControled = True
+                        Case Station.StationTypes.Batteries
+                            centerShip.Batteries.PlayerControled = True
+                        Case Station.StationTypes.Shielding
+                            centerShip.Batteries.PlayerControled = True
+                        Case Station.StationTypes.Engineering
+                            centerShip.Engineering.PlayerControled = True
+                    End Select
+                Next
                 Exit Sub
             End If
         Next
         GalaxyTimer.Enabled = False
         Console.WriteLine("Player is Defeated")
-    End Sub
-
-    Public Sub NewClientMessage_Call(ByVal nMessage As Station, ByVal nStation As Station.StationTypes)
-        RaiseEvent NewClientMessage(nMessage, nStation)
-    End Sub
-
-    Private Sub NewClientMessage_Handle(ByVal nMessage As Station, ByVal nStation As Station.StationTypes) Handles Me.NewClientMessage
-
     End Sub
 
     Public Sub UpdateGalaxy() Handles GalaxyTimer.Tick
@@ -146,8 +304,10 @@
                 Bmp = My.Resources.NormalSpace.Clone
             Case Warp.Entering
                 Warping = Warp.Warping
+                Bmp.MakeTransparent(Color.White)
             Case Warp.Exiting
                 Warping = Warp.None
+                Bmp.MakeTransparent(Color.White)
             Case Warp.Warping
                 Bmp = My.Resources.Warping.Clone
         End Select

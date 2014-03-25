@@ -77,6 +77,9 @@
   <PropertyGroup>
     <SignManifests>false</SignManifests>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationManifest>My Project\app.manifest</ApplicationManifest>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -132,6 +135,7 @@
     <Compile Include="Ships\PirateShip.vb" />
     <Compile Include="Ships\Ship Layouts\Layout.vb" />
     <Compile Include="Ships\Ship Layouts\Clunker.vb" />
+    <Compile Include="Ships\Ship Layouts\Scrap.vb" />
     <Compile Include="Ships\Ship.vb" />
     <Compile Include="Ships\Stat.vb" />
     <Compile Include="Ships\Stations\Battery.vb" />
@@ -139,6 +143,7 @@
     <Compile Include="Ships\Stations\Helm.vb" />
     <Compile Include="Ships\Stations\Shields.vb" />
     <Compile Include="Ships\Stations\Station.vb" />
+    <Compile Include="Ships\Weapons\Weapon Layouts\Blank.vb" />
     <Compile Include="Ships\Weapons\Weapon Layouts\Rattler.vb" />
     <Compile Include="Ships\Weapons\Weapon Layouts\WeaponLayout.vb" />
     <Compile Include="Ships\Weapons\Weapon.vb" />
@@ -155,6 +160,7 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <None Include="My Project\app.manifest" />
     <None Include="My Project\Application.myapp">
       <Generator>MyApplicationCodeGenerator</Generator>
       <LastGenOutput>Application.Designer.vb</LastGenOutput>

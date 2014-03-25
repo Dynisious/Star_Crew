@@ -2,7 +2,7 @@
 Public Class Weapon
     Public Parent As Battery
     Public Enum DamageTypes
-        Slug
+        Laser
         Max
     End Enum
     Public Enum Stats

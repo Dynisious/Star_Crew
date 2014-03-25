@@ -3,7 +3,7 @@
 
     Public Sub New()
         stats(Weapon.Stats.Damage) = New Stat(8, 8)
-        stats(Weapon.Stats.DamageType) = New Stat(Weapon.DamageTypes.Slug, Weapon.DamageTypes.Slug)
+        stats(Weapon.Stats.DamageType) = New Stat(Weapon.DamageTypes.Laser, Weapon.DamageTypes.Laser)
         stats(Weapon.Stats.Ammo) = New Stat(5000, 5000)
         stats(Weapon.Stats.Integrety) = New Stat(100, 100)
         stats(Weapon.Stats.Range) = New Stat(70, 70)

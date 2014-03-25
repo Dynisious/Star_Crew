@@ -15,7 +15,6 @@
         NewBatteryWeapons(BatteryWeapons.Secondary) = New Weapon(New Rattler)
         '-------------------
         '-----Shielding-----
-        NewShieldBonuses(Weapon.DamageTypes.Slug) = 1
         NewShields(Shields.Sides.FrontShield) = New Stat(30, 30)
         NewShields(Shields.Sides.LeftShield) = New Stat(15, 15)
         NewShields(Shields.Sides.BackShield) = New Stat(15, 15)
