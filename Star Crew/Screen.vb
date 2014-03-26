@@ -184,6 +184,7 @@
         Public Shared WithEvents pnlMenuButtons As System.Windows.Forms.Panel
         Public Shared WithEvents btnMainMenu As System.Windows.Forms.Button
         Public Shared WithEvents btnEndGame As System.Windows.Forms.Button
+        Private Shared WithEvents UserKeyInterfacer As System.Windows.Forms.Button
 
         Public Sub New()
             Server.OutputScreen.Controls.Clear()
@@ -203,6 +204,7 @@
             btnEndGame = New System.Windows.Forms.Button()
             btnMainMenu = New System.Windows.Forms.Button()
             lblThrottle = New System.Windows.Forms.Label()
+            UserKeyInterfacer = New System.Windows.Forms.Button()
             CType(picDisplayGraphics, System.ComponentModel.ISupportInitialize).BeginInit()
             pnlDisplays.SuspendLayout()
             pnlMenuButtons.SuspendLayout()
@@ -366,7 +368,7 @@
             pnlMenuButtons.Location = New System.Drawing.Point(612, 350)
             pnlMenuButtons.Name = "pnlMenuButtons"
             pnlMenuButtons.Size = New System.Drawing.Size(560, 256)
-            pnlMenuButtons.TabIndex = 2
+            pnlMenuButtons.TabIndex = 3
             '
             'btnEndGame
             '
@@ -374,7 +376,7 @@
             btnEndGame.Location = New System.Drawing.Point(285, 19)
             btnEndGame.Name = "btnEndGame"
             btnEndGame.Size = New System.Drawing.Size(140, 40)
-            btnEndGame.TabIndex = 1
+            btnEndGame.TabIndex = 2
             btnEndGame.Text = "Close Game"
             btnEndGame.FlatStyle = FlatStyle.Flat
             btnEndGame.UseVisualStyleBackColor = True
@@ -385,16 +387,27 @@
             btnMainMenu.Location = New System.Drawing.Point(135, 19)
             btnMainMenu.Name = "btnMainMenu"
             btnMainMenu.Size = New System.Drawing.Size(140, 40)
-            btnMainMenu.TabIndex = 0
+            btnMainMenu.TabIndex = 1
             btnMainMenu.Text = "Main Menu"
             btnMainMenu.FlatStyle = FlatStyle.Flat
             btnMainMenu.UseVisualStyleBackColor = True
+            'UserKeyInterfacer
+            '
+            UserKeyInterfacer.Name = "UserKeyInterfacer"
+            UserKeyInterfacer.Location = New System.Drawing.Point(20, 20)
+            UserKeyInterfacer.Size = New System.Drawing.Size(40, 40)
+            UserKeyInterfacer.TabIndex = 0
+            UserKeyInterfacer.Text = ""
+            UserKeyInterfacer.FlatStyle = FlatStyle.Flat
+            UserKeyInterfacer.UseVisualStyleBackColor = True
+            UserKeyInterfacer.Visible = True
             '--------------------------
 
             '-----Add Controls-----
             Server.OutputScreen.Controls.Add(picDisplayGraphics)
             Server.OutputScreen.Controls.Add(pnlDisplays)
             Server.OutputScreen.Controls.Add(pnlMenuButtons)
+            Server.OutputScreen.Controls.Add(UserKeyInterfacer)
             '----------------------
 
             '-----Display Controls-----
@@ -403,10 +416,10 @@
             pnlMenuButtons.ResumeLayout(False)
             '--------------------------
             Server.OutputScreen.tick.Enabled = True
-            picDisplayGraphics.Focus()
+            UserKeyInterfacer.Focus()
         End Sub
 
-        Private Shared Sub btnMainMenu_Click() Handles btnMainMenu.Click
+        Public Shared Sub btnMainMenu_Click() Handles btnMainMenu.Click
             Screen.MyClient.comms.Abort()
             Screen.MyClient.MyConnector.Close()
             Dim temp As New MenuScreenLayout
@@ -416,45 +429,89 @@
             End
         End Sub
 
-        Private Shared Sub picDisplayGraphics_PreviewKeyDown(ByVal sender As Object, ByVal e As PreviewKeyDownEventArgs) Handles picDisplayGraphics.PreviewKeyDown
+        Private Shared Sub UserKeyInterfacer_PreviewKeyDown(ByVal sender As Object, ByVal e As PreviewKeyDownEventArgs) Handles UserKeyInterfacer.PreviewKeyDown
             Select Case MyClient.myMessage.Station
                 Case Station.StationTypes.Helm
                     If e.KeyCode = Keys.Up Then 'Throttle Up
-                        MyClient.SendCommand_Call(Helm.Commands.ThrottleUp)
+                        MyClient.SendCommand_Call(Helm.Commands.ThrottleUp, 1)
                     ElseIf e.KeyCode = Keys.Down Then 'Throttle Down
-                        MyClient.SendCommand_Call(Helm.Commands.ThrottleDown)
+                        MyClient.SendCommand_Call(Helm.Commands.ThrottleDown, 1)
                     ElseIf e.KeyCode = Keys.Right Then 'Turn Right
-                        MyClient.SendCommand_Call(Helm.Commands.TurnRight)
+                        MyClient.SendCommand_Call(Helm.Commands.TurnRight, 1)
                     ElseIf e.KeyCode = Keys.Left Then 'Turn Left
-                        MyClient.SendCommand_Call(Helm.Commands.TurnLeft)
+                        MyClient.SendCommand_Call(Helm.Commands.TurnLeft, 1)
                     ElseIf e.KeyCode = Keys.J And e.Control = True Then 'Warp Drive
-                        MyClient.SendCommand_Call(Helm.Commands.WarpDrive)
+                        MyClient.SendCommand_Call(Helm.Commands.WarpDrive, 1)
                     ElseIf e.KeyCode = Keys.M Then 'Match Speed
-                        MyClient.SendCommand_Call(Helm.Commands.MatchSpeed)
+                        MyClient.SendCommand_Call(Helm.Commands.MatchSpeed, 1)
                     End If
                 Case Station.StationTypes.Batteries
                     If e.KeyCode = Keys.Right Then 'Turn Right
-                        MyClient.SendCommand_Call(Battery.Commands.TurnRight)
+                        MyClient.SendCommand_Call(Battery.Commands.TurnRight, 1)
                     ElseIf e.KeyCode = Keys.Left Then 'Turn Left
-                        MyClient.SendCommand_Call(Battery.Commands.TurnLeft)
+                        MyClient.SendCommand_Call(Battery.Commands.TurnLeft, 1)
                     ElseIf e.KeyCode = Keys.M Then 'Set Target
-                        MyClient.SendCommand_Call(Battery.Commands.SetTarget)
+                        MyClient.SendCommand_Call(Battery.Commands.SetTarget, 1)
                     End If
-                    If e.Control = True Then 'Fire Primary
-                        MyClient.SendCommand_Call(Battery.Commands.FirePrimary)
+                    If e.KeyCode = Keys.A Then 'Fire Primary
+                        MyClient.SendCommand_Call(Battery.Commands.FirePrimary, 1)
                     End If
-                    If e.Shift = True Then 'Fire Secondary
-                        MyClient.SendCommand_Call(Battery.Commands.FireSecondary)
+                    If e.KeyCode = Keys.D Then 'Fire Secondary
+                        MyClient.SendCommand_Call(Battery.Commands.FireSecondary, 1)
                     End If
                 Case Station.StationTypes.Shielding
                     If e.KeyCode = Keys.Up Then
-                        MyClient.SendCommand_Call(Shields.Commands.BoostForward)
+                        MyClient.SendCommand_Call(Shields.Commands.BoostForward, 1)
                     ElseIf e.KeyCode = Keys.Right Then
-                        MyClient.SendCommand_Call(Shields.Commands.BoostRight)
+                        MyClient.SendCommand_Call(Shields.Commands.BoostRight, 1)
                     ElseIf e.KeyCode = Keys.Back Then
-                        MyClient.SendCommand_Call(Shields.Commands.BoostBack)
+                        MyClient.SendCommand_Call(Shields.Commands.BoostBack, 1)
                     ElseIf e.KeyCode = Keys.Left Then
-                        MyClient.SendCommand_Call(Shields.Commands.BoostLeft)
+                        MyClient.SendCommand_Call(Shields.Commands.BoostLeft, 1)
+                    End If
+                Case Station.StationTypes.Engineering
+
+            End Select
+        End Sub
+        Private Shared Sub UserKeyInterfacer_KeyUp(ByVal sender As Object, ByVal e As KeyEventArgs) Handles UserKeyInterfacer.KeyUp
+            Select Case MyClient.myMessage.Station
+                Case Station.StationTypes.Helm
+                    If e.KeyCode = Keys.Up Then 'Throttle Up
+                        MyClient.SendCommand_Call(Helm.Commands.ThrottleUp, 0)
+                    ElseIf e.KeyCode = Keys.Down Then 'Throttle Down
+                        MyClient.SendCommand_Call(Helm.Commands.ThrottleDown, 0)
+                    ElseIf e.KeyCode = Keys.Right Then 'Turn Right
+                        MyClient.SendCommand_Call(Helm.Commands.TurnRight, 0)
+                    ElseIf e.KeyCode = Keys.Left Then 'Turn Left
+                        MyClient.SendCommand_Call(Helm.Commands.TurnLeft, 0)
+                    ElseIf e.KeyCode = Keys.J And e.Control = True Then 'Warp Drive
+                        MyClient.SendCommand_Call(Helm.Commands.WarpDrive, 0)
+                    ElseIf e.KeyCode = Keys.M Then 'Match Speed
+                        MyClient.SendCommand_Call(Helm.Commands.MatchSpeed, 0)
+                    End If
+                Case Station.StationTypes.Batteries
+                    If e.KeyCode = Keys.Right Then 'Turn Right
+                        MyClient.SendCommand_Call(Battery.Commands.TurnRight, 0)
+                    ElseIf e.KeyCode = Keys.Left Then 'Turn Left
+                        MyClient.SendCommand_Call(Battery.Commands.TurnLeft, 0)
+                    ElseIf e.KeyCode = Keys.M Then 'Set Target
+                        MyClient.SendCommand_Call(Battery.Commands.SetTarget, 0)
+                    End If
+                    If e.KeyCode = Keys.A Then 'Fire Primary
+                        MyClient.SendCommand_Call(Battery.Commands.FirePrimary, 0)
+                    End If
+                    If e.KeyCode = Keys.D Then 'Fire Secondary
+                        MyClient.SendCommand_Call(Battery.Commands.FireSecondary, 0)
+                    End If
+                Case Station.StationTypes.Shielding
+                    If e.KeyCode = Keys.Up Then
+                        MyClient.SendCommand_Call(Shields.Commands.BoostForward, 0)
+                    ElseIf e.KeyCode = Keys.Right Then
+                        MyClient.SendCommand_Call(Shields.Commands.BoostRight, 0)
+                    ElseIf e.KeyCode = Keys.Back Then
+                        MyClient.SendCommand_Call(Shields.Commands.BoostBack, 0)
+                    ElseIf e.KeyCode = Keys.Left Then
+                        MyClient.SendCommand_Call(Shields.Commands.BoostLeft, 0)
                     End If
                 Case Station.StationTypes.Engineering
 

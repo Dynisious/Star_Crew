@@ -27,7 +27,7 @@ Public Class Helm
     End Sub
 
     Public Overrides Sub Update()
-        If Parent IsNot Nothing And PlayerControled = False Then
+        If Parent IsNot Nothing And PlayerControled = False And Galaxy.Warping <> Galaxy.Warp.Warping Then
             Dim targetDirection As Double
             Dim finalSpeed As Double = MinimumSpeed
             '-----Set Target Direction and Distance-----
@@ -76,45 +76,24 @@ Public Class Helm
                     End If
                     '------------------
 
-                    '-----Brakes-----
-                    If 0 = Int(30 * Rnd()) Then
-                        If brakes = True Then
-                            brakes = False
-                        Else
-                            brakes = True
-                        End If
-                    End If
-                    If brakes = False Then
-                        finalSpeed = Throttle.max
-                    ElseIf Throttle.current <> MinimumSpeed Then
-                        finalSpeed = MinimumSpeed
-                    Else
-                        brakes = False
-                        finalSpeed = Throttle.max
-                    End If
-                    '----------------
+                    finalSpeed = Throttle.max
                 ElseIf Throttle.current <> Target.Helm.Throttle.current And
-                    distance < MinimumDistance + 20 And targetDirection - Direction < Math.PI / 2 And
+                    distance < MinimumDistance + (((Throttle.current - Target.Helm.Throttle.current) / Acceleration.current) * Throttle.current) And
+                    targetDirection - Direction < Math.PI / 2 And
                     targetDirection - Direction > -Math.PI / 2 Then 'Match the enemies speed
                     finalSpeed = Target.Helm.Throttle.current
                 ElseIf distance > StandardDistance And targetDirection - Direction < Math.PI / 2 And
                     targetDirection - Direction > -Math.PI / 2 Then 'Charge the enemy
                     finalSpeed = Throttle.max
                 End If
-                '---------------
-            Else
-                For Each i As Ship In Parent.Parent.xList
-                    If i.MyAllegence = Ship.Allegence.Pirate Then
-                        Exit Sub
+                If distance < MinimumDistance Then
+                    If targetDirection < Math.PI Then
+                        targetDirection = (3 * Math.PI) / 2
+                    Else
+                        targetDirection = (Math.PI / 2)
                     End If
-                Next
-                finalSpeed = MinimumSpeed
-                If Galaxy.centerShip.Helm.Throttle.current = MinimumSpeed And
-                    Galaxy.Warping <> Galaxy.Warp.Warping And
-                    Galaxy.centerShip.Helm.Direction = 0 Then
-                    Galaxy.Warping = Galaxy.Warp.Entering
-                    Galaxy.Star.Speed = 20
                 End If
+                '---------------
             End If
 
             '-----Evade-----

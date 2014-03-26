@@ -39,10 +39,8 @@ Public MustInherit Class Ship
         Dim incomingVector As Double
         If adjacent <> 0 Then
             incomingVector = Math.Tanh(opposite / adjacent)
-            If adjacent > 0 Then
+            If adjacent < 0 Then
                 incomingVector = incomingVector + Math.PI
-            ElseIf incomingVector < 0 Then
-                incomingVector = incomingVector + (Math.PI * 2)
             End If
             incomingVector = Helm.NormalizeDirection(incomingVector)
         ElseIf opposite > 0 Then
@@ -50,14 +48,15 @@ Public MustInherit Class Ship
         Else
             incomingVector = (3 * Math.PI) / 2
         End If
+        incomingVector = Helm.NormalizeDirection(incomingVector - Helm.Direction)
 
-        If incomingVector >= (Math.PI / 4) And incomingVector <= ((3 * Math.PI) / 4) Then
+        If incomingVector <= Math.PI / 4 Or incomingVector >= (7 * Math.PI) / 4 Then
             sideHit = Shields.Sides.FrontShield
-        ElseIf incomingVector >= ((3 * Math.PI) / 4) And incomingVector <= ((5 * Math.PI) / 4) Then
+        ElseIf incomingVector >= Math.PI / 4 And incomingVector <= (3 * Math.PI) / 4 Then
             sideHit = Shields.Sides.LeftShield
-        ElseIf incomingVector >= ((5 * Math.PI) / 4) And incomingVector <= ((7 * Math.PI) / 4) Then
+        ElseIf incomingVector >= (3 * Math.PI) / 4 And incomingVector <= (5 * Math.PI) / 4 Then
             sideHit = Shields.Sides.BackShield
-        ElseIf incomingVector >= ((7 * Math.PI) / 4) And incomingVector <= (Math.PI / 4) Then
+        ElseIf incomingVector >= (5 * Math.PI) / 4 And incomingVector <= (7 * Math.PI) / 4 Then
             sideHit = Shields.Sides.RightShield
         End If
 

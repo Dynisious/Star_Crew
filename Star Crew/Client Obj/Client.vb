@@ -19,12 +19,13 @@
         End Try
     End Sub
 
-    Private Event SendCommand(ByVal command As Integer)
-    Public Sub SendCommand_Call(ByVal command As Integer)
-        RaiseEvent SendCommand(command)
+    Private Event SendCommand(ByVal command As Integer, ByVal value As Integer)
+    Public Sub SendCommand_Call(ByVal command As Integer, ByVal value As Integer)
+        RaiseEvent SendCommand(command, value)
     End Sub
-    Private Sub SendCommand_Handle(ByVal command As Integer) Handles Me.SendCommand
+    Private Sub SendCommand_Handle(ByVal command As Integer, ByVal value As Integer) Handles Me.SendCommand
         myMessage.Command = command
+        myMessage.Value = value
     End Sub
 
     Private Event RunComms()
@@ -45,15 +46,28 @@
         Dim bf As New Runtime.Serialization.Formatters.Binary.BinaryFormatter
         '-----Recieve Message-----
         Net.Sockets.Socket.Select(socket, Nothing, Nothing, -1)
-        serversMessage = bf.Deserialize(MyConnector.GetStream())
+        Try
+            serversMessage = bf.Deserialize(MyConnector.GetStream())
+        Catch ex As Exception
+            Console.WriteLine("Error : The Client was disconnected unexpectedly")
+            Console.WriteLine(ex.ToString)
+            Screen.GamePlayLayout.btnMainMenu_Click()
+        End Try
         '-------------------------
 
         '-----Send Message-----
         Net.Sockets.Socket.Select(Nothing, socket, Nothing, -1)
         Using fs As New IO.MemoryStream
             bf.Serialize(fs, myMessage)
-            MyConnector.Client.Send(fs.ToArray())
+            Try
+                MyConnector.Client.Send(fs.ToArray())
+            Catch ex As Exception
+                Console.WriteLine("Error : The Client was disconnected unexpectedly")
+                Console.WriteLine(ex.ToString)
+                Screen.GamePlayLayout.btnMainMenu_Click()
+            End Try
             myMessage.Command = -1
+            myMessage.Value = -1
         End Using
         '----------------------
     End Sub

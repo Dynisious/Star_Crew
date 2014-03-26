@@ -48,8 +48,8 @@ Module Server
                           "Once you have killed all Enemies press 'Control + J' to exit to Warp Speed." + Environment.NewLine +
                           Environment.NewLine +
                           "Batteries: Rotate both Guns with the 'Left' and 'Right' arrow keys." + Environment.NewLine +
-                          "Fire the Primary Gun with 'Control'." + Environment.NewLine +
-                          "Fire the Secondary Gun with 'Shift'." + Environment.NewLine +
+                          "Fire the Primary Gun with 'A'." + Environment.NewLine +
+                          "Fire the Secondary Gun with 'D'." + Environment.NewLine +
                           "Select a New Target with 'M'." + Environment.NewLine +
                           Environment.NewLine +
                           "Shielding: Set the Shield to Prioritise with the arrow keys." + Environment.NewLine +
