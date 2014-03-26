@@ -17,6 +17,7 @@
             Console.WriteLine("Check address and make sure the server exists")
             Console.WriteLine(ex.ToString)
             Console.Beep()
+            Connected = False
         End Try
     End Sub
 
@@ -53,6 +54,7 @@
             Console.WriteLine("Error : The Client was disconnected unexpectedly")
             Console.WriteLine(ex.ToString)
             Screen.MyClient.MyConnector.Close()
+            Connected = False
             Screen.MyClient.comms.Abort()
         End Try
         '-------------------------
@@ -67,6 +69,7 @@
                 Console.WriteLine("Error : The Client was disconnected unexpectedly")
                 Console.WriteLine(ex.ToString)
                 Screen.MyClient.MyConnector.Close()
+                Connected = False
                 Screen.MyClient.comms.Abort()
             End Try
             myMessage.Command = -1

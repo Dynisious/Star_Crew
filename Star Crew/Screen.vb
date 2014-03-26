@@ -158,7 +158,7 @@
 
                 If count = 3 And DomainUpDown1.SelectedIndex <> -1 Then
                     MyClient = New Client(txtIP.Text, DomainUpDown1.SelectedIndex)
-                    If MyClient.comms.IsAlive = True Then
+                    If MyClient.Connected = True Then
                         Dim temp As New GamePlayLayout
                     End If
                 Else
@@ -472,7 +472,7 @@
                         MyClient.SendCommand_Call(Shields.Commands.BoostForward, 1)
                     ElseIf e.KeyCode = Keys.Right Then
                         MyClient.SendCommand_Call(Shields.Commands.BoostRight, 1)
-                    ElseIf e.KeyCode = Keys.Back Then
+                    ElseIf e.KeyCode = Keys.Down Then
                         MyClient.SendCommand_Call(Shields.Commands.BoostBack, 1)
                     ElseIf e.KeyCode = Keys.Left Then
                         MyClient.SendCommand_Call(Shields.Commands.BoostLeft, 1)
@@ -516,7 +516,7 @@
                         MyClient.SendCommand_Call(Shields.Commands.BoostForward, 0)
                     ElseIf e.KeyCode = Keys.Right Then
                         MyClient.SendCommand_Call(Shields.Commands.BoostRight, 0)
-                    ElseIf e.KeyCode = Keys.Back Then
+                    ElseIf e.KeyCode = Keys.Down Then
                         MyClient.SendCommand_Call(Shields.Commands.BoostBack, 0)
                     ElseIf e.KeyCode = Keys.Left Then
                         MyClient.SendCommand_Call(Shields.Commands.BoostLeft, 0)
@@ -576,7 +576,7 @@
     End Sub
 
     Private Sub UpdateScreen() Handles tick.Tick
-        If GamePlayLayout.Displaying = True And MyClient.serversMessage IsNot Nothing Then
+        If GamePlayLayout.Displaying = True And MyClient.serversMessage IsNot Nothing And MyClient.Connected = True Then
             Screen.GamePlayLayout.picDisplayGraphics.Image = MyClient.serversMessage.bmp
             Screen.GamePlayLayout.lblHull.Text = "Hull: " + CStr(MyClient.serversMessage.ship.Hull.current) + "/" + CStr(MyClient.serversMessage.ship.Hull.max)
             Screen.GamePlayLayout.lblThrottle.Text = "Throttle: " + CStr(CInt(MyClient.serversMessage.ship.Helm.Throttle.current)) + "/" + CStr(CInt(MyClient.serversMessage.ship.Helm.Throttle.max))
@@ -611,7 +611,7 @@
             Screen.GamePlayLayout.lblSecondary.Text = "Secondary: " + CStr(MyClient.serversMessage.ship.Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).current) + "/" + CStr(MyClient.serversMessage.ship.Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).max)
             Screen.GamePlayLayout.lblPowerCore.Text = "Power Core: " + CStr(MyClient.serversMessage.ship.Engineering.PowerCore.current) + "/" + CStr(MyClient.serversMessage.ship.Engineering.PowerCore.max)
             Screen.GamePlayLayout.lblEngines.Text = "Engines: " + CStr(MyClient.serversMessage.ship.Engineering.Engines.current) + "/" + CStr(MyClient.serversMessage.ship.Engineering.Engines.max)
-        ElseIf MyClient.comms.IsAlive = False Then
+        Else
             tick.Enabled = False
             Dim temp As New MenuScreenLayout
         End If

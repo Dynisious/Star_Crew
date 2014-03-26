@@ -129,7 +129,7 @@ Module Server
                     For Each i As ServerSideClient In Communications.Clients
                         If i.MyStation = stationType Then
                             Communications.RemoveClient(i.MySocket, True)
-                            WriteLine(str + " Has been kicked")
+                            Console.WriteLine(str + ": Has been kicked")
                             Exit Sub
                         End If
                     Next
@@ -150,6 +150,9 @@ Module Server
     End Sub
 
     Public Sub StartServer()
+        For Each i As ServerSideClient In Communications.Clients
+            Communications.RemoveClient(i.MySocket, True)
+        Next
         GameWorld.StartGame_Call()
         Console.WriteLine("Game is now running")
         If comms.IsAlive = False Then
@@ -207,12 +210,11 @@ Module Server
         Public MyListener As New TcpListener("1225")
         Public Ports(0) As Socket
         Public Clients(-1) As ServerSideClient
-        Public Event UpdateServerMessage(ByVal nShip As Ship, ByVal nBmp As Bitmap)
 
+        Public Event UpdateServerMessage(ByVal nShip As Ship, ByVal nBmp As Bitmap)
         Public Sub UpdateServerMessage_Call(ByVal nShip As Ship, ByVal nBmp As Bitmap)
             RaiseEvent UpdateServerMessage(nShip, nBmp)
         End Sub
-
         Private Sub UpdateServerMessage_Handle(ByVal nShip As Ship, ByVal nBmp As Bitmap) Handles Me.UpdateServerMessage
             MessageToSend = New ServerMessage(nShip, nBmp)
         End Sub
