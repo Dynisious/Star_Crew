@@ -15,7 +15,8 @@
             Console.WriteLine()
             Console.WriteLine("Error: Could not connect to server")
             Console.WriteLine("Check address and make sure the server exists")
-            Console.WriteLine(ex)
+            Console.WriteLine(ex.ToString)
+            Console.Beep()
         End Try
     End Sub
 
@@ -51,7 +52,8 @@
         Catch ex As Exception
             Console.WriteLine("Error : The Client was disconnected unexpectedly")
             Console.WriteLine(ex.ToString)
-            Screen.GamePlayLayout.btnMainMenu_Click()
+            Screen.MyClient.MyConnector.Close()
+            Screen.MyClient.comms.Abort()
         End Try
         '-------------------------
 
@@ -64,7 +66,8 @@
             Catch ex As Exception
                 Console.WriteLine("Error : The Client was disconnected unexpectedly")
                 Console.WriteLine(ex.ToString)
-                Screen.GamePlayLayout.btnMainMenu_Click()
+                Screen.MyClient.MyConnector.Close()
+                Screen.MyClient.comms.Abort()
             End Try
             myMessage.Command = -1
             myMessage.Value = -1

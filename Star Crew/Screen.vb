@@ -161,7 +161,11 @@
                     If MyClient.comms.IsAlive = True Then
                         Dim temp As New GamePlayLayout
                     End If
+                Else
+                    Console.Beep()
                 End If
+            Else
+                Console.Beep()
             End If
         End Sub
 
@@ -417,6 +421,10 @@
             '--------------------------
             Server.OutputScreen.tick.Enabled = True
             UserKeyInterfacer.Focus()
+            If MyClient.comms.IsAlive = False Then
+                Server.OutputScreen.tick.Enabled = False
+                Dim temp As New MenuScreenLayout
+            End If
         End Sub
 
         Public Shared Sub btnMainMenu_Click() Handles btnMainMenu.Click
@@ -580,6 +588,9 @@
             Screen.GamePlayLayout.lblSecondary.Text = "Secondary: " + CStr(MyClient.serversMessage.ship.Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).current) + "/" + CStr(MyClient.serversMessage.ship.Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).max)
             Screen.GamePlayLayout.lblPowerCore.Text = "Power Core: " + CStr(MyClient.serversMessage.ship.Engineering.PowerCore.current) + "/" + CStr(MyClient.serversMessage.ship.Engineering.PowerCore.max)
             Screen.GamePlayLayout.lblEngines.Text = "Engines: " + CStr(MyClient.serversMessage.ship.Engineering.Engines.current) + "/" + CStr(MyClient.serversMessage.ship.Engineering.Engines.max)
+        ElseIf MyClient.comms.IsAlive = False Then
+            tick.Enabled = False
+            Dim temp As New MenuScreenLayout
         End If
     End Sub
 
