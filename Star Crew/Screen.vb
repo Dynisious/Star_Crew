@@ -580,10 +580,33 @@
             Screen.GamePlayLayout.picDisplayGraphics.Image = MyClient.serversMessage.bmp
             Screen.GamePlayLayout.lblHull.Text = "Hull: " + CStr(MyClient.serversMessage.ship.Hull.current) + "/" + CStr(MyClient.serversMessage.ship.Hull.max)
             Screen.GamePlayLayout.lblThrottle.Text = "Throttle: " + CStr(CInt(MyClient.serversMessage.ship.Helm.Throttle.current)) + "/" + CStr(CInt(MyClient.serversMessage.ship.Helm.Throttle.max))
+
             Screen.GamePlayLayout.lblForward.Text = "Fore: " + CStr(CInt(MyClient.serversMessage.ship.Shielding.ShipShields(Shields.Sides.FrontShield).current)) + "/" + CStr(MyClient.serversMessage.ship.Shielding.ShipShields(Shields.Sides.FrontShield).max)
             Screen.GamePlayLayout.lblRight.Text = "Starboard: " + CStr(CInt(MyClient.serversMessage.ship.Shielding.ShipShields(Shields.Sides.RightShield).current)) + "/" + CStr(MyClient.serversMessage.ship.Shielding.ShipShields(Shields.Sides.RightShield).max)
             Screen.GamePlayLayout.lblRear.Text = "Aft: " + CStr(CInt(MyClient.serversMessage.ship.Shielding.ShipShields(Shields.Sides.BackShield).current)) + "/" + CStr(MyClient.serversMessage.ship.Shielding.ShipShields(Shields.Sides.BackShield).max)
             Screen.GamePlayLayout.lblLeft.Text = "Port: " + CStr(CInt(MyClient.serversMessage.ship.Shielding.ShipShields(Shields.Sides.LeftShield).current)) + "/" + CStr(MyClient.serversMessage.ship.Shielding.ShipShields(Shields.Sides.LeftShield).max)
+            Select Case MyClient.serversMessage.ship.Shielding.LastHit
+                Case Shields.Sides.FrontShield
+                    Screen.GamePlayLayout.lblForward.BackColor = Color.LightBlue
+                    Screen.GamePlayLayout.lblRight.BackColor = Color.Transparent
+                    Screen.GamePlayLayout.lblRear.BackColor = Color.Transparent
+                    Screen.GamePlayLayout.lblLeft.BackColor = Color.Transparent
+                Case Shields.Sides.RightShield
+                    Screen.GamePlayLayout.lblForward.BackColor = Color.Transparent
+                    Screen.GamePlayLayout.lblRight.BackColor = Color.LightBlue
+                    Screen.GamePlayLayout.lblRear.BackColor = Color.Transparent
+                    Screen.GamePlayLayout.lblLeft.BackColor = Color.Transparent
+                Case Shields.Sides.BackShield
+                    Screen.GamePlayLayout.lblForward.BackColor = Color.Transparent
+                    Screen.GamePlayLayout.lblRight.BackColor = Color.Transparent
+                    Screen.GamePlayLayout.lblRear.BackColor = Color.LightBlue
+                    Screen.GamePlayLayout.lblLeft.BackColor = Color.Transparent
+                Case Shields.Sides.LeftShield
+                    Screen.GamePlayLayout.lblForward.BackColor = Color.Transparent
+                    Screen.GamePlayLayout.lblRight.BackColor = Color.Transparent
+                    Screen.GamePlayLayout.lblRear.BackColor = Color.Transparent
+                    Screen.GamePlayLayout.lblLeft.BackColor = Color.LightBlue
+            End Select
             Screen.GamePlayLayout.lblPrimary.Text = "Primary: " + CStr(MyClient.serversMessage.ship.Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).current) + "/" + CStr(MyClient.serversMessage.ship.Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).max)
             Screen.GamePlayLayout.lblSecondary.Text = "Secondary: " + CStr(MyClient.serversMessage.ship.Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).current) + "/" + CStr(MyClient.serversMessage.ship.Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).max)
             Screen.GamePlayLayout.lblPowerCore.Text = "Power Core: " + CStr(MyClient.serversMessage.ship.Engineering.PowerCore.current) + "/" + CStr(MyClient.serversMessage.ship.Engineering.PowerCore.max)

@@ -11,6 +11,7 @@
         NewHelmStats(HelmStats.Turn) = New Stat(Math.PI / 20, Math.PI / 20)
         '--------------
         '-----Batteries-----
+        TurnScale = 1.25
         NewBatteryWeapons(BatteryWeapons.Primary) = New Weapon(New Rattler)
         NewBatteryWeapons(BatteryWeapons.Secondary) = New Weapon(New Rattler)
         '-------------------

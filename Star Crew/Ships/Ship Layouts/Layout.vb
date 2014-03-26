@@ -21,7 +21,7 @@
         Max
     End Enum
     Public NewBatteryWeapons(BatteryWeapons.Max - 1) As Weapon
-    Private TurnScale As Double = 1.25
+    Public TurnScale As Double = 1
     '-------------------
 
     '-----Shielding-----

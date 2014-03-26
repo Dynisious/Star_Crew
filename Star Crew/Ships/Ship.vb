@@ -34,8 +34,8 @@ Public MustInherit Class Ship
 
     Public Sub TakeDamage(ByRef nWeapon As Weapon, ByRef shooter As Ship)
         Dim sideHit As Shields.Sides
-        Dim adjacent As Integer = (Position.X - nWeapon.Parent.Parent.Position.X)
-        Dim opposite As Integer = (Position.Y - nWeapon.Parent.Parent.Position.Y)
+        Dim adjacent As Integer = (nWeapon.Parent.Parent.Position.X - Position.X)
+        Dim opposite As Integer = (nWeapon.Parent.Parent.Position.Y - Position.Y)
         Dim incomingVector As Double
         If adjacent <> 0 Then
             incomingVector = Math.Tanh(opposite / adjacent)
@@ -53,11 +53,11 @@ Public MustInherit Class Ship
         If incomingVector <= Math.PI / 4 Or incomingVector >= (7 * Math.PI) / 4 Then
             sideHit = Shields.Sides.FrontShield
         ElseIf incomingVector >= Math.PI / 4 And incomingVector <= (3 * Math.PI) / 4 Then
-            sideHit = Shields.Sides.LeftShield
+            sideHit = Shields.Sides.RightShield
         ElseIf incomingVector >= (3 * Math.PI) / 4 And incomingVector <= (5 * Math.PI) / 4 Then
             sideHit = Shields.Sides.BackShield
         ElseIf incomingVector >= (5 * Math.PI) / 4 And incomingVector <= (7 * Math.PI) / 4 Then
-            sideHit = Shields.Sides.RightShield
+            sideHit = Shields.Sides.LeftShield
         End If
 
         Dim incomingDamage As Integer = Shielding.DeflectHit(sideHit, nWeapon)

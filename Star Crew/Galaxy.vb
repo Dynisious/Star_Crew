@@ -5,7 +5,7 @@
     Private primaryRadius As Integer
     Private secondaryDirection As Double
     Private secondaryRadius As Integer
-    Public ReadOnly ShipCount As Integer = 1
+    Public ReadOnly ShipCount As Integer = 50
     Public Shared xList(-1) As Ship
     Private Shared Bmp As New Bitmap(600, 600)
     Private shipPositions(-1) As Point
