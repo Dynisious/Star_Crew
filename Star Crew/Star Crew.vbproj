@@ -113,6 +113,7 @@
     <Compile Include="Client Obj\Client.vb" />
     <Compile Include="Client Obj\ClientMessage.vb" />
     <Compile Include="Galaxy.vb" />
+    <Compile Include="Graphics\GraphicPosition.vb" />
     <Compile Include="Server Obj\Server.vb" />
     <Compile Include="Screen.vb">
       <SubType>Form</SubType>

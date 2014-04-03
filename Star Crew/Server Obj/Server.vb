@@ -30,11 +30,9 @@ Module Server
         {commands.KickPlayer, "/kick :      Removes the player from the game"},
         {commands.Clear, "/clr :        Clears the screen"}
     }
-    Public GameWorld As New Galaxy
     Public OutputScreen As New Screen
     Public client As New Threading.Thread(AddressOf OutputScreen.Open)
-    Public Communications As New ServerComms
-    Public comms As New Threading.Thread(AddressOf Communications.StartCommunications)
+    Public comms As New Threading.Thread(AddressOf ServerComms.StartCommunications)
 
     Public Sub Main()
         client.Start()
@@ -126,9 +124,9 @@ Module Server
                         Case Else
                             Console.WriteLine("Station not recognised. Check for capitals and spelling")
                     End Select
-                    For Each i As ServerSideClient In Communications.Clients
+                    For Each i As ServerSideClient In ServerComms.Clients
                         If i.MyStation = stationType Then
-                            Communications.RemoveClient(i.MySocket, True)
+                            ServerComms.RemoveClient(i.MySocket, True)
                             Console.WriteLine(str + ": Has been kicked")
                             Exit Sub
                         End If
@@ -150,10 +148,10 @@ Module Server
     End Sub
 
     Public Sub StartServer()
-        For Each i As ServerSideClient In Communications.Clients
-            Communications.RemoveClient(i.MySocket, True)
+        For Each i As ServerSideClient In ServerComms.Clients
+            ServerComms.RemoveClient(i.MySocket, True)
         Next
-        GameWorld.StartGame_Call()
+        Galaxy.StartGame_Call()
         Console.WriteLine("Game is now running")
         If comms.IsAlive = False Then
             comms.Start()
@@ -174,9 +172,9 @@ Module Server
                 Dim receivedBuffLength As Integer = MySocket.Receive(receiveBuff, 0, receiveBuff.Length, SocketFlags.None)
                 Dim str As Integer = System.Text.Encoding.ASCII.GetString(receiveBuff, 0, receivedBuffLength).Trim(ChrW(0))
                 MyStation = CInt(str)
-                For Each i As ServerSideClient In Communications.Clients
+                For Each i As ServerSideClient In ServerComms.Clients
                     If ReferenceEquals(Me, i) = False And i.MyStation = MyStation Then
-                        Communications.RemoveClient(MySocket, False)
+                        ServerComms.RemoveClient(MySocket, False)
                         Exit Sub
                     End If
                 Next
@@ -195,31 +193,31 @@ Module Server
                 Try
                     Using fs As New NetworkStream(MySocket)
                         Dim bf As New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
-                        GameWorld.RunCommand_Call(bf.Deserialize(fs))
+                        Galaxy.RunCommand_Call(bf.Deserialize(fs))
                     End Using
                 Catch ex As Exception
-                    Server.Communications.RemoveClient(MySocket, True)
+                    Server.ServerComms.RemoveClient(MySocket, True)
                 End Try
             End If
         End Sub
     End Class
 
     Public Class ServerComms
-        Public MessageToSend As ServerMessage
-        Public MessageBuff() As Byte
-        Public MyListener As New TcpListener("1225")
-        Public Ports(0) As Socket
-        Public Clients(-1) As ServerSideClient
+        Public Shared MessageToSend As ServerMessage
+        Public Shared MessageBuff() As Byte
+        Public Shared MyListener As New TcpListener("1225")
+        Public Shared Ports(0) As Socket
+        Public Shared Clients(-1) As ServerSideClient
 
-        Public Event UpdateServerMessage(ByVal nShip As Ship, ByVal nBmp As Bitmap)
-        Public Sub UpdateServerMessage_Call(ByVal nShip As Ship, ByVal nBmp As Bitmap)
-            RaiseEvent UpdateServerMessage(nShip, nBmp)
+        Public Shared Event UpdateServerMessage(ByVal nShip As Ship, ByVal nPositions() As GraphicPosition, ByVal nWarp As Galaxy.Warp)
+        Public Shared Sub UpdateServerMessage_Call(ByVal nShip As Ship, ByVal nPositions() As GraphicPosition, ByVal nWarp As Galaxy.Warp)
+            RaiseEvent UpdateServerMessage(nShip, nPositions, nWarp)
         End Sub
-        Private Sub UpdateServerMessage_Handle(ByVal nShip As Ship, ByVal nBmp As Bitmap) Handles Me.UpdateServerMessage
-            MessageToSend = New ServerMessage(nShip, nBmp)
+        Private Shared Sub UpdateServerMessage_Handle(ByVal nShip As Ship, ByVal nPositions() As GraphicPosition, ByVal nWarp As Galaxy.Warp) Handles MyClass.UpdateServerMessage
+            MessageToSend = New ServerMessage(nShip, nPositions, nWarp)
         End Sub
 
-        Public Sub StartCommunications()
+        Public Shared Sub StartCommunications()
             Ports(0) = MyListener.Server
             MyListener.Start()
             Console.WriteLine("Server is now listening on " + MyListener.Server.LocalEndPoint.ToString)
@@ -229,7 +227,7 @@ Module Server
             End While
         End Sub
 
-        Private Sub Listen()
+        Private Shared Sub Listen()
             '-----Creat List-----
             Dim socketList As New ArrayList
             For Each i As Socket In Ports
@@ -255,7 +253,7 @@ Module Server
 
             '-----Send Messages to Clients-----
             socketList.Clear()
-            MessageBuff = MessageToSend.ConstructMessage()
+            MessageBuff = ServerMessage.ConstructMessage()
             For Each i As ServerSideClient In Clients
                 socketList.Add(i.MySocket)
             Next
@@ -272,7 +270,7 @@ Module Server
             '----------------------------------
         End Sub
 
-        Public Sub AddClient(ByRef nSocket As Socket)
+        Public Shared Sub AddClient(ByRef nSocket As Socket)
             If Clients.Length < 4 Then
                 ReDim Preserve Clients(Clients.Length)
                 Clients(UBound(Clients)) = New ServerSideClient(nSocket)
@@ -289,7 +287,7 @@ Module Server
             End If
         End Sub
 
-        Public Sub RemoveClient(ByRef nSocket As Socket, ByVal resetControl As Boolean)
+        Public Shared Sub RemoveClient(ByRef nSocket As Socket, ByVal resetControl As Boolean)
             For Each i As ServerSideClient In Clients
                 If ReferenceEquals(i.MySocket, nSocket) = True Then
                     Console.WriteLine(i.MyStation.ToString + ": Client was disconnected")

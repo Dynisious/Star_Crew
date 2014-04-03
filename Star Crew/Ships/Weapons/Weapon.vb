@@ -49,6 +49,7 @@ Public Class Weapon
             WeaponStats(Stats.Ready).current = 0
             WeaponStats(Stats.Ammo).current = WeaponStats(Stats.Ammo).current - 1
             target.TakeDamage(Me, Parent.Parent)
+            Parent.Parent.Firing = True
             If ReferenceEquals(target, Parent.Parent.Helm.Target) = True And target.Dead = True Then
                 Parent.Parent.TargetLock = False
             End If

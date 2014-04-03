@@ -1,17 +1,19 @@
 ﻿<Serializable()>
 Public Class ServerMessage
-    Public bmp As Bitmap
-    Public ship As Ship
+    Public Ship As Ship
+    Public Positions() As GraphicPosition
+    Public Warping As Galaxy.Warp
 
-    Public Sub New(ByVal ncenterShip As Ship, ByVal nImage As Bitmap)
-        bmp = nImage
-        ship = ncenterShip
+    Public Sub New(ByVal nCenterShip As Ship, ByVal nPositions() As GraphicPosition, ByVal nWarping As Galaxy.Warp)
+        Ship = nCenterShip
+        Positions = nPositions
+        Warping = nWarping
     End Sub
 
-    Public Function ConstructMessage() As Byte()
+    Public Shared Function ConstructMessage() As Byte()
         Using fs As New IO.MemoryStream
             Dim bf As New Runtime.Serialization.Formatters.Binary.BinaryFormatter
-            bf.Serialize(fs, Server.Communications.MessageToSend)
+            bf.Serialize(fs, Server.ServerComms.MessageToSend)
             Dim buff() As Byte = fs.ToArray
             Return buff
         End Using

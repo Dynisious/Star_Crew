@@ -1,6 +1,7 @@
 ﻿Public Class Screen
-    Private WithEvents tick As New Timer With {.Interval = 10, .Enabled = False}
+    Private Shared WithEvents Tick As New Timer With {.Interval = 10, .Enabled = False}
     Public Shared MyClient As Client
+    Public Shared ReadOnly ImageSize As New Point(600, 600)
 
     Public Class MenuScreenLayout
         Public Shared WithEvents btnStartServer As System.Windows.Forms.Button
@@ -60,7 +61,7 @@
         Private Shared Sub btnExit_Click() Handles btnExit.Click
             Server.comms.Abort()
             If MyClient IsNot Nothing Then
-                MyClient.comms.Abort()
+                Client.comms.Abort()
             End If
             End
         End Sub
@@ -158,7 +159,7 @@
 
                 If count = 3 And DomainUpDown1.SelectedIndex <> -1 Then
                     MyClient = New Client(txtIP.Text, DomainUpDown1.SelectedIndex)
-                    If MyClient.Connected = True Then
+                    If Client.Connected = True Then
                         Dim temp As New GamePlayLayout
                     End If
                 Else
@@ -222,7 +223,7 @@
             picDisplayGraphics.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
             picDisplayGraphics.Location = New System.Drawing.Point(6, 6)
             picDisplayGraphics.Name = "picDisplayGraphics"
-            picDisplayGraphics.Size = New System.Drawing.Size(600, 600)
+            picDisplayGraphics.Size = New System.Drawing.Size(ImageSize.X, ImageSize.Y)
             picDisplayGraphics.TabIndex = 0
             picDisplayGraphics.TabStop = False
             '
@@ -419,17 +420,17 @@
             pnlDisplays.ResumeLayout(False)
             pnlMenuButtons.ResumeLayout(False)
             '--------------------------
-            Server.OutputScreen.tick.Enabled = True
             UserKeyInterfacer.Focus()
-            If MyClient.comms.IsAlive = False Then
-                Server.OutputScreen.tick.Enabled = False
+            If Client.comms.IsAlive = False Then
                 Dim temp As New MenuScreenLayout
+            Else
+                Tick.Enabled = True
             End If
         End Sub
 
         Public Shared Sub btnMainMenu_Click() Handles btnMainMenu.Click
-            Screen.MyClient.comms.Abort()
-            Screen.MyClient.MyConnector.Close()
+            Client.comms.Abort()
+            Client.MyConnector.Close()
             Dim temp As New MenuScreenLayout
         End Sub
 
@@ -438,88 +439,88 @@
         End Sub
 
         Private Shared Sub UserKeyInterfacer_PreviewKeyDown(ByVal sender As Object, ByVal e As PreviewKeyDownEventArgs) Handles UserKeyInterfacer.PreviewKeyDown
-            Select Case MyClient.myMessage.Station
+            Select Case Client.myMessage.Station
                 Case Station.StationTypes.Helm
                     If e.KeyCode = Keys.Up Then 'Throttle Up
-                        MyClient.SendCommand_Call(Helm.Commands.ThrottleUp, 1)
+                        Client.SendCommand_Call(Helm.Commands.ThrottleUp, 1)
                     ElseIf e.KeyCode = Keys.Down Then 'Throttle Down
-                        MyClient.SendCommand_Call(Helm.Commands.ThrottleDown, 1)
+                        Client.SendCommand_Call(Helm.Commands.ThrottleDown, 1)
                     ElseIf e.KeyCode = Keys.Right Then 'Turn Right
-                        MyClient.SendCommand_Call(Helm.Commands.TurnRight, 1)
+                        Client.SendCommand_Call(Helm.Commands.TurnRight, 1)
                     ElseIf e.KeyCode = Keys.Left Then 'Turn Left
-                        MyClient.SendCommand_Call(Helm.Commands.TurnLeft, 1)
+                        Client.SendCommand_Call(Helm.Commands.TurnLeft, 1)
                     ElseIf e.KeyCode = Keys.J And e.Control = True Then 'Warp Drive
-                        MyClient.SendCommand_Call(Helm.Commands.WarpDrive, 1)
+                        Client.SendCommand_Call(Helm.Commands.WarpDrive, 1)
                     ElseIf e.KeyCode = Keys.M Then 'Match Speed
-                        MyClient.SendCommand_Call(Helm.Commands.MatchSpeed, 1)
+                        Client.SendCommand_Call(Helm.Commands.MatchSpeed, 1)
                     End If
                 Case Station.StationTypes.Batteries
                     If e.KeyCode = Keys.Right Then 'Turn Right
-                        MyClient.SendCommand_Call(Battery.Commands.TurnRight, 1)
+                        Client.SendCommand_Call(Battery.Commands.TurnRight, 1)
                     ElseIf e.KeyCode = Keys.Left Then 'Turn Left
-                        MyClient.SendCommand_Call(Battery.Commands.TurnLeft, 1)
+                        Client.SendCommand_Call(Battery.Commands.TurnLeft, 1)
                     ElseIf e.KeyCode = Keys.M Then 'Set Target
-                        MyClient.SendCommand_Call(Battery.Commands.SetTarget, 1)
+                        Client.SendCommand_Call(Battery.Commands.SetTarget, 1)
                     End If
                     If e.KeyCode = Keys.A Then 'Fire Primary
-                        MyClient.SendCommand_Call(Battery.Commands.FirePrimary, 1)
+                        Client.SendCommand_Call(Battery.Commands.FirePrimary, 1)
                     End If
                     If e.KeyCode = Keys.D Then 'Fire Secondary
-                        MyClient.SendCommand_Call(Battery.Commands.FireSecondary, 1)
+                        Client.SendCommand_Call(Battery.Commands.FireSecondary, 1)
                     End If
                 Case Station.StationTypes.Shielding
                     If e.KeyCode = Keys.Up Then
-                        MyClient.SendCommand_Call(Shields.Commands.BoostForward, 1)
+                        Client.SendCommand_Call(Shields.Commands.BoostForward, 1)
                     ElseIf e.KeyCode = Keys.Right Then
-                        MyClient.SendCommand_Call(Shields.Commands.BoostRight, 1)
+                        Client.SendCommand_Call(Shields.Commands.BoostRight, 1)
                     ElseIf e.KeyCode = Keys.Down Then
-                        MyClient.SendCommand_Call(Shields.Commands.BoostBack, 1)
+                        Client.SendCommand_Call(Shields.Commands.BoostBack, 1)
                     ElseIf e.KeyCode = Keys.Left Then
-                        MyClient.SendCommand_Call(Shields.Commands.BoostLeft, 1)
+                        Client.SendCommand_Call(Shields.Commands.BoostLeft, 1)
                     End If
                 Case Station.StationTypes.Engineering
 
             End Select
         End Sub
         Private Shared Sub UserKeyInterfacer_KeyUp(ByVal sender As Object, ByVal e As KeyEventArgs) Handles UserKeyInterfacer.KeyUp
-            Select Case MyClient.myMessage.Station
+            Select Case Client.myMessage.Station
                 Case Station.StationTypes.Helm
                     If e.KeyCode = Keys.Up Then 'Throttle Up
-                        MyClient.SendCommand_Call(Helm.Commands.ThrottleUp, 0)
+                        Client.SendCommand_Call(Helm.Commands.ThrottleUp, 0)
                     ElseIf e.KeyCode = Keys.Down Then 'Throttle Down
-                        MyClient.SendCommand_Call(Helm.Commands.ThrottleDown, 0)
+                        Client.SendCommand_Call(Helm.Commands.ThrottleDown, 0)
                     ElseIf e.KeyCode = Keys.Right Then 'Turn Right
-                        MyClient.SendCommand_Call(Helm.Commands.TurnRight, 0)
+                        Client.SendCommand_Call(Helm.Commands.TurnRight, 0)
                     ElseIf e.KeyCode = Keys.Left Then 'Turn Left
-                        MyClient.SendCommand_Call(Helm.Commands.TurnLeft, 0)
+                        Client.SendCommand_Call(Helm.Commands.TurnLeft, 0)
                     ElseIf e.KeyCode = Keys.J And e.Control = True Then 'Warp Drive
-                        MyClient.SendCommand_Call(Helm.Commands.WarpDrive, 0)
+                        Client.SendCommand_Call(Helm.Commands.WarpDrive, 0)
                     ElseIf e.KeyCode = Keys.M Then 'Match Speed
-                        MyClient.SendCommand_Call(Helm.Commands.MatchSpeed, 0)
+                        Client.SendCommand_Call(Helm.Commands.MatchSpeed, 0)
                     End If
                 Case Station.StationTypes.Batteries
                     If e.KeyCode = Keys.Right Then 'Turn Right
-                        MyClient.SendCommand_Call(Battery.Commands.TurnRight, 0)
+                        Client.SendCommand_Call(Battery.Commands.TurnRight, 0)
                     ElseIf e.KeyCode = Keys.Left Then 'Turn Left
-                        MyClient.SendCommand_Call(Battery.Commands.TurnLeft, 0)
+                        Client.SendCommand_Call(Battery.Commands.TurnLeft, 0)
                     ElseIf e.KeyCode = Keys.M Then 'Set Target
-                        MyClient.SendCommand_Call(Battery.Commands.SetTarget, 0)
+                        Client.SendCommand_Call(Battery.Commands.SetTarget, 0)
                     End If
                     If e.KeyCode = Keys.A Then 'Fire Primary
-                        MyClient.SendCommand_Call(Battery.Commands.FirePrimary, 0)
+                        Client.SendCommand_Call(Battery.Commands.FirePrimary, 0)
                     End If
                     If e.KeyCode = Keys.D Then 'Fire Secondary
-                        MyClient.SendCommand_Call(Battery.Commands.FireSecondary, 0)
+                        Client.SendCommand_Call(Battery.Commands.FireSecondary, 0)
                     End If
                 Case Station.StationTypes.Shielding
                     If e.KeyCode = Keys.Up Then
-                        MyClient.SendCommand_Call(Shields.Commands.BoostForward, 0)
+                        Client.SendCommand_Call(Shields.Commands.BoostForward, 0)
                     ElseIf e.KeyCode = Keys.Right Then
-                        MyClient.SendCommand_Call(Shields.Commands.BoostRight, 0)
+                        Client.SendCommand_Call(Shields.Commands.BoostRight, 0)
                     ElseIf e.KeyCode = Keys.Down Then
-                        MyClient.SendCommand_Call(Shields.Commands.BoostBack, 0)
+                        Client.SendCommand_Call(Shields.Commands.BoostBack, 0)
                     ElseIf e.KeyCode = Keys.Left Then
-                        MyClient.SendCommand_Call(Shields.Commands.BoostLeft, 0)
+                        Client.SendCommand_Call(Shields.Commands.BoostLeft, 0)
                     End If
                 Case Station.StationTypes.Engineering
 
@@ -575,17 +576,16 @@
         Focus()
     End Sub
 
-    Private Sub UpdateScreen() Handles tick.Tick
-        If GamePlayLayout.Displaying = True And MyClient.serversMessage IsNot Nothing And MyClient.Connected = True Then
-            Screen.GamePlayLayout.picDisplayGraphics.Image = MyClient.serversMessage.bmp
-            Screen.GamePlayLayout.lblHull.Text = "Hull: " + CStr(MyClient.serversMessage.ship.Hull.current) + "/" + CStr(MyClient.serversMessage.ship.Hull.max)
-            Screen.GamePlayLayout.lblThrottle.Text = "Throttle: " + CStr(CInt(MyClient.serversMessage.ship.Helm.Throttle.current)) + "/" + CStr(CInt(MyClient.serversMessage.ship.Helm.Throttle.max))
+    Private Shared Sub UpdateScreen_Handle() Handles Tick.Tick
+        If Client.Connected = True And Client.serversMessage IsNot Nothing Then
+            Screen.GamePlayLayout.lblHull.Text = "Hull: " + CStr(Client.serversMessage.Ship.Hull.current) + "/" + CStr(Client.serversMessage.Ship.Hull.max)
+            Screen.GamePlayLayout.lblThrottle.Text = "Throttle: " + CStr(CInt(Client.serversMessage.Ship.Helm.Throttle.current)) + "/" + CStr(CInt(Client.serversMessage.Ship.Helm.Throttle.max))
 
-            Screen.GamePlayLayout.lblForward.Text = "Fore: " + CStr(CInt(MyClient.serversMessage.ship.Shielding.ShipShields(Shields.Sides.FrontShield).current)) + "/" + CStr(MyClient.serversMessage.ship.Shielding.ShipShields(Shields.Sides.FrontShield).max)
-            Screen.GamePlayLayout.lblRight.Text = "Starboard: " + CStr(CInt(MyClient.serversMessage.ship.Shielding.ShipShields(Shields.Sides.RightShield).current)) + "/" + CStr(MyClient.serversMessage.ship.Shielding.ShipShields(Shields.Sides.RightShield).max)
-            Screen.GamePlayLayout.lblRear.Text = "Aft: " + CStr(CInt(MyClient.serversMessage.ship.Shielding.ShipShields(Shields.Sides.BackShield).current)) + "/" + CStr(MyClient.serversMessage.ship.Shielding.ShipShields(Shields.Sides.BackShield).max)
-            Screen.GamePlayLayout.lblLeft.Text = "Port: " + CStr(CInt(MyClient.serversMessage.ship.Shielding.ShipShields(Shields.Sides.LeftShield).current)) + "/" + CStr(MyClient.serversMessage.ship.Shielding.ShipShields(Shields.Sides.LeftShield).max)
-            Select Case MyClient.serversMessage.ship.Shielding.LastHit
+            Screen.GamePlayLayout.lblForward.Text = "Fore: " + CStr(CInt(Client.serversMessage.Ship.Shielding.ShipShields(Shields.Sides.FrontShield).current)) + "/" + CStr(Client.serversMessage.Ship.Shielding.ShipShields(Shields.Sides.FrontShield).max)
+            Screen.GamePlayLayout.lblRight.Text = "Starboard: " + CStr(CInt(Client.serversMessage.Ship.Shielding.ShipShields(Shields.Sides.RightShield).current)) + "/" + CStr(Client.serversMessage.Ship.Shielding.ShipShields(Shields.Sides.RightShield).max)
+            Screen.GamePlayLayout.lblRear.Text = "Aft: " + CStr(CInt(Client.serversMessage.Ship.Shielding.ShipShields(Shields.Sides.BackShield).current)) + "/" + CStr(Client.serversMessage.Ship.Shielding.ShipShields(Shields.Sides.BackShield).max)
+            Screen.GamePlayLayout.lblLeft.Text = "Port: " + CStr(CInt(Client.serversMessage.Ship.Shielding.ShipShields(Shields.Sides.LeftShield).current)) + "/" + CStr(Client.serversMessage.Ship.Shielding.ShipShields(Shields.Sides.LeftShield).max)
+            Select Case Client.serversMessage.Ship.Shielding.LastHit
                 Case Shields.Sides.FrontShield
                     Screen.GamePlayLayout.lblForward.BackColor = Color.LightBlue
                     Screen.GamePlayLayout.lblRight.BackColor = Color.Transparent
@@ -607,20 +607,20 @@
                     Screen.GamePlayLayout.lblRear.BackColor = Color.Transparent
                     Screen.GamePlayLayout.lblLeft.BackColor = Color.LightBlue
             End Select
-            Screen.GamePlayLayout.lblPrimary.Text = "Primary: " + CStr(MyClient.serversMessage.ship.Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).current) + "/" + CStr(MyClient.serversMessage.ship.Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).max)
-            Screen.GamePlayLayout.lblSecondary.Text = "Secondary: " + CStr(MyClient.serversMessage.ship.Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).current) + "/" + CStr(MyClient.serversMessage.ship.Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).max)
-            Screen.GamePlayLayout.lblPowerCore.Text = "Power Core: " + CStr(MyClient.serversMessage.ship.Engineering.PowerCore.current) + "/" + CStr(MyClient.serversMessage.ship.Engineering.PowerCore.max)
-            Screen.GamePlayLayout.lblEngines.Text = "Engines: " + CStr(MyClient.serversMessage.ship.Engineering.Engines.current) + "/" + CStr(MyClient.serversMessage.ship.Engineering.Engines.max)
+            Screen.GamePlayLayout.lblPrimary.Text = "Primary: " + CStr(Client.serversMessage.Ship.Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).current) + "/" + CStr(Client.serversMessage.Ship.Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).max)
+            Screen.GamePlayLayout.lblSecondary.Text = "Secondary: " + CStr(Client.serversMessage.Ship.Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).current) + "/" + CStr(Client.serversMessage.Ship.Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).max)
+            Screen.GamePlayLayout.lblPowerCore.Text = "Power Core: " + CStr(Client.serversMessage.Ship.Engineering.PowerCore.current) + "/" + CStr(Client.serversMessage.Ship.Engineering.PowerCore.max)
+            Screen.GamePlayLayout.lblEngines.Text = "Engines: " + CStr(Client.serversMessage.Ship.Engineering.Engines.current) + "/" + CStr(Client.serversMessage.Ship.Engineering.Engines.max)
         Else
-            tick.Enabled = False
             Dim temp As New MenuScreenLayout
+            Tick.Enabled = False
         End If
     End Sub
 
     Private Sub Screen_FormClosing(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.FormClosing
         Server.comms.Abort()
         If MyClient IsNot Nothing Then
-            MyClient.comms.Abort()
+            Client.comms.Abort()
         End If
         End
     End Sub

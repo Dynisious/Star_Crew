@@ -1,16 +1,16 @@
 ﻿<Serializable()>
 Public MustInherit Class Ship
     <NonSerialized()>
-    Public Parent As Galaxy
+    Public Firing As Boolean = False
     Public Hit As Boolean = False
     Public Dead As Boolean = False
     Public TargetLock As Boolean = False
+    Public Index As Integer
     Public Enum Allegence
         Player
         Pirate
     End Enum
     Public MyAllegence As Allegence
-    Public Event ShipUpdate()
     Public Hull As Stat
     Public Position As Point
     '-----Helm-----
@@ -26,10 +26,10 @@ Public MustInherit Class Ship
     Public Engineering As New Engineering(Me)
     '---------------------
 
-    Public Sub New(ByRef nParent As Galaxy, ByVal nShipStats As Layout, ByVal nAllegence As Allegence)
-        Parent = nParent
+    Public Sub New(ByVal nShipStats As Layout, ByVal nIndex As Integer, ByVal nAllegence As Allegence)
         MyAllegence = nAllegence
         nShipStats.SetLayout(Me)
+        Index = nindex
     End Sub
 
     Public Sub TakeDamage(ByRef nWeapon As Weapon, ByRef shooter As Ship)
@@ -114,24 +114,28 @@ Public MustInherit Class Ship
     End Sub
 
     Public Overridable Sub DestroyShip()
-        If Parent IsNot Nothing Then
-            Parent.RemoveShip(Me)
+        If Dead = 0 Then
+            Galaxy.RemoveShip(Me)
             Helm.Parent = Nothing
             Batteries.Parent = Nothing
             Batteries.Primary.Parent = Nothing
             Batteries.Secondary.Parent = Nothing
             Shielding.Parent = Nothing
             Engineering.Parent = Nothing
-            Parent = Nothing
             Dead = True
             If ReferenceEquals(Galaxy.centerShip, Me) = True Then
-                GameWorld.Recenter()
+                Galaxy.Recenter()
             End If
         End If
     End Sub
 
-    Public Overridable Sub UpdateShip()
+    Public Shared Event ShipUpdate()
+    Public Shared Sub UpdateShip_Call()
+        RaiseEvent ShipUpdate()
+    End Sub
+    Public Overridable Sub UpdateShip_Handle() Handles MyClass.ShipUpdate
         Hit = False
+        Firing = False
         Batteries.Update()
         Engineering.Update()
         Shielding.Update()
@@ -142,7 +146,6 @@ Public MustInherit Class Ship
                                    (Helm.Throttle.current * (Engineering.Engines.current / Engineering.Engines.max)))
         Position.Y = Position.Y + (Math.Sin(Helm.Direction) *
                                    (Helm.Throttle.current * (Engineering.Engines.current / Engineering.Engines.max)))
-        RaiseEvent ShipUpdate()
     End Sub
 
 End Class

@@ -2,8 +2,8 @@
 Public Class PirateShip
     Inherits Ship
 
-    Public Sub New(ByRef nParent As Galaxy, ByVal nShipStats As Layout)
-        MyBase.New(nParent, nShipStats, Allegence.Pirate)
+    Public Sub New(ByVal nShipStats As Layout, ByVal nIndex As Integer)
+        MyBase.New(nShipStats, nIndex, Allegence.Pirate)
     End Sub
 
 End Class

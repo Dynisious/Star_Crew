@@ -2,8 +2,8 @@
 Public Class FriendlyShip
     Inherits Ship
 
-    Public Sub New(ByRef nParent As Galaxy, ByVal nShipStats As Layout)
-        MyBase.New(nParent, nShipStats, Allegence.Player)
+    Public Sub New(ByVal nShipStats As Layout, ByVal nIndex As Integer)
+        MyBase.New(nShipStats, nIndex, Allegence.Player)
     End Sub
 
 End Class

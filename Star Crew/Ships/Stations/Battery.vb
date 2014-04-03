@@ -24,22 +24,22 @@ Public Class Battery
             Primary.UpdateWeapon()
             Secondary.UpdateWeapon()
 
-            If PlayerControled = False And Parent.Parent.xList.Length <> 1 Then
-                Dim shipDirections(Parent.Parent.xList.Length - 1) As Double
-                Dim shipDistances(Parent.Parent.xList.Length - 1) As Integer
+            If PlayerControled = False And Galaxy.xList.Length <> 1 Then
+                Dim shipDirections(Galaxy.xList.Length - 1) As Double
+                Dim shipDistances(Galaxy.xList.Length - 1) As Integer
                 Parent.Helm.Target = Nothing
                 Dim Opposite As Integer
                 Dim Adjacent As Integer
-                Dim target As Ship
+                Dim target As Ship = Nothing
                 Dim targetDistance As Integer
                 Dim targetDirection As Double
-                ReDim shipDirections(Parent.Parent.xList.Length - 1)
-                ReDim shipDistances(Parent.Parent.xList.Length - 1)
+                ReDim shipDirections(Galaxy.xList.Length - 1)
+                ReDim shipDistances(Galaxy.xList.Length - 1)
                 ReDim Parent.Helm.evadeList(-1)
                 '-----Set Target Distances and Directions-----
                 For i As Integer = 0 To shipDistances.Length - 1
-                    Opposite = Parent.Parent.xList(i).Position.Y - Parent.Position.Y
-                    Adjacent = Parent.Parent.xList(i).Position.X - Parent.Position.X
+                    Opposite = Galaxy.xList(i).Position.Y - Parent.Position.Y
+                    Adjacent = Galaxy.xList(i).Position.X - Parent.Position.X
                     If Adjacent <> 0 Then
                         shipDirections(i) = Math.Tanh(Opposite / Adjacent)
                         If Adjacent < 0 Then
@@ -53,7 +53,7 @@ Public Class Battery
                     End If
                     shipDistances(i) = Math.Sqrt((Adjacent ^ 2) + (Opposite ^ 2))
 
-                    If ReferenceEquals(Parent, Parent.Parent.xList(i)) = False And shipDistances(i) < Helm.MinimumDistance And
+                    If ReferenceEquals(Parent, Galaxy.xList(i)) = False And shipDistances(i) < Helm.MinimumDistance And
                         shipDirections(i) - Parent.Helm.Direction < (3 * Math.PI) / 4 And
                         shipDirections(i) - Parent.Helm.Direction > -(3 * Math.PI) / 4 Then
                         ReDim Preserve Parent.Helm.evadeList(Parent.Helm.evadeList.Length)
@@ -66,16 +66,16 @@ Public Class Battery
                 Dim lastDistance As Integer
                 For i As Integer = 0 To shipDistances.Length - 1
                     '-----Select Target to Shoot-----
-                    If ReferenceEquals(Parent, Parent.Parent.xList(i)) = False Then
+                    If ReferenceEquals(Parent, Galaxy.xList(i)) = False Then
                         If (shipDistances(i) <= lastDistance Or lastDistance = 0) And
-                            Parent.Parent.xList(i).MyAllegence <> Parent.MyAllegence Then
+                            Galaxy.xList(i).MyAllegence <> Parent.MyAllegence Then
                             If Parent.TargetLock = False Then
-                                Parent.Helm.Target = Parent.Parent.xList(i)
+                                Parent.Helm.Target = Galaxy.xList(i)
                             End If
                             If (shipDirections(i) - Parent.Helm.Direction) < (Math.PI / 2) And
                                 (shipDirections(i) - Parent.Helm.Direction) > -(Math.PI / 2) Then
                                 lastDistance = shipDistances(i)
-                                target = Parent.Parent.xList(i)
+                                target = Galaxy.xList(i)
                                 targetDirection = shipDirections(i)
                                 targetDistance = shipDistances(i)
                             End If
