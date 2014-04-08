@@ -186,16 +186,19 @@
         Public Shared WithEvents lblRear As System.Windows.Forms.Label
         Public Shared WithEvents lblRight As System.Windows.Forms.Label
         Public Shared WithEvents lblLeft As System.Windows.Forms.Label
+        Public Shared WithEvents lblCoreTemp As System.Windows.Forms.Label
+        Public Shared WithEvents lblTempRate As System.Windows.Forms.Label
         Public Shared WithEvents pnlMenuButtons As System.Windows.Forms.Panel
         Public Shared WithEvents btnMainMenu As System.Windows.Forms.Button
         Public Shared WithEvents btnEndGame As System.Windows.Forms.Button
-        Private Shared WithEvents UserKeyInterfacer As System.Windows.Forms.Button
+        Public Shared WithEvents UserKeyInterfacer As System.Windows.Forms.Button
 
         Public Sub New()
             Server.OutputScreen.Controls.Clear()
             '-----Initialize Controls-----
             picDisplayGraphics = New System.Windows.Forms.PictureBox()
             pnlDisplays = New System.Windows.Forms.Panel()
+            lblThrottle = New System.Windows.Forms.Label()
             lblEngines = New System.Windows.Forms.Label()
             lblPowerCore = New System.Windows.Forms.Label()
             lblSecondary = New System.Windows.Forms.Label()
@@ -205,10 +208,11 @@
             lblRight = New System.Windows.Forms.Label()
             lblLeft = New System.Windows.Forms.Label()
             lblHull = New System.Windows.Forms.Label()
+            lblCoreTemp = New System.Windows.Forms.Label()
+            lblTempRate = New System.Windows.Forms.Label()
             pnlMenuButtons = New System.Windows.Forms.Panel()
             btnEndGame = New System.Windows.Forms.Button()
             btnMainMenu = New System.Windows.Forms.Button()
-            lblThrottle = New System.Windows.Forms.Label()
             UserKeyInterfacer = New System.Windows.Forms.Button()
             CType(picDisplayGraphics, System.ComponentModel.ISupportInitialize).BeginInit()
             pnlDisplays.SuspendLayout()
@@ -223,13 +227,15 @@
             picDisplayGraphics.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
             picDisplayGraphics.Location = New System.Drawing.Point(6, 6)
             picDisplayGraphics.Name = "picDisplayGraphics"
-            picDisplayGraphics.Size = New System.Drawing.Size(ImageSize.X, ImageSize.Y)
+            picDisplayGraphics.Size = New System.Drawing.Size(600, 600)
             picDisplayGraphics.TabIndex = 0
             picDisplayGraphics.TabStop = False
             '
             'pnlDisplays
             '
             pnlDisplays.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
+            pnlDisplays.Controls.Add(lblTempRate)
+            pnlDisplays.Controls.Add(lblCoreTemp)
             pnlDisplays.Controls.Add(lblThrottle)
             pnlDisplays.Controls.Add(lblEngines)
             pnlDisplays.Controls.Add(lblPowerCore)
@@ -245,12 +251,36 @@
             pnlDisplays.Size = New System.Drawing.Size(560, 338)
             pnlDisplays.TabIndex = 1
             '
+            'lblCoreTemp
+            '
+            lblCoreTemp.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
+            lblCoreTemp.Font = New System.Drawing.Font("Lucida Console", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+            lblCoreTemp.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft
+            lblCoreTemp.Location = New System.Drawing.Point(85, 295)
+            lblCoreTemp.Name = "lblCoreTemp"
+            lblCoreTemp.Size = New System.Drawing.Size(200, 30)
+            lblCoreTemp.TabIndex = 10
+            lblCoreTemp.Text = "Core Temp: 0/0"
+            lblCoreTemp.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
+            '
+            'lblThrottle
+            '
+            lblThrottle.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
+            lblThrottle.Font = New System.Drawing.Font("Lucida Console", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+            lblThrottle.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft
+            lblThrottle.Location = New System.Drawing.Point(295, 25)
+            lblThrottle.Name = "lblThrottle"
+            lblThrottle.Size = New System.Drawing.Size(200, 30)
+            lblThrottle.TabIndex = 9
+            lblThrottle.Text = "Throttle: 0/0"
+            lblThrottle.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
+            '
             'lblEngines
             '
             lblEngines.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
             lblEngines.Font = New System.Drawing.Font("Lucida Console", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
             lblEngines.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft
-            lblEngines.Location = New System.Drawing.Point(295, 267)
+            lblEngines.Location = New System.Drawing.Point(295, 247)
             lblEngines.Name = "lblEngines"
             lblEngines.Size = New System.Drawing.Size(200, 30)
             lblEngines.TabIndex = 8
@@ -262,7 +292,7 @@
             lblPowerCore.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
             lblPowerCore.Font = New System.Drawing.Font("Lucida Console", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
             lblPowerCore.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft
-            lblPowerCore.Location = New System.Drawing.Point(295, 232)
+            lblPowerCore.Location = New System.Drawing.Point(295, 212)
             lblPowerCore.Name = "lblPowerCore"
             lblPowerCore.Size = New System.Drawing.Size(200, 30)
             lblPowerCore.TabIndex = 7
@@ -274,7 +304,7 @@
             lblSecondary.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
             lblSecondary.Font = New System.Drawing.Font("Lucida Console", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
             lblSecondary.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft
-            lblSecondary.Location = New System.Drawing.Point(85, 267)
+            lblSecondary.Location = New System.Drawing.Point(85, 247)
             lblSecondary.Name = "lblSecondary"
             lblSecondary.Size = New System.Drawing.Size(200, 30)
             lblSecondary.TabIndex = 6
@@ -286,7 +316,7 @@
             lblPrimary.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
             lblPrimary.Font = New System.Drawing.Font("Lucida Console", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
             lblPrimary.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft
-            lblPrimary.Location = New System.Drawing.Point(85, 232)
+            lblPrimary.Location = New System.Drawing.Point(85, 212)
             lblPrimary.Name = "lblPrimary"
             lblPrimary.Size = New System.Drawing.Size(200, 30)
             lblPrimary.TabIndex = 5
@@ -298,7 +328,7 @@
             lblForward.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
             lblForward.Font = New System.Drawing.Font("Lucida Console", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
             lblForward.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft
-            lblForward.Location = New System.Drawing.Point(180, 86)
+            lblForward.Location = New System.Drawing.Point(180, 76)
             lblForward.Name = "lblForward"
             lblForward.Size = New System.Drawing.Size(200, 30)
             lblForward.TabIndex = 4
@@ -310,7 +340,7 @@
             lblRear.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
             lblRear.Font = New System.Drawing.Font("Lucida Console", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
             lblRear.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft
-            lblRear.Location = New System.Drawing.Point(180, 166)
+            lblRear.Location = New System.Drawing.Point(180, 156)
             lblRear.Name = "lblRear"
             lblRear.Size = New System.Drawing.Size(200, 30)
             lblRear.TabIndex = 3
@@ -322,7 +352,7 @@
             lblRight.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
             lblRight.Font = New System.Drawing.Font("Lucida Console", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
             lblRight.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft
-            lblRight.Location = New System.Drawing.Point(295, 126)
+            lblRight.Location = New System.Drawing.Point(295, 116)
             lblRight.Name = "lblRight"
             lblRight.Size = New System.Drawing.Size(200, 30)
             lblRight.TabIndex = 2
@@ -334,7 +364,7 @@
             lblLeft.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
             lblLeft.Font = New System.Drawing.Font("Lucida Console", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
             lblLeft.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft
-            lblLeft.Location = New System.Drawing.Point(85, 126)
+            lblLeft.Location = New System.Drawing.Point(85, 116)
             lblLeft.Name = "lblLeft"
             lblLeft.Size = New System.Drawing.Size(200, 30)
             lblLeft.TabIndex = 1
@@ -353,18 +383,6 @@
             lblHull.Text = "Hull: 0/0"
             lblHull.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
             '
-            'lblThrottle
-            '
-            lblThrottle.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
-            lblThrottle.Font = New System.Drawing.Font("Lucida Console", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-            lblThrottle.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft
-            lblThrottle.Location = New System.Drawing.Point(295, 25)
-            lblThrottle.Name = "lblThrottle"
-            lblThrottle.Size = New System.Drawing.Size(200, 30)
-            lblThrottle.TabIndex = 9
-            lblThrottle.Text = "Throttle: 0/0"
-            lblThrottle.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
-            '
             'pnlMenuButtons
             '
             pnlMenuButtons.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
@@ -377,48 +395,59 @@
             '
             'btnEndGame
             '
+            btnEndGame.FlatStyle = System.Windows.Forms.FlatStyle.Flat
             btnEndGame.Font = New System.Drawing.Font("Lucida Console", 14.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
             btnEndGame.Location = New System.Drawing.Point(285, 19)
             btnEndGame.Name = "btnEndGame"
             btnEndGame.Size = New System.Drawing.Size(140, 40)
             btnEndGame.TabIndex = 2
             btnEndGame.Text = "Close Game"
-            btnEndGame.FlatStyle = FlatStyle.Flat
             btnEndGame.UseVisualStyleBackColor = True
             '
             'btnMainMenu
             '
+            btnMainMenu.FlatStyle = System.Windows.Forms.FlatStyle.Flat
             btnMainMenu.Font = New System.Drawing.Font("Lucida Console", 14.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
             btnMainMenu.Location = New System.Drawing.Point(135, 19)
             btnMainMenu.Name = "btnMainMenu"
             btnMainMenu.Size = New System.Drawing.Size(140, 40)
             btnMainMenu.TabIndex = 1
             btnMainMenu.Text = "Main Menu"
-            btnMainMenu.FlatStyle = FlatStyle.Flat
             btnMainMenu.UseVisualStyleBackColor = True
+            '
             'UserKeyInterfacer
             '
-            UserKeyInterfacer.Name = "UserKeyInterfacer"
+            UserKeyInterfacer.FlatStyle = System.Windows.Forms.FlatStyle.Flat
             UserKeyInterfacer.Location = New System.Drawing.Point(20, 20)
+            UserKeyInterfacer.Name = "UserKeyInterfacer"
             UserKeyInterfacer.Size = New System.Drawing.Size(40, 40)
             UserKeyInterfacer.TabIndex = 0
-            UserKeyInterfacer.Text = ""
-            UserKeyInterfacer.FlatStyle = FlatStyle.Flat
             UserKeyInterfacer.UseVisualStyleBackColor = True
-            UserKeyInterfacer.Visible = True
+            '
+            'lblTempRate
+            '
+            lblTempRate.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
+            lblTempRate.Font = New System.Drawing.Font("Lucida Console", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+            lblTempRate.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft
+            lblTempRate.Location = New System.Drawing.Point(295, 295)
+            lblTempRate.Name = "lblTempRate"
+            lblTempRate.Size = New System.Drawing.Size(200, 30)
+            lblTempRate.TabIndex = 11
+            lblTempRate.Text = "Temp Rate: 0"
+            lblTempRate.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
             '--------------------------
 
             '-----Add Controls-----
-            Server.OutputScreen.Controls.Add(picDisplayGraphics)
-            Server.OutputScreen.Controls.Add(pnlDisplays)
-            Server.OutputScreen.Controls.Add(pnlMenuButtons)
-            Server.OutputScreen.Controls.Add(UserKeyInterfacer)
+            Server.OutputScreen.Controls.Add(Me.picDisplayGraphics)
+            Server.OutputScreen.Controls.Add(Me.pnlDisplays)
+            Server.OutputScreen.Controls.Add(Me.pnlMenuButtons)
+            Server.OutputScreen.Controls.Add(Me.UserKeyInterfacer)
             '----------------------
 
             '-----Display Controls-----
-            CType(picDisplayGraphics, System.ComponentModel.ISupportInitialize).EndInit()
-            pnlDisplays.ResumeLayout(False)
-            pnlMenuButtons.ResumeLayout(False)
+            CType(Me.picDisplayGraphics, System.ComponentModel.ISupportInitialize).EndInit()
+            Me.pnlDisplays.ResumeLayout(False)
+            Me.pnlMenuButtons.ResumeLayout(False)
             '--------------------------
             UserKeyInterfacer.Focus()
             If Client.comms.IsAlive = False Then
@@ -469,17 +498,21 @@
                         Client.SendCommand_Call(Battery.Commands.FireSecondary, 1)
                     End If
                 Case Station.StationTypes.Shielding
-                    If e.KeyCode = Keys.Up Then
+                    If e.KeyCode = Keys.Up Then 'Boost Forward
                         Client.SendCommand_Call(Shields.Commands.BoostForward, 1)
-                    ElseIf e.KeyCode = Keys.Right Then
+                    ElseIf e.KeyCode = Keys.Right Then 'Boost Right
                         Client.SendCommand_Call(Shields.Commands.BoostRight, 1)
-                    ElseIf e.KeyCode = Keys.Down Then
+                    ElseIf e.KeyCode = Keys.Down Then 'Boost Back
                         Client.SendCommand_Call(Shields.Commands.BoostBack, 1)
-                    ElseIf e.KeyCode = Keys.Left Then
+                    ElseIf e.KeyCode = Keys.Left Then 'Boost Left
                         Client.SendCommand_Call(Shields.Commands.BoostLeft, 1)
                     End If
                 Case Station.StationTypes.Engineering
-
+                    If e.KeyCode = Keys.Up Then 'Heat
+                        Client.SendCommand_Call(Engineering.Commands.Heat, 1)
+                    ElseIf e.KeyCode = Keys.Down Then 'Cool
+                        Client.SendCommand_Call(Engineering.Commands.Cool, 1)
+                    End If
             End Select
         End Sub
         Private Shared Sub UserKeyInterfacer_KeyUp(ByVal sender As Object, ByVal e As KeyEventArgs) Handles UserKeyInterfacer.KeyUp
@@ -513,17 +546,21 @@
                         Client.SendCommand_Call(Battery.Commands.FireSecondary, 0)
                     End If
                 Case Station.StationTypes.Shielding
-                    If e.KeyCode = Keys.Up Then
+                    If e.KeyCode = Keys.Up Then 'Boost Forward
                         Client.SendCommand_Call(Shields.Commands.BoostForward, 0)
-                    ElseIf e.KeyCode = Keys.Right Then
+                    ElseIf e.KeyCode = Keys.Right Then 'Boost Right
                         Client.SendCommand_Call(Shields.Commands.BoostRight, 0)
-                    ElseIf e.KeyCode = Keys.Down Then
+                    ElseIf e.KeyCode = Keys.Down Then 'Boost Back
                         Client.SendCommand_Call(Shields.Commands.BoostBack, 0)
-                    ElseIf e.KeyCode = Keys.Left Then
+                    ElseIf e.KeyCode = Keys.Left Then 'Boost Left
                         Client.SendCommand_Call(Shields.Commands.BoostLeft, 0)
                     End If
                 Case Station.StationTypes.Engineering
-
+                    If e.KeyCode = Keys.Up Then 'Heat
+                        Client.SendCommand_Call(Engineering.Commands.Heat, 0)
+                    ElseIf e.KeyCode = Keys.Down Then 'Cool
+                        Client.SendCommand_Call(Engineering.Commands.Cool, 0)
+                    End If
             End Select
         End Sub
 
@@ -578,7 +615,7 @@
 
     Private Shared Sub UpdateScreen_Handle() Handles Tick.Tick
         If Client.Connected = True And Client.serversMessage IsNot Nothing Then
-            Screen.GamePlayLayout.lblHull.Text = "Hull: " + CStr(Client.serversMessage.Ship.Hull.current) + "/" + CStr(Client.serversMessage.Ship.Hull.max)
+            Screen.GamePlayLayout.lblHull.Text = "Hull: " + CStr(Math.Round(Client.serversMessage.Ship.Hull.current, 2)) + "/" + CStr(Client.serversMessage.Ship.Hull.max)
             Screen.GamePlayLayout.lblThrottle.Text = "Throttle: " + CStr(CInt(Client.serversMessage.Ship.Helm.Throttle.current)) + "/" + CStr(CInt(Client.serversMessage.Ship.Helm.Throttle.max))
 
             Screen.GamePlayLayout.lblForward.Text = "Fore: " + CStr(CInt(Client.serversMessage.Ship.Shielding.ShipShields(Shields.Sides.FrontShield).current)) + "/" + CStr(Client.serversMessage.Ship.Shielding.ShipShields(Shields.Sides.FrontShield).max)
@@ -611,6 +648,8 @@
             Screen.GamePlayLayout.lblSecondary.Text = "Secondary: " + CStr(Client.serversMessage.Ship.Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).current) + "/" + CStr(Client.serversMessage.Ship.Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).max)
             Screen.GamePlayLayout.lblPowerCore.Text = "Power Core: " + CStr(Client.serversMessage.Ship.Engineering.PowerCore.current) + "/" + CStr(Client.serversMessage.Ship.Engineering.PowerCore.max)
             Screen.GamePlayLayout.lblEngines.Text = "Engines: " + CStr(Client.serversMessage.Ship.Engineering.Engines.current) + "/" + CStr(Client.serversMessage.Ship.Engineering.Engines.max)
+            Screen.GamePlayLayout.lblCoreTemp.Text = "Core Temp: " + CStr(Math.Round(Client.serversMessage.Ship.Engineering.Heat, 2)) + "*e^5/100*e^5"
+            Screen.GamePlayLayout.lblTempRate.Text = "Temp Rate: " + CStr(Math.Round(Client.serversMessage.Ship.Engineering.Rate, 2)) + "*e^5"
         Else
             Dim temp As New MenuScreenLayout
             Tick.Enabled = False

@@ -187,7 +187,7 @@ Module Server
                     Case Station.StationTypes.Shielding
                         Galaxy.centerShip.Shielding.PlayerControled = True
                     Case Station.StationTypes.Engineering
-                        'Galaxy.centerShip.Engineering.PlayerControled = True
+                        Galaxy.centerShip.Engineering.PlayerControled = True
                 End Select
             Else
                 Try

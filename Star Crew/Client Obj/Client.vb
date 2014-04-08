@@ -22,42 +22,38 @@
         End Sub
 
         Public Sub Update()
-            If Flash = False Then
-                If Int(80 * Rnd()) = 0 Then
-                    Flash = True
-                End If
-                count = 8
-            ElseIf count = 1 Then
-                count = 0
-                Flash = False
-            Else
-                count = count - 1
-            End If
+            '    If Flash = False Then
+            '        If Int(80 * Rnd()) = 0 Then
+            '            Flash = True
+            '        End If
+            '        count = 8
+            '    ElseIf count = 1 Then
+            '        count = 0
+            '        Flash = False
+            '    Else
+            '        count = count - 1
+            '    End If
 
 
-            Dim direction As Double = serversMessage.Ship.Helm.Direction + Math.PI
-            Position = New Point(Position.X + (serversMessage.Ship.Helm.Throttle.current * Math.Cos(direction) * Speed),
-                                 Position.Y + (serversMessage.Ship.Helm.Throttle.current * Math.Sin(direction) * Speed))
-            If Position.X <= 2 Then
-                Position = New Point(Position.X + Screen.ImageSize.X - 5, Position.Y)
-            ElseIf Position.X >= Screen.GamePlayLayout.picDisplayGraphics.Width - 3 Then
-                Position = New Point(Position.X - Screen.ImageSize.X + 5, Position.Y)
-            End If
-            If Position.Y <= 2 Then
-                Position = New Point(Position.X, Position.Y + Screen.ImageSize.Y - 5)
-            ElseIf Position.Y >= Screen.GamePlayLayout.picDisplayGraphics.Height - 3 Then
-                Position = New Point(Position.X, Position.Y - Screen.ImageSize.Y + 5)
-            End If
+            '    Dim direction As Double = serversMessage.Ship.Helm.Direction + Math.PI
+            '    Position = New Point(Position.X + (serversMessage.Ship.Helm.Throttle.current * Math.Cos(direction) * Speed),
+            '                         Position.Y + (serversMessage.Ship.Helm.Throttle.current * Math.Sin(direction) * Speed))
+            '    If Position.X <= 2 Then
+            '        Position = New Point(Position.X + Screen.ImageSize.X - 5, Position.Y)
+            '    ElseIf Position.X >= Screen.GamePlayLayout.picDisplayGraphics.Width - 3 Then
+            '        Position = New Point(Position.X - Screen.ImageSize.X + 5, Position.Y)
+            '    End If
+            '    If Position.Y <= 2 Then
+            '        Position = New Point(Position.X, Position.Y + Screen.ImageSize.Y - 5)
+            '    ElseIf Position.Y >= Screen.GamePlayLayout.picDisplayGraphics.Height - 3 Then
+            '        Position = New Point(Position.X, Position.Y - Screen.ImageSize.Y + 5)
+            '    End If
 
-            If serversMessage.Warping = Galaxy.Warp.Warping Then
-                If Speed <> WarpSpeed And
-                    Galaxy.Warping = Galaxy.Warp.Warping Then
-                    Speed = Speed + (WarpSpeed / 50)
-                    If Speed > WarpSpeed Then
-                        Speed = WarpSpeed
-                    End If
-                End If
-            End If
+            '    If serversMessage.Warping = Galaxy.Warp.Warping Then
+            '        Speed = WarpSpeed
+            '    Else
+            '        Speed = 1
+            '    End If
         End Sub
     End Class
 
@@ -143,7 +139,7 @@
         End Using
         '----------------------
     End Sub
-    Private Shared WithEvents Tick As New Timer With {.Interval = 10, .Enabled = True}
+    Private Shared WithEvents Tick As New Timer With {.Interval = 55, .Enabled = True}
     Private Shared Sub UpdateStars() Handles Tick.Tick
         For Each i As Star In stars
             i.Update()

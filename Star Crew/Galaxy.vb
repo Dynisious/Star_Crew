@@ -1,7 +1,7 @@
 ﻿Public Class Galaxy
     Public Shared WithEvents GalaxyTimer As New Timer With {.Interval = 100, .Enabled = False}
     Public Shared centerShip As Ship
-    Public Shared ReadOnly ShipCount As Integer = 100
+    Public Shared ReadOnly ShipCount As Integer = 40
     Public Shared xList(-1) As Ship
     Private Shared shipPositions(-1) As GraphicPosition
     Public Enum Warp
@@ -142,7 +142,18 @@
                 End Select
             Case Star_Crew.Station.StationTypes.Engineering
                 Select Case clientCommand.Command
-
+                    Case Engineering.Commands.Heat
+                        If clientCommand.Value = 1 Then
+                            PlayerControl.HeatCheck = True
+                        ElseIf clientCommand.Value = 0 Then
+                            PlayerControl.HeatCheck = False
+                        End If
+                    Case Engineering.Commands.Cool
+                        If clientCommand.Value = 1 Then
+                            PlayerControl.CoolCheck = True
+                        ElseIf clientCommand.Value = 0 Then
+                            PlayerControl.CoolCheck = False
+                        End If
                 End Select
         End Select
     End Sub
@@ -368,6 +379,21 @@
         End Sub
         '-------------------
 
+        '-----Engineering-----
+        Public Shared HeatCheck As Boolean = False
+        Public Shared CoolCheck As Boolean = False
+        Private Shared Sub Heat()
+            If HeatCheck = True Then
+                centerShip.Engineering.Rate = centerShip.Engineering.Rate + (Engineering.RateOfChange * 10)
+            End If
+        End Sub
+        Private Shared Sub Cool()
+            If CoolCheck = True Then
+                centerShip.Engineering.Rate = centerShip.Engineering.Rate - (Engineering.RateOfChange * 10)
+            End If
+        End Sub
+        '---------------------
+
         Public Shared Sub RunPlayerControls()
             '-----Helm-----
             ThrottleUp()
@@ -390,6 +416,10 @@
             RearBoost()
             LeftBoost()
             '-------------------
+            '-----Engineering-----
+            Heat()
+            Cool()
+            '---------------------
         End Sub
     End Class
 
