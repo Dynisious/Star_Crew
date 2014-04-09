@@ -8,7 +8,7 @@ Public Class Engineering
     Private Heating As Boolean = True
     Public Heat As Double = 50
     Public Rate As Double
-    Public Shared ReadOnly RateOfChange = 0.003
+    Public Shared ReadOnly RateOfChange = 0.002
     Public Enum Commands
         Heat
         Cool
@@ -20,7 +20,6 @@ Public Class Engineering
 
     Public Overrides Sub Update()
         If Parent IsNot Nothing Then
-            Power = Power + PowerCore.current
             Dim primaryDraw As Integer = (Parent.Batteries.Primary.Integrety.max -
                  Parent.Batteries.Primary.Integrety.current)
             Dim secondaryDraw As Integer = (Parent.Batteries.Secondary.Integrety.max -
@@ -28,6 +27,7 @@ Public Class Engineering
             Dim enginesDraw As Integer = (Engines.max - Engines.current)
             Dim powerCoreDraw As Integer = (PowerCore.max - PowerCore.current)
             Dim totalPowerDraw As Integer = batteriesDraw + shieldingDraw + enginesDraw + powerCoreDraw + primaryDraw + secondaryDraw
+            Dim CoreStability As Double = 1
             If PlayerControled = True Then
                 Heat = Heat + Rate
                 If totalPowerDraw <> 0 Then
@@ -56,10 +56,9 @@ Public Class Engineering
                         End If
                     End If
                 End If
-                If Heat < 10 Or Heat > 100 Then
-                    Parent.Hull.current = Parent.Hull.current - 0.0025
-                End If
+                CoreStability = 1 / ((Math.Sqrt((Int(Heat - 50) / 100) ^ 2)) + 1)
             End If
+            Power = Power + (PowerCore.current * CoreStability)
 
             If totalPowerDraw <> 0 And PlayerControled = False Then
                 Dim usablePower As Integer = Power

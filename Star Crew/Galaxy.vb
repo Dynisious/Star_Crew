@@ -385,22 +385,22 @@
         Public Shared LeftBoostCheck As Boolean = False
         Private Shared Sub ForwardBoost()
             If ForwardBoostCheck = True Then
-                centerShip.Shielding.LastHit = centerShip.Shielding.Sides.FrontShield
+                centerShip.Shielding.LastHit = Shields.Sides.FrontShield
             End If
         End Sub
         Private Shared Sub RightBoost()
             If RightBoostCheck = True Then
-                centerShip.Shielding.LastHit = centerShip.Shielding.Sides.RightShield
+                centerShip.Shielding.LastHit = Shields.Sides.RightShield
             End If
         End Sub
         Private Shared Sub RearBoost()
             If RearBoostCheck = True Then
-                centerShip.Shielding.LastHit = centerShip.Shielding.Sides.BackShield
+                centerShip.Shielding.LastHit = Shields.Sides.BackShield
             End If
         End Sub
         Private Shared Sub LeftBoost()
             If LeftBoostCheck = True Then
-                centerShip.Shielding.LastHit = centerShip.Shielding.Sides.LeftShield
+                centerShip.Shielding.LastHit = Shields.Sides.LeftShield
             End If
         End Sub
         '-------------------

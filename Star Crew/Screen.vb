@@ -438,16 +438,16 @@
             '--------------------------
 
             '-----Add Controls-----
-            Server.OutputScreen.Controls.Add(Me.picDisplayGraphics)
-            Server.OutputScreen.Controls.Add(Me.pnlDisplays)
-            Server.OutputScreen.Controls.Add(Me.pnlMenuButtons)
-            Server.OutputScreen.Controls.Add(Me.UserKeyInterfacer)
+            Server.OutputScreen.Controls.Add(picDisplayGraphics)
+            Server.OutputScreen.Controls.Add(pnlDisplays)
+            Server.OutputScreen.Controls.Add(pnlMenuButtons)
+            Server.OutputScreen.Controls.Add(UserKeyInterfacer)
             '----------------------
 
             '-----Display Controls-----
-            CType(Me.picDisplayGraphics, System.ComponentModel.ISupportInitialize).EndInit()
-            Me.pnlDisplays.ResumeLayout(False)
-            Me.pnlMenuButtons.ResumeLayout(False)
+            CType(picDisplayGraphics, System.ComponentModel.ISupportInitialize).EndInit()
+            pnlDisplays.ResumeLayout(False)
+            pnlMenuButtons.ResumeLayout(False)
             '--------------------------
             UserKeyInterfacer.Focus()
             If Client.comms.IsAlive = False Then

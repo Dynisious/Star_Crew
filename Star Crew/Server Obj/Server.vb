@@ -53,8 +53,8 @@ Module Server
                           "Shielding: Set the Shield to Prioritise with the arrow keys." + Environment.NewLine +
                           Environment.NewLine +
                           "Engineering: Control the Power Core's Temperature with the 'Up' and 'Down'" + Environment.NewLine +
-                          "Arrow Keys; keep the temperature between 10*e^5 and 100*e^5 or the ship will" + Environment.NewLine +
-                          "begin to take damage.")
+                          "Arrow Keys; keep the temperature as close to 50*e^5 or the Power Core will" + Environment.NewLine +
+                          "not be at full efficiency.")
         Console.WriteLine()
         While True
             Dim str As String = Console.ReadLine().Trim(ChrW(0))
