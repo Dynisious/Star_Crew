@@ -109,9 +109,9 @@
             serversMessage = bf.Deserialize(MyConnector.GetStream())
             Render()
             primaryDirection = serversMessage.Ship.Helm.Direction + serversMessage.Ship.Batteries.Primary.TurnDistance.current
-            primaryRadius = serversMessage.Ship.Batteries.Primary.WeaponStats(Weapon.Stats.Range).current
+            primaryRadius = serversMessage.Ship.Batteries.Primary.Range.current
             secondaryDirection = serversMessage.Ship.Helm.Direction + serversMessage.Ship.Batteries.Secondary.TurnDistance.current
-            secondaryRadius = serversMessage.Ship.Batteries.Secondary.WeaponStats(Weapon.Stats.Range).current
+            secondaryRadius = serversMessage.Ship.Batteries.Secondary.Range.current
         Catch ex As Exception
             Console.WriteLine("Error : The Client was disconnected unexpectedly")
             Console.WriteLine(ex.ToString)
@@ -189,7 +189,7 @@
             '-----Batteries Arc-----
             '-----Primary Arc-----
             primaryDirection = serversMessage.Ship.Helm.Direction + serversMessage.Ship.Batteries.Primary.TurnDistance.current
-            primaryRadius = serversMessage.Ship.Helm.Direction + serversMessage.Ship.Batteries.Primary.WeaponStats(Weapon.Stats.Range).current
+            primaryRadius = serversMessage.Ship.Helm.Direction + serversMessage.Ship.Batteries.Primary.Range.current
             For i As Integer = 1 To primaryRadius
                 Dim x As Integer = Math.Cos(primaryDirection + -(Battery.PlayerArc / 2)) * i
                 Dim y As Integer = Math.Sin(primaryDirection + -(Battery.PlayerArc / 2)) * i
@@ -206,7 +206,7 @@
             '---------------------
             '-----Secondary Arc-----
             secondaryDirection = serversMessage.Ship.Helm.Direction + serversMessage.Ship.Batteries.Secondary.TurnDistance.current
-            secondaryRadius = serversMessage.Ship.Helm.Direction + serversMessage.Ship.Batteries.Secondary.WeaponStats(Weapon.Stats.Range).current
+            secondaryRadius = serversMessage.Ship.Helm.Direction + serversMessage.Ship.Batteries.Secondary.Range.current
             For i As Integer = 1 To secondaryRadius
                 Dim x As Integer = Math.Cos(secondaryDirection + -(Battery.PlayerArc / 2)) * i
                 Dim y As Integer = Math.Sin(secondaryDirection + -(Battery.PlayerArc / 2)) * i

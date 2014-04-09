@@ -46,36 +46,46 @@
                     Case Helm.Commands.ThrottleUp
                         If clientCommand.Value = 1 Then
                             PlayerControl.ThrottleUpCheck = True
+                            PlayerControl.ThrottleDownCheck = False
                         ElseIf clientCommand.Value = 0 Then
                             PlayerControl.ThrottleUpCheck = False
                         End If
                     Case Helm.Commands.ThrottleDown
                         If clientCommand.Value = 1 Then
                             PlayerControl.ThrottleDownCheck = True
+                            PlayerControl.ThrottleUpCheck = False
                         ElseIf clientCommand.Value = 0 Then
                             PlayerControl.ThrottleDownCheck = False
                         End If
                     Case Helm.Commands.TurnRight
                         If clientCommand.Value = 1 Then
                             PlayerControl.TurnRightCheck = True
+                            PlayerControl.TurnLeftCheck = False
                         ElseIf clientCommand.Value = 0 Then
                             PlayerControl.TurnRightCheck = False
                         End If
                     Case Helm.Commands.TurnLeft
                         If clientCommand.Value = 1 Then
                             PlayerControl.TurnLeftCheck = True
+                            PlayerControl.TurnRightCheck = False
                         ElseIf clientCommand.Value = 0 Then
                             PlayerControl.TurnLeftCheck = False
                         End If
                     Case Helm.Commands.WarpDrive
                         If clientCommand.Value = 1 Then
                             PlayerControl.WarpDriveCheck = True
+                            PlayerControl.MatchSpeedCheck = False
+                            PlayerControl.ThrottleUpCheck = False
+                            PlayerControl.ThrottleDownCheck = False
+                            PlayerControl.TurnLeftCheck = False
+                            PlayerControl.TurnRightCheck = False
                         ElseIf clientCommand.Value = 0 Then
                             PlayerControl.WarpDriveCheck = False
                         End If
                     Case Helm.Commands.MatchSpeed
                         If clientCommand.Value = 1 Then
                             PlayerControl.MatchSpeedCheck = True
+                            PlayerControl.WarpDriveCheck = False
                         ElseIf clientCommand.Value = 0 Then
                             PlayerControl.MatchSpeedCheck = False
                         End If
@@ -85,12 +95,14 @@
                     Case Battery.Commands.TurnRight
                         If clientCommand.Value = 1 Then
                             PlayerControl.RotateRightCheck = True
+                            PlayerControl.RotateLeftCheck = False
                         ElseIf clientCommand.Value = 0 Then
                             PlayerControl.RotateRightCheck = False
                         End If
                     Case Battery.Commands.TurnLeft
                         If clientCommand.Value = 1 Then
                             PlayerControl.RotateLeftCheck = True
+                            PlayerControl.RotateRightCheck = False
                         ElseIf clientCommand.Value = 0 Then
                             PlayerControl.RotateLeftCheck = False
                         End If
@@ -118,23 +130,35 @@
                     Case Shields.Commands.BoostForward
                         If clientCommand.Value = 1 Then
                             PlayerControl.ForwardBoostCheck = True
+                            PlayerControl.RightBoostCheck = False
+                            PlayerControl.RearBoostCheck = False
+                            PlayerControl.LeftBoostCheck = False
                         ElseIf clientCommand.Value = 0 Then
                             PlayerControl.ForwardBoostCheck = False
                         End If
                     Case Shields.Commands.BoostRight
                         If clientCommand.Value = 1 Then
+                            PlayerControl.ForwardBoostCheck = False
                             PlayerControl.RightBoostCheck = True
+                            PlayerControl.RearBoostCheck = False
+                            PlayerControl.LeftBoostCheck = False
                         ElseIf clientCommand.Value = 0 Then
                             PlayerControl.RightBoostCheck = False
                         End If
                     Case Shields.Commands.BoostBack
                         If clientCommand.Value = 1 Then
+                            PlayerControl.ForwardBoostCheck = False
+                            PlayerControl.RightBoostCheck = False
                             PlayerControl.RearBoostCheck = True
+                            PlayerControl.LeftBoostCheck = False
                         ElseIf clientCommand.Value = 0 Then
                             PlayerControl.RearBoostCheck = False
                         End If
                     Case Shields.Commands.BoostLeft
                         If clientCommand.Value = 1 Then
+                            PlayerControl.ForwardBoostCheck = False
+                            PlayerControl.RightBoostCheck = False
+                            PlayerControl.RearBoostCheck = False
                             PlayerControl.LeftBoostCheck = True
                         ElseIf clientCommand.Value = 0 Then
                             PlayerControl.LeftBoostCheck = False
@@ -145,12 +169,14 @@
                     Case Engineering.Commands.Heat
                         If clientCommand.Value = 1 Then
                             PlayerControl.HeatCheck = True
+                            PlayerControl.CoolCheck = False
                         ElseIf clientCommand.Value = 0 Then
                             PlayerControl.HeatCheck = False
                         End If
                     Case Engineering.Commands.Cool
                         If clientCommand.Value = 1 Then
                             PlayerControl.CoolCheck = True
+                            PlayerControl.HeatCheck = False
                         ElseIf clientCommand.Value = 0 Then
                             PlayerControl.CoolCheck = False
                         End If
@@ -295,7 +321,7 @@
                         direction = (3 * Math.PI) / 2
                     End If
 
-                    If distance < centerShip.Batteries.Primary.WeaponStats(Weapon.Stats.Range).current And distance <> 0 Then
+                    If distance < centerShip.Batteries.Primary.Range.current And distance <> 0 Then
                         If direction - centerShip.Helm.Direction - centerShip.Batteries.Primary.TurnDistance.current < Battery.PlayerArc / 2 And
                             direction - centerShip.Helm.Direction - centerShip.Batteries.Primary.TurnDistance.current > -Battery.PlayerArc / 2 Then
                             centerShip.Batteries.Primary.FireWeapon(distance, xList(i))
@@ -325,7 +351,7 @@
                             direction = (3 * Math.PI) / 2
                         End If
 
-                        If distance < centerShip.Batteries.Secondary.WeaponStats(Weapon.Stats.Range).current And distance <> 0 Then
+                        If distance < centerShip.Batteries.Secondary.Range.current And distance <> 0 Then
                             If direction - centerShip.Helm.Direction - centerShip.Batteries.Secondary.TurnDistance.current < Battery.PlayerArc / 2 And
                                 direction - centerShip.Helm.Direction - centerShip.Batteries.Secondary.TurnDistance.current > -Battery.PlayerArc / 2 Then
                                 centerShip.Batteries.Secondary.FireWeapon(distance, xList(i))

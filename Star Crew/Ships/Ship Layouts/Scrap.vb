@@ -3,25 +3,25 @@
 
     Public Sub New()
         '-----Ship-----
-        NewHull = New Stat(1000, 1000)
+        NewHull = New StatDbl(1000, 1000)
         '-----Helm-----
-        NewHelmStats(HelmStats.Acceleration) = New Stat(0, 0)
-        NewHelmStats(HelmStats.Throttle) = New Stat(0, 0)
-        NewHelmStats(HelmStats.Turn) = New Stat(0, 0)
+        NewHelmStats(HelmStats.Acceleration) = New StatDbl(0, 0)
+        NewHelmStats(HelmStats.Throttle) = New StatDbl(0, 0)
+        NewHelmStats(HelmStats.Turn) = New StatDbl(0, 0)
         '--------------
         '-----Batteries-----
-        NewBatteryWeapons(BatteryWeapons.Primary) = New Weapon(New Blank)
-        NewBatteryWeapons(BatteryWeapons.Secondary) = New Weapon(New Blank)
+        NewBatteryWeapons(BatteryWeapons.Primary) = Nothing
+        NewBatteryWeapons(BatteryWeapons.Secondary) = Nothing
         '-------------------
         '-----Shielding-----
-        NewShields(Shields.Sides.FrontShield) = New Stat(0, 0)
-        NewShields(Shields.Sides.LeftShield) = New Stat(0, 0)
-        NewShields(Shields.Sides.BackShield) = New Stat(0, 0)
-        NewShields(Shields.Sides.RightShield) = New Stat(0, 0)
+        NewShields(Shields.Sides.FrontShield) = New StatDbl(0, 0)
+        NewShields(Shields.Sides.LeftShield) = New StatDbl(0, 0)
+        NewShields(Shields.Sides.BackShield) = New StatDbl(0, 0)
+        NewShields(Shields.Sides.RightShield) = New StatDbl(0, 0)
         '-------------------
         '-----Engineering-----
-        NewEngineeringStats(EngineeringStats.Engines) = New Stat(1, 1)
-        NewEngineeringStats(EngineeringStats.PowerCore) = New Stat(0, 0)
+        NewEngineeringStats(EngineeringStats.Engines) = New StatDbl(1, 1)
+        NewEngineeringStats(EngineeringStats.PowerCore) = New StatDbl(0, 0)
         '---------------------
     End Sub
 

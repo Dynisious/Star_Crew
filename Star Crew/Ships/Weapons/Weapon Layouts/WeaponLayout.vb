@@ -1,14 +1,22 @@
 ﻿Public MustInherit Class WeaponLayout
-    Public nTurnDistance As Stat
-    Public nTurnSpeed As Stat
-    Public stats(Weapon.Stats.Max - 1) As Stat
+    Public Damage As StatDbl
+    Public DamageType As Weapon.DamageTypes
+    Public Range As StatInt
+    Public Ready As StatDbl
+    Public Ammo As StatInt
+    Public Integrety As StatInt
+    Public TurnDistance As StatDbl
+    Public TurnSpeed As StatDbl
 
     Public Sub SetLayout(ByRef nWeapon As Weapon)
-        For i As Integer = 0 To Weapon.Stats.Max - 1
-            nWeapon.WeaponStats(i) = stats(i)
-        Next
-        nWeapon.TurnDistance = nTurnDistance
-        nWeapon.TurnSpeed = nTurnSpeed
+        nWeapon.Damage = Damage
+        nWeapon.DamageType = DamageType
+        nWeapon.Range = Range
+        nWeapon.Ready = Ready
+        nWeapon.Ammo = Ammo
+        nWeapon.Integrety = Integrety
+        nWeapon.TurnDistance = TurnDistance
+        nWeapon.TurnSpeed = TurnSpeed
     End Sub
 
 End Class

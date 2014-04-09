@@ -16,7 +16,7 @@ Public Class Shields
         ChangeLeft
         Tune
     End Enum
-    Public ShipShields(Sides.Max - 1) As Stat
+    Public ShipShields(Sides.Max - 1) As StatDbl
     Public DamagePerSide(Sides.Max - 1) As Integer
     Public LastHit As Sides 'The side that was last hit
     Public Enum Commands
@@ -34,10 +34,10 @@ Public Class Shields
         If PlayerControled = False Then
             LastHit = side
         End If
-        DamagePerSide(side) = DamagePerSide(side) + nWeapon.WeaponStats(Weapon.Stats.Damage).current
+        DamagePerSide(side) = DamagePerSide(side) + nWeapon.Damage.current
 
-        Dim recivedDamage As Integer = nWeapon.WeaponStats(Weapon.Stats.Damage).current
-        recivedDamage = recivedDamage * DefenceBonuses(nWeapon.WeaponStats(Weapon.Stats.DamageType).current)
+        Dim recivedDamage As Integer = nWeapon.Damage.current
+        recivedDamage = recivedDamage * DefenceBonuses(nWeapon.DamageType)
         If ShipShields(side).current > recivedDamage Then
             ShipShields(side).current = ShipShields(side).current - recivedDamage
             recivedDamage = 0

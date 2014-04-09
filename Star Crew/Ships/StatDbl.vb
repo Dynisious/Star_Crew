@@ -1,5 +1,5 @@
 ﻿<Serializable()>
-Public Class Stat
+Public Class StatDbl
     Public current As Double
     Public max As Double
 

@@ -1,7 +1,7 @@
 ﻿Public MustInherit Class Layout
 
     '-----Ship-----
-    Public NewHull As Stat
+    Public NewHull As StatDbl
     '--------------
 
     '-----Helm-----
@@ -11,7 +11,7 @@
         Acceleration
         Max
     End Enum
-    Public NewHelmStats(HelmStats.Max - 1) As Stat
+    Public NewHelmStats(HelmStats.Max - 1) As StatDbl
     '--------------
 
     '-----Batteries-----
@@ -25,8 +25,8 @@
     '-------------------
 
     '-----Shielding-----
-    Public NewShieldBonuses(Weapon.DamageTypes.Max - 1) As  Double
-    Public NewShields(Shields.Sides.Max - 1) As Stat
+    Public NewShieldBonuses(Weapon.DamageTypes.Max - 1) As Double
+    Public NewShields(Shields.Sides.Max - 1) As StatDbl
     '-------------------
 
     '-----Engineering-----
@@ -36,7 +36,7 @@
         Capacity
         Max
     End Enum
-    Public NewEngineeringStats(EngineeringStats.Max-1) As Stat
+    Public NewEngineeringStats(EngineeringStats.Max - 1) As StatDbl
     '---------------------
 
     Public Sub New()

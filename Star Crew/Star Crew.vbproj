@@ -138,19 +138,19 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
     <Compile Include="Server Obj\ServerMessage.vb" />
+    <Compile Include="Ships\StatInt.vb" />
+    <Compile Include="Ships\StatDbl.vb" />
     <Compile Include="Ships\FriendlyShip.vb" />
     <Compile Include="Ships\PirateShip.vb" />
     <Compile Include="Ships\Ship Layouts\Layout.vb" />
     <Compile Include="Ships\Ship Layouts\Clunker.vb" />
     <Compile Include="Ships\Ship Layouts\Scrap.vb" />
     <Compile Include="Ships\Ship.vb" />
-    <Compile Include="Ships\Stat.vb" />
     <Compile Include="Ships\Stations\Battery.vb" />
     <Compile Include="Ships\Stations\Engineering.vb" />
     <Compile Include="Ships\Stations\Helm.vb" />
     <Compile Include="Ships\Stations\Shields.vb" />
     <Compile Include="Ships\Stations\Station.vb" />
-    <Compile Include="Ships\Weapons\Weapon Layouts\Blank.vb" />
     <Compile Include="Ships\Weapons\Weapon Layouts\Rattler.vb" />
     <Compile Include="Ships\Weapons\Weapon Layouts\WeaponLayout.vb" />
     <Compile Include="Ships\Weapons\Weapon.vb" />

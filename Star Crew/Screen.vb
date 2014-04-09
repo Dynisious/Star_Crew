@@ -644,8 +644,8 @@
                     Screen.GamePlayLayout.lblRear.BackColor = Color.Transparent
                     Screen.GamePlayLayout.lblLeft.BackColor = Color.LightBlue
             End Select
-            Screen.GamePlayLayout.lblPrimary.Text = "Primary: " + CStr(Client.serversMessage.Ship.Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).current) + "/" + CStr(Client.serversMessage.Ship.Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).max)
-            Screen.GamePlayLayout.lblSecondary.Text = "Secondary: " + CStr(Client.serversMessage.Ship.Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).current) + "/" + CStr(Client.serversMessage.Ship.Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).max)
+            Screen.GamePlayLayout.lblPrimary.Text = "Primary: " + CStr(Client.serversMessage.Ship.Batteries.Primary.Integrety.current) + "/" + CStr(Client.serversMessage.Ship.Batteries.Primary.Integrety.max)
+            Screen.GamePlayLayout.lblSecondary.Text = "Secondary: " + CStr(Client.serversMessage.Ship.Batteries.Secondary.Integrety.current) + "/" + CStr(Client.serversMessage.Ship.Batteries.Secondary.Integrety.max)
             Screen.GamePlayLayout.lblPowerCore.Text = "Power Core: " + CStr(Client.serversMessage.Ship.Engineering.PowerCore.current) + "/" + CStr(Client.serversMessage.Ship.Engineering.PowerCore.max)
             Screen.GamePlayLayout.lblEngines.Text = "Engines: " + CStr(Client.serversMessage.Ship.Engineering.Engines.current) + "/" + CStr(Client.serversMessage.Ship.Engineering.Engines.max)
             Screen.GamePlayLayout.lblCoreTemp.Text = "Core Temp: " + CStr(Math.Round(Client.serversMessage.Ship.Engineering.Heat, 2)) + "*e^5/100*e^5"

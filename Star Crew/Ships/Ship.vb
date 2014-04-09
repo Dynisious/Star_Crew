@@ -11,7 +11,7 @@ Public MustInherit Class Ship
         Pirate
     End Enum
     Public MyAllegence As Allegence
-    Public Hull As Stat
+    Public Hull As StatDbl
     Public Position As Point
     '-----Helm-----
     Public Helm As New Helm(Me)
@@ -64,26 +64,26 @@ Public MustInherit Class Ship
         Hull.current = Hull.current - incomingDamage
         Select Case sideHit
             Case Shields.Sides.FrontShield
-                Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).current = Int(Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).current - (incomingDamage / 10))
-                If Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).current < 0 Then
-                    Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).current = 0
+                Batteries.Primary.Integrety.current = Int(Batteries.Primary.Integrety.current - (incomingDamage / 10))
+                If Batteries.Primary.Integrety.current < 0 Then
+                    Batteries.Primary.Integrety.current = 0
                 End If
                 Batteries.Primary.ChangeStats()
-                Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).current = Int(Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).current - (incomingDamage / 10))
-                If Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).current < 0 Then
-                    Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).current = 0
+                Batteries.Secondary.Integrety.current = Int(Batteries.Secondary.Integrety.current - (incomingDamage / 10))
+                If Batteries.Secondary.Integrety.current < 0 Then
+                    Batteries.Secondary.Integrety.current = 0
                 End If
                 Batteries.Secondary.ChangeStats()
             Case Shields.Sides.RightShield Or Shields.Sides.LeftShield
                 If Int(2 * Rnd()) = 0 Then
-                    Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).current = Int(Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).current - (incomingDamage / 10))
-                    If Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).current < 0 Then
-                        Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).current = 0
+                    Batteries.Primary.Integrety.current = Int(Batteries.Primary.Integrety.current - (incomingDamage / 10))
+                    If Batteries.Primary.Integrety.current < 0 Then
+                        Batteries.Primary.Integrety.current = 0
                     End If
                     Batteries.Primary.ChangeStats()
-                    Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).current = Int(Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).current - (incomingDamage / 10))
-                    If Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).current < 0 Then
-                        Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).current = 0
+                    Batteries.Secondary.Integrety.current = Int(Batteries.Secondary.Integrety.current - (incomingDamage / 10))
+                    If Batteries.Secondary.Integrety.current < 0 Then
+                        Batteries.Secondary.Integrety.current = 0
                     End If
                     Batteries.Secondary.ChangeStats()
                 End If

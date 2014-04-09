@@ -2,9 +2,9 @@
 Public Class Helm
     Inherits Station
     Public Direction As Double
-    Public TurnSpeed As Stat
-    Public Throttle As Stat
-    Public Acceleration As Stat
+    Public TurnSpeed As StatDbl
+    Public Throttle As StatDbl
+    Public Acceleration As StatDbl
     Private evadeRight As Boolean = False
     Private brakes As Boolean = False
     Public Shared ReadOnly MinimumSpeed As Integer = 5

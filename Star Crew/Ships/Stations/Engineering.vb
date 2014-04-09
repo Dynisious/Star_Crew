@@ -3,8 +3,8 @@ Public Class Engineering
     Inherits Station
     Public batteriesDraw As Integer
     Public shieldingDraw As Integer
-    Public Engines As Stat
-    Public PowerCore As Stat
+    Public Engines As StatDbl
+    Public PowerCore As StatDbl
     Private Heating As Boolean = True
     Public Heat As Double = 50
     Public Rate As Double
@@ -21,10 +21,10 @@ Public Class Engineering
     Public Overrides Sub Update()
         If Parent IsNot Nothing Then
             Power = Power + PowerCore.current
-            Dim primaryDraw As Integer = (Parent.Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).max -
-                 Parent.Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).current)
-            Dim secondaryDraw As Integer = (Parent.Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).max -
-                 Parent.Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).current)
+            Dim primaryDraw As Integer = (Parent.Batteries.Primary.Integrety.max -
+                 Parent.Batteries.Primary.Integrety.current)
+            Dim secondaryDraw As Integer = (Parent.Batteries.Secondary.Integrety.max -
+                 Parent.Batteries.Secondary.Integrety.current)
             Dim enginesDraw As Integer = (Engines.max - Engines.current)
             Dim powerCoreDraw As Integer = (PowerCore.max - PowerCore.current)
             Dim totalPowerDraw As Integer = batteriesDraw + shieldingDraw + enginesDraw + powerCoreDraw + primaryDraw + secondaryDraw
@@ -94,8 +94,8 @@ Public Class Engineering
                     If primaryCost > primaryDraw Then
                         primaryCost = primaryDraw
                     End If
-                    Parent.Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).current =
-                        Parent.Batteries.Primary.WeaponStats(Weapon.Stats.Integrety).current + primaryCost
+                    Parent.Batteries.Primary.Integrety.current =
+                    Parent.Batteries.Primary.Integrety.current + primaryCost
                     Parent.Batteries.Primary.ChangeStats()
                     '------------------------
 
@@ -104,8 +104,8 @@ Public Class Engineering
                     If secondaryCost > secondaryDraw Then
                         secondaryCost = secondaryDraw
                     End If
-                    Parent.Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).current =
-                        Parent.Batteries.Secondary.WeaponStats(Weapon.Stats.Integrety).current + secondaryCost
+                    Parent.Batteries.Secondary.Integrety.current =
+                    Parent.Batteries.Secondary.Integrety.current + secondaryCost
                     Parent.Batteries.Secondary.ChangeStats()
                     '------------------------
 
