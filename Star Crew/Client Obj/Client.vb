@@ -140,7 +140,6 @@
             Console.WriteLine()
             Console.WriteLine(ex.ToString)
             Console.WriteLine()
-            'My.Computer.Clipboard.SetText(ex.ToString)***
             MyConnector.Close()
             Connected = False
             comms.Abort()

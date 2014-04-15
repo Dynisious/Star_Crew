@@ -241,50 +241,51 @@ Module Server
         Private Shared Sub Listen()
             '-----Creat List-----
             Dim socketList As New ArrayList
+            socketList.Add(MyListener.Server)
             For Each i As Socket In Ports
                 socketList.Add(i)
             Next
             '--------------------
 
             '-----Recieve Messages-----
-            Socket.Select(socketList, Nothing, Nothing, -1)
-            For Each i As Socket In socketList
-                If ReferenceEquals(i, MyListener.Server) = True Then
-                    AddClient(MyListener.AcceptSocket())
-                Else
-                    For Each e As ServerSideClient In Clients
-                        If ReferenceEquals(i, e.MySocket) Then
-                            e.DecodeMessage()
-                            Exit For
-                        End If
-                    Next
-                End If
-            Next
+            If socketList.Count > 0 Then
+                Socket.Select(socketList, Nothing, Nothing, -1)
+                For Each i As Socket In socketList
+                    If ReferenceEquals(i, MyListener.Server) = True Then
+                        AddClient(MyListener.AcceptSocket())
+                    Else
+                        For Each e As ServerSideClient In Clients
+                            If ReferenceEquals(i, e.MySocket) Then
+                                e.DecodeMessage()
+                                Exit For
+                            End If
+                        Next
+                    End If
+                Next
+            End If
             '--------------------------
 
             '-----Send Messages to Clients-----
-            socketList.Clear()
             MessageBuff = ServerMessage.ConstructMessage()
+            socketList.Clear()
             For Each i As ServerSideClient In Clients
                 socketList.Add(i.MySocket)
             Next
             If socketList.Count > 0 Then
-                Socket.Select(Nothing, socketList, Nothing, -1)
                 For Each i As Socket In socketList
                     Try
                         i.Send(MessageBuff)
+                        Socket.Select(Nothing, socketList, Nothing, -1)
                     Catch ex As SocketException
                         RemoveClient(i, True)
                     Catch ex As Exception
                         Console.WriteLine()
                         Console.WriteLine("Error : There was an unexpected and unhandled exception.")
-                        Console.WriteLine("The error message has now been copied to your clipboard")
                         Console.WriteLine("please submit it as an issue at the URL bellow")
                         Console.WriteLine("https://github.com/Dynisious/Star_Crew/issues")
                         Console.WriteLine()
                         Console.WriteLine(ex.ToString)
                         Console.WriteLine()
-                        My.Computer.Clipboard.SetText(ex.ToString)
                     End Try
                 Next
             End If

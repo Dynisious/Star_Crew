@@ -450,15 +450,7 @@
     End Class
 
     Public Shared Sub RemoveShip(ByRef nShip As Ship)
-        Dim index As Integer = 0
-        While True
-            If ReferenceEquals(xList(index), nShip) = True Then
-                Exit While
-            End If
-            index = index + 1
-        End While
-
-        For i As Integer = index To UBound(xList)
+        For i As Integer = nShip.Index To UBound(xList)
             If i <> UBound(xList) Then
                 xList(i) = xList(i + 1)
                 xList(i).Index = i
