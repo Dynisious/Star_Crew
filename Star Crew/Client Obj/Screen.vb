@@ -60,9 +60,6 @@
 
         Private Shared Sub btnExit_Click() Handles btnExit.Click
             Server.comms.Abort()
-            If MyClient IsNot Nothing Then
-                Client.comms.Abort()
-            End If
             End
         End Sub
 
@@ -450,7 +447,7 @@
             pnlMenuButtons.ResumeLayout(False)
             '--------------------------
             UserKeyInterfacer.Focus()
-            If Client.comms.IsAlive = False Then
+            If Client.Connected = False Then
                 Dim temp As New MenuScreenLayout
             Else
                 Tick.Enabled = True
@@ -458,7 +455,6 @@
         End Sub
 
         Public Shared Sub btnMainMenu_Click() Handles btnMainMenu.Click
-            Client.comms.Abort()
             Client.MyConnector.Close()
             Dim temp As New MenuScreenLayout
         End Sub
@@ -650,7 +646,7 @@
             Screen.GamePlayLayout.lblEngines.Text = "Engines: " + CStr(Client.serversMessage.Ship.Engineering.Engines.current) + "/" + CStr(Client.serversMessage.Ship.Engineering.Engines.max)
             Screen.GamePlayLayout.lblCoreTemp.Text = "Core Temp: " + CStr(Math.Round(Client.serversMessage.Ship.Engineering.Heat, 2)) + "*e^5/100*e^5"
             Screen.GamePlayLayout.lblTempRate.Text = "Temp Rate: " + CStr(Math.Round(Client.serversMessage.Ship.Engineering.Rate, 2)) + "*e^5"
-        Else
+        ElseIf Client.Connected = False Then
             Dim temp As New MenuScreenLayout
             Tick.Enabled = False
         End If
@@ -658,9 +654,6 @@
 
     Private Sub Screen_FormClosing(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.FormClosing
         Server.comms.Abort()
-        If MyClient IsNot Nothing Then
-            Client.comms.Abort()
-        End If
         End
     End Sub
 End Class

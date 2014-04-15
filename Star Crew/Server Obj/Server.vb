@@ -53,8 +53,8 @@ Module Server
                           "Shielding: Set the Shield to Prioritise with the arrow keys." + Environment.NewLine +
                           Environment.NewLine +
                           "Engineering: Control the Power Core's Temperature with the 'Up' and 'Down'" + Environment.NewLine +
-                          "Arrow Keys; keep the temperature as close to 50*e^5 or the Power Core will" + Environment.NewLine +
-                          "not be at full efficiency.")
+                          "Arrow Keys; keep the temperature as close to 50*e^5 as possible or the Power" + Environment.NewLine +
+                          "Core will not be at full efficiency.")
         Console.WriteLine()
         While True
             Dim str As String = Console.ReadLine().Trim(ChrW(0))
@@ -197,8 +197,17 @@ Module Server
                         Dim bf As New System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
                         Galaxy.RunCommand_Call(bf.Deserialize(fs))
                     End Using
-                Catch ex As Exception
+                Catch ex As Runtime.Serialization.SerializationException
                     Server.ServerComms.RemoveClient(MySocket, True)
+                Catch ex As Exception
+                    Console.WriteLine()
+                    Console.WriteLine("Error : There was an unexpected and unhandled exception.")
+                    Console.WriteLine("The error message has now been copied to your clipboard")
+                    Console.WriteLine("please submit it as an issue at the URL bellow")
+                    Console.WriteLine("https://github.com/Dynisious/Star_Crew/issues")
+                    Console.WriteLine()
+                    Console.WriteLine(ex.ToString)
+                    Console.WriteLine()
                 End Try
             End If
         End Sub
@@ -266,6 +275,16 @@ Module Server
                         i.Send(MessageBuff)
                     Catch ex As SocketException
                         RemoveClient(i, True)
+                    Catch ex As Exception
+                        Console.WriteLine()
+                        Console.WriteLine("Error : There was an unexpected and unhandled exception.")
+                        Console.WriteLine("The error message has now been copied to your clipboard")
+                        Console.WriteLine("please submit it as an issue at the URL bellow")
+                        Console.WriteLine("https://github.com/Dynisious/Star_Crew/issues")
+                        Console.WriteLine()
+                        Console.WriteLine(ex.ToString)
+                        Console.WriteLine()
+                        My.Computer.Clipboard.SetText(ex.ToString)
                     End Try
                 Next
             End If
@@ -293,16 +312,18 @@ Module Server
             For Each i As ServerSideClient In Clients
                 If ReferenceEquals(i.MySocket, nSocket) = True Then
                     Console.WriteLine(i.MyStation.ToString + ": Client was disconnected")
-                    Select Case i.MyStation
-                        Case Station.StationTypes.Helm
-                            Galaxy.centerShip.Helm.PlayerControled = False
-                        Case Station.StationTypes.Batteries
-                            Galaxy.centerShip.Batteries.PlayerControled = False
-                        Case Station.StationTypes.Shielding
-                            Galaxy.centerShip.Shielding.PlayerControled = False
-                        Case Station.StationTypes.Engineering
-                            Galaxy.centerShip.Engineering.PlayerControled = False
-                    End Select
+                    If resetControl = True Then
+                        Select Case i.MyStation
+                            Case Station.StationTypes.Helm
+                                Galaxy.centerShip.Helm.PlayerControled = False
+                            Case Station.StationTypes.Batteries
+                                Galaxy.centerShip.Batteries.PlayerControled = False
+                            Case Station.StationTypes.Shielding
+                                Galaxy.centerShip.Shielding.PlayerControled = False
+                            Case Station.StationTypes.Engineering
+                                Galaxy.centerShip.Engineering.PlayerControled = False
+                        End Select
+                    End If
                     Dim index = Array.IndexOf(Clients, i)
                     If index < UBound(Clients) Then
                         For e As Integer = index To UBound(Clients) - 1
