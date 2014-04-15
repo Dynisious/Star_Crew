@@ -487,7 +487,6 @@
             End If
         Next
         GalaxyTimer.Enabled = False
-        centerShip = Nothing
         Console.WriteLine("Player is Defeated")
     End Sub
 
