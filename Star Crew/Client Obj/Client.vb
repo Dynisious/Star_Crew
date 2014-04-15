@@ -275,7 +275,7 @@
             For i As Integer = 0 To UBound(messageData.Positions)
                 If (messageData.Warping = Galaxy.Warp.None) Or (messageData.Warping = Galaxy.Warp.Warping And count = messageData.Ship.Index) Then
                     Dim col As Color = messageData.Positions(i).Col
-                    If serversMessage.Positions(i).Hit = True Then
+                    If messageData.Positions(i).Hit = True Then
                         col = Color.Orange
                     End If
                     For x As Integer = -3 To 3
