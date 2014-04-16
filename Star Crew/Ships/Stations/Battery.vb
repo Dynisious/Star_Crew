@@ -146,6 +146,11 @@ Public Class Battery
                 End If
             Else
                 ReDim Parent.Helm.evadeList(-1)
+                If Parent.Helm.Target IsNot Nothing Then
+                    If Parent.Helm.Target.Dead = True Then
+                        Parent.Helm.Target = Nothing
+                    End If
+                End If
             End If
         End If
     End Sub

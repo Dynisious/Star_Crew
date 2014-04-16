@@ -1,7 +1,7 @@
 ﻿Public Class Galaxy
     Public Shared WithEvents GalaxyTimer As New Timer With {.Interval = 100, .Enabled = False}
     Public Shared centerShip As Ship
-    Public Shared ReadOnly ShipCount As Integer = 40
+    Public Shared ShipCount As Integer = 50
     Public Shared xList(-1) As Ship
     Private Shared shipPositions(-1) As GraphicPosition
     Public Enum Warp
@@ -24,7 +24,9 @@
         centerShip = New FriendlyShip(New Clunker, 0)
         xList(0) = centerShip
         xList(0).Position = New Point((6000 * Rnd()) - 3000, (6000 * Rnd()) - 3000)
-        For i As Integer = 1 To UBound(xList)
+        xList(1) = New PirateShip(New Clunker, 1)
+        xList(1).Position = New Point((6000 * Rnd()) - 3000, (6000 * Rnd()) - 3000)
+        For i As Integer = 2 To UBound(xList)
             If Int(2 * Rnd()) = 0 Then
                 xList(i) = New FriendlyShip(New Clunker, i)
             Else
@@ -463,7 +465,7 @@
         For Each i As Ship In xList
             If i.MyAllegence = Ship.Allegence.Player Then
                 centerShip = i
-                For Each e As ServerSideClient In Server.ServerComms.Clients
+                For Each e As ServerSideClient In Server.ServerComms.Ports
                     Select Case e.MyStation
                         Case Station.StationTypes.Helm
                             centerShip.Helm.PlayerControled = True

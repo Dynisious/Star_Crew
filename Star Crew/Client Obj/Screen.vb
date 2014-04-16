@@ -610,15 +610,15 @@
     End Sub
 
     Private Shared Sub UpdateScreen_Handle() Handles Tick.Tick
-        If Client.Connected = True And Client.serversMessage IsNot Nothing Then
-            Screen.GamePlayLayout.lblHull.Text = "Hull: " + CStr(Math.Round(Client.serversMessage.Ship.Hull.current, 2)) + "/" + CStr(Client.serversMessage.Ship.Hull.max)
-            Screen.GamePlayLayout.lblThrottle.Text = "Throttle: " + CStr(CInt(Client.serversMessage.Ship.Helm.Throttle.current)) + "/" + CStr(CInt(Client.serversMessage.Ship.Helm.Throttle.max))
+        If Client.Connected = True And Client.IncomingMessage IsNot Nothing Then
+            Screen.GamePlayLayout.lblHull.Text = "Hull: " + CStr(Math.Round(Client.IncomingMessage.Ship.Hull.current, 2)) + "/" + CStr(Client.IncomingMessage.Ship.Hull.max)
+            Screen.GamePlayLayout.lblThrottle.Text = "Throttle: " + CStr(CInt(Client.IncomingMessage.Ship.Helm.Throttle.current)) + "/" + CStr(CInt(Client.IncomingMessage.Ship.Helm.Throttle.max))
 
-            Screen.GamePlayLayout.lblForward.Text = "Fore: " + CStr(CInt(Client.serversMessage.Ship.Shielding.ShipShields(Shields.Sides.FrontShield).current)) + "/" + CStr(Client.serversMessage.Ship.Shielding.ShipShields(Shields.Sides.FrontShield).max)
-            Screen.GamePlayLayout.lblRight.Text = "Starboard: " + CStr(CInt(Client.serversMessage.Ship.Shielding.ShipShields(Shields.Sides.RightShield).current)) + "/" + CStr(Client.serversMessage.Ship.Shielding.ShipShields(Shields.Sides.RightShield).max)
-            Screen.GamePlayLayout.lblRear.Text = "Aft: " + CStr(CInt(Client.serversMessage.Ship.Shielding.ShipShields(Shields.Sides.BackShield).current)) + "/" + CStr(Client.serversMessage.Ship.Shielding.ShipShields(Shields.Sides.BackShield).max)
-            Screen.GamePlayLayout.lblLeft.Text = "Port: " + CStr(CInt(Client.serversMessage.Ship.Shielding.ShipShields(Shields.Sides.LeftShield).current)) + "/" + CStr(Client.serversMessage.Ship.Shielding.ShipShields(Shields.Sides.LeftShield).max)
-            Select Case Client.serversMessage.Ship.Shielding.LastHit
+            Screen.GamePlayLayout.lblForward.Text = "Fore: " + CStr(CInt(Client.IncomingMessage.Ship.Shielding.ShipShields(Shields.Sides.FrontShield).current)) + "/" + CStr(Client.IncomingMessage.Ship.Shielding.ShipShields(Shields.Sides.FrontShield).max)
+            Screen.GamePlayLayout.lblRight.Text = "Starboard: " + CStr(CInt(Client.IncomingMessage.Ship.Shielding.ShipShields(Shields.Sides.RightShield).current)) + "/" + CStr(Client.IncomingMessage.Ship.Shielding.ShipShields(Shields.Sides.RightShield).max)
+            Screen.GamePlayLayout.lblRear.Text = "Aft: " + CStr(CInt(Client.IncomingMessage.Ship.Shielding.ShipShields(Shields.Sides.BackShield).current)) + "/" + CStr(Client.IncomingMessage.Ship.Shielding.ShipShields(Shields.Sides.BackShield).max)
+            Screen.GamePlayLayout.lblLeft.Text = "Port: " + CStr(CInt(Client.IncomingMessage.Ship.Shielding.ShipShields(Shields.Sides.LeftShield).current)) + "/" + CStr(Client.IncomingMessage.Ship.Shielding.ShipShields(Shields.Sides.LeftShield).max)
+            Select Case Client.IncomingMessage.Ship.Shielding.LastHit
                 Case Shields.Sides.FrontShield
                     Screen.GamePlayLayout.lblForward.BackColor = Color.LightBlue
                     Screen.GamePlayLayout.lblRight.BackColor = Color.Transparent
@@ -640,12 +640,12 @@
                     Screen.GamePlayLayout.lblRear.BackColor = Color.Transparent
                     Screen.GamePlayLayout.lblLeft.BackColor = Color.LightBlue
             End Select
-            Screen.GamePlayLayout.lblPrimary.Text = "Primary: " + CStr(Client.serversMessage.Ship.Batteries.Primary.Integrety.current) + "/" + CStr(Client.serversMessage.Ship.Batteries.Primary.Integrety.max)
-            Screen.GamePlayLayout.lblSecondary.Text = "Secondary: " + CStr(Client.serversMessage.Ship.Batteries.Secondary.Integrety.current) + "/" + CStr(Client.serversMessage.Ship.Batteries.Secondary.Integrety.max)
-            Screen.GamePlayLayout.lblPowerCore.Text = "Power Core: " + CStr(Client.serversMessage.Ship.Engineering.PowerCore.current) + "/" + CStr(Client.serversMessage.Ship.Engineering.PowerCore.max)
-            Screen.GamePlayLayout.lblEngines.Text = "Engines: " + CStr(Client.serversMessage.Ship.Engineering.Engines.current) + "/" + CStr(Client.serversMessage.Ship.Engineering.Engines.max)
-            Screen.GamePlayLayout.lblCoreTemp.Text = "Core Temp: " + CStr(Math.Round(Client.serversMessage.Ship.Engineering.Heat, 2)) + "*e^5/100*e^5"
-            Screen.GamePlayLayout.lblTempRate.Text = "Temp Rate: " + CStr(Math.Round(Client.serversMessage.Ship.Engineering.Rate, 2)) + "*e^5"
+            Screen.GamePlayLayout.lblPrimary.Text = "Primary: " + CStr(Client.IncomingMessage.Ship.Batteries.Primary.Integrety.current) + "/" + CStr(Client.IncomingMessage.Ship.Batteries.Primary.Integrety.max)
+            Screen.GamePlayLayout.lblSecondary.Text = "Secondary: " + CStr(Client.IncomingMessage.Ship.Batteries.Secondary.Integrety.current) + "/" + CStr(Client.IncomingMessage.Ship.Batteries.Secondary.Integrety.max)
+            Screen.GamePlayLayout.lblPowerCore.Text = "Power Core: " + CStr(Client.IncomingMessage.Ship.Engineering.PowerCore.current) + "/" + CStr(Client.IncomingMessage.Ship.Engineering.PowerCore.max)
+            Screen.GamePlayLayout.lblEngines.Text = "Engines: " + CStr(Client.IncomingMessage.Ship.Engineering.Engines.current) + "/" + CStr(Client.IncomingMessage.Ship.Engineering.Engines.max)
+            Screen.GamePlayLayout.lblCoreTemp.Text = "Core Temp: " + CStr(Math.Round(Client.IncomingMessage.Ship.Engineering.Heat, 2)) + "*e^5/100*e^5"
+            Screen.GamePlayLayout.lblTempRate.Text = "Temp Rate: " + CStr(Math.Round(Client.IncomingMessage.Ship.Engineering.Rate, 2)) + "*e^5"
         ElseIf Client.Connected = False Then
             Dim temp As New MenuScreenLayout
             Tick.Enabled = False

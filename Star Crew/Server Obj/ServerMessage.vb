@@ -24,9 +24,4 @@ Public Class ServerMessage
         End Using
     End Function
 
-    Public Shared Function CopyMessage(ByVal message As ServerMessage) As ServerMessage
-        Dim newMessage As New ServerMessage(message.Ship, message.Positions, message.Warping)
-        Return newMessage
-    End Function
-
 End Class

@@ -2,7 +2,7 @@
     Public Shared Connected As Boolean = False
     Public Shared MyConnector As Net.Sockets.TcpClient
     Public Shared myMessage As New ClientMessage
-    Public Shared serversMessage As ServerMessage
+    Public Shared IncomingMessage As ServerMessage
     Public Shared comms As Threading.Thread
     Private Shared stars(200) As Star
 
@@ -31,9 +31,9 @@
             End If
 
 
-            Dim direction As Double = serversMessage.Ship.Helm.Direction + Math.PI
-            Position = New Point(Position.X + (serversMessage.Ship.Helm.Throttle.current * Math.Cos(direction) * Speed),
-                                 Position.Y + (serversMessage.Ship.Helm.Throttle.current * Math.Sin(direction) * Speed))
+            Dim direction As Double = IncomingMessage.Ship.Helm.Direction + Math.PI
+            Position = New Point(Position.X + (IncomingMessage.Ship.Helm.Throttle.current * Math.Cos(direction) * Speed),
+                                 Position.Y + (IncomingMessage.Ship.Helm.Throttle.current * Math.Sin(direction) * Speed))
             If Position.X <= 2 Then
                 Position = New Point(Position.X + Screen.ImageSize.X - 5, Position.Y)
             ElseIf Position.X >= Screen.GamePlayLayout.picDisplayGraphics.Width - 3 Then
@@ -45,7 +45,7 @@
                 Position = New Point(Position.X, Position.Y - Screen.ImageSize.Y + 5)
             End If
 
-            If serversMessage.Warping = Galaxy.Warp.Warping Then
+            If IncomingMessage.Warping = Galaxy.Warp.Warping Then
                 Speed = WarpSpeed
             Else
                 Speed = 1
@@ -102,11 +102,7 @@
         '-----Recieve Message-----
         Net.Sockets.Socket.Select(socket, Nothing, Nothing, -1)
         Try
-            serversMessage = bf.Deserialize(MyConnector.GetStream())
-            primaryDirection = serversMessage.Ship.Helm.Direction + serversMessage.Ship.Batteries.Primary.TurnDistance.current
-            primaryRadius = serversMessage.Ship.Batteries.Primary.Range.current
-            secondaryDirection = serversMessage.Ship.Helm.Direction + serversMessage.Ship.Batteries.Secondary.TurnDistance.current
-            secondaryRadius = serversMessage.Ship.Batteries.Secondary.Range.current
+            IncomingMessage = bf.Deserialize(MyConnector.GetStream())
         Catch ex As Net.Sockets.SocketException
             Console.WriteLine()
             Console.WriteLine("Error : The Client was disconnected unexpectedly")
@@ -134,7 +130,6 @@
         Catch ex As Exception
             Console.WriteLine()
             Console.WriteLine("Error : There was an unexpected and unhandled exception.")
-            Console.WriteLine("The error message has now been copied to your clipboard")
             Console.WriteLine("please submit it as an issue at the URL bellow")
             Console.WriteLine("https://github.com/Dynisious/Star_Crew/issues")
             Console.WriteLine()
@@ -163,13 +158,11 @@
             Catch ex As Exception
                 Console.WriteLine()
                 Console.WriteLine("Error : There was an unexpected and unhandled exception.")
-                Console.WriteLine("The error message has now been copied to your clipboard")
                 Console.WriteLine("please submit it as an issue at the URL bellow")
                 Console.WriteLine("https://github.com/Dynisious/Star_Crew/issues")
                 Console.WriteLine()
                 Console.WriteLine(ex.ToString)
                 Console.WriteLine()
-                My.Computer.Clipboard.SetText(ex.ToString)
                 MyConnector.Close()
                 Connected = False
                 comms.Abort()
@@ -186,13 +179,17 @@
     Private Shared secondaryDirection As Double
     Private Shared secondaryRadius As Integer
     Private Shared Sub UpdateGraphics() Handles Tick.Tick
-        If serversMessage IsNot Nothing Then
-            Dim messageData As New ServerMessage(serversMessage)
+        If IncomingMessage IsNot Nothing Then
+            Dim messageData As New ServerMessage(IncomingMessage)
+            primaryDirection = messageData.Ship.Helm.Direction + IncomingMessage.Ship.Batteries.Primary.TurnDistance.current
+            primaryRadius = IncomingMessage.Ship.Batteries.Primary.Range.current
+            secondaryDirection = IncomingMessage.Ship.Helm.Direction + IncomingMessage.Ship.Batteries.Secondary.TurnDistance.current
+            secondaryRadius = IncomingMessage.Ship.Batteries.Secondary.Range.current
             For Each i As Star In stars
                 i.Update()
             Next
 
-            '-----Clear old-----
+            '-----Set Background-----
             Dim bmp As Bitmap
             Select Case messageData.Warping
                 Case Galaxy.Warp.None
@@ -200,14 +197,11 @@
                 Case Galaxy.Warp.Warping
                     bmp = My.Resources.Warping.Clone
             End Select
-            '-------------------
+            '------------------------
 
             '-----Put on Radar-----
             For i As Integer = 0 To UBound(messageData.Positions)
                 Dim distance As Integer = Math.Sqrt((messageData.Positions(i).X ^ 2) + (messageData.Positions(i).Y ^ 2))
-                If messageData.Positions(i).X <= 0 Or messageData.Positions(i).X >= Screen.ImageSize.X - 1 Or messageData.Positions(i).Y <= 0 Or messageData.Positions(i).Y >= Screen.ImageSize.Y - 1 Then
-                    Dim a = 1
-                End If
                 If distance > 200 Then
                     Dim scale As Double = distance / 200
                     messageData.Positions(i).X = (messageData.Positions(i).X / scale)
@@ -234,8 +228,6 @@
             If messageData.Warping <> Galaxy.Warp.Warping Then
                 '-----Batteries Arc-----
                 '-----Primary Arc-----
-                primaryDirection = messageData.Ship.Helm.Direction + messageData.Ship.Batteries.Primary.TurnDistance.current
-                primaryRadius = messageData.Ship.Helm.Direction + messageData.Ship.Batteries.Primary.Range.current
                 For i As Integer = 1 To primaryRadius
                     Dim x As Integer = Math.Cos(primaryDirection + -(Battery.PlayerArc / 2)) * i
                     Dim y As Integer = Math.Sin(primaryDirection + -(Battery.PlayerArc / 2)) * i
@@ -251,8 +243,6 @@
                 Next
                 '---------------------
                 '-----Secondary Arc-----
-                secondaryDirection = messageData.Ship.Helm.Direction + messageData.Ship.Batteries.Secondary.TurnDistance.current
-                secondaryRadius = messageData.Ship.Helm.Direction + messageData.Ship.Batteries.Secondary.Range.current
                 For i As Integer = 1 To secondaryRadius
                     Dim x As Integer = Math.Cos(secondaryDirection + -(Battery.PlayerArc / 2)) * i
                     Dim y As Integer = Math.Sin(secondaryDirection + -(Battery.PlayerArc / 2)) * i
@@ -270,11 +260,10 @@
                 '-----------------------
             End If
 
-            Dim count As Integer = 0
             For i As Integer = 0 To UBound(messageData.Positions)
-                If (messageData.Warping = Galaxy.Warp.None) Or (messageData.Warping = Galaxy.Warp.Warping And count = messageData.Ship.Index) Then
+                If (messageData.Warping = Galaxy.Warp.None) Or (messageData.Warping = Galaxy.Warp.Warping And i = messageData.Ship.Index) Then
                     Dim col As Color = messageData.Positions(i).Col
-                    If serversMessage.Positions(i).Hit = True Then
+                    If messageData.Positions(i).Hit = True Then
                         col = Color.Orange
                     End If
                     For x As Integer = -3 To 3
@@ -294,7 +283,6 @@
                         Next
                     Next
                 End If
-                count = count + 1
             Next
 
             '-----Batteries Target-----
