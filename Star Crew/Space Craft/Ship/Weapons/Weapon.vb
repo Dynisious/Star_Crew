@@ -36,7 +36,7 @@ Public Class Weapon
         TurnSpeed.current = TurnSpeed.max * fraction
     End Sub
 
-    Public Sub FireWeapon(ByVal distance As Integer, ByRef target As Ship)
+    Public Sub FireWeapon(ByVal distance As Integer, ByRef target As Ship, ByVal direction As Double)
         Randomize()
         If distance <= Range.current And
             Ammo.current <> 0 And
@@ -44,7 +44,7 @@ Public Class Weapon
             Ready.current = Ready.max Then
             Ready.current = 0
             Ammo.current = Ammo.current - 1
-            target.TakeDamage(Me, Parent.Parent)
+            target.TakeDamage(Me, Parent.Parent, direction)
             Parent.Parent.Firing = True
             If ReferenceEquals(target, Parent.Parent.Helm.Target) = True And target.Dead = True Then
                 Parent.Parent.TargetLock = False

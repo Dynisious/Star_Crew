@@ -5,14 +5,14 @@ Public MustInherit Class Ship
     Public Hit As Boolean = False
     Public Dead As Boolean = False
     Public TargetLock As Boolean = False
+    Public Hull As StatDbl
     Public Index As Integer
+    Public Position As Point
     Public Enum Allegence
         Player
         Pirate
     End Enum
     Public MyAllegence As Allegence
-    Public Hull As StatDbl
-    Public Position As Point
     '-----Helm-----
     Public Helm As New Helm(Me)
     '--------------
@@ -29,10 +29,15 @@ Public MustInherit Class Ship
     Public Sub New(ByVal nShipStats As Layout, ByVal nIndex As Integer, ByVal nAllegence As Allegence)
         MyAllegence = nAllegence
         nShipStats.SetLayout(Me)
-        Index = nindex
+        Index = nIndex
     End Sub
 
-    Public Sub TakeDamage(ByRef nWeapon As Weapon, ByRef shooter As Ship)
+    Public Sub TakeDamage(ByRef nWeapon As Weapon, ByRef shooter As Ship, ByVal direction As Double)
+        If MyAllegence = Allegence.Pirate Then
+            Dim DirectionRelativeToShooter = direction - shooter.Helm.Direction - nWeapon.TurnDistance.current
+            Dim BatteriesRealWorld = shooter.Helm.Direction + nWeapon.TurnDistance.current
+            Dim a = 1
+        End If
         Dim sideHit As Shields.Sides
         Dim adjacent As Integer = (nWeapon.Parent.Parent.Position.X - Position.X)
         Dim opposite As Integer = (nWeapon.Parent.Parent.Position.Y - Position.Y)
@@ -115,7 +120,7 @@ Public MustInherit Class Ship
 
     Public Overridable Sub DestroyShip()
         If Dead = 0 Then
-            Galaxy.RemoveShip(Me)
+            Combat.RemoveShip(Me)
             Helm.Parent = Nothing
             Batteries.Parent = Nothing
             Batteries.Primary.Parent = Nothing
@@ -123,8 +128,8 @@ Public MustInherit Class Ship
             Shielding.Parent = Nothing
             Engineering.Parent = Nothing
             Dead = True
-            If ReferenceEquals(Galaxy.centerShip, Me) = True Then
-                Galaxy.Recenter()
+            If ReferenceEquals(Combat.centerShip, Me) = True Then
+                Combat.Recenter()
             End If
         End If
     End Sub

@@ -113,7 +113,7 @@ Public Class Helm
             Else
                 Direction = NormalizeDirection(Direction - TurnSpeed.current)
             End If
-            If ReferenceEquals(Parent, Galaxy.centerShip) Then
+            If ReferenceEquals(Parent, Combat.centerShip) Then
                 Dim a = 1
             End If
 
@@ -154,13 +154,10 @@ Public Class Helm
     End Sub
 
     Public Shared Function NormalizeDirection(ByVal nDirecion As Double) As Double
-        While nDirecion > (2 * Math.PI) Or nDirecion < 0
-            If nDirecion < 0 Then
-                nDirecion = nDirecion + (2 * Math.PI)
-            Else
-                nDirecion = nDirecion - (2 * Math.PI)
-            End If
-        End While
+        nDirecion = nDirecion Mod 2 * Math.PI
+        If nDirecion < 0 Then
+            nDirecion = nDirecion + (2 * Math.PI)
+        End If
         Return nDirecion
     End Function
 

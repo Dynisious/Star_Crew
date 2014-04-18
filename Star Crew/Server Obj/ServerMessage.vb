@@ -4,8 +4,8 @@ Public Class ServerMessage
     Public Positions() As GraphicPosition
     Public Warping As Galaxy.Warp
 
-    Public Sub New(ByVal nCenterShip As Ship, ByVal nPositions() As GraphicPosition, ByVal nWarping As Galaxy.Warp)
-        Ship = nCenterShip
+    Public Sub New(ByVal ncenterCraft As Ship, ByVal nPositions() As GraphicPosition, ByVal nWarping As Galaxy.Warp)
+        Ship = ncenterCraft
         Positions = nPositions
         Warping = nWarping
     End Sub

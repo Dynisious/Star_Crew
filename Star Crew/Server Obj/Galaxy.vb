@@ -1,9 +1,6 @@
 ﻿Public Class Galaxy
     Public Shared WithEvents GalaxyTimer As New Timer With {.Interval = 100, .Enabled = False}
-    Public Shared centerShip As Ship
-    Public Shared ShipCount As Integer = 50
-    Public Shared xList(-1) As Ship
-    Private Shared shipPositions(-1) As GraphicPosition
+    Private Shared craftPositions(-1) As GraphicPosition
     Public Enum Warp
         None
         Entering
@@ -11,29 +8,19 @@
         Warping
     End Enum
     Public Shared Warping As Warp = Warp.None
+    Public Enum Scenario
+        Battle
+        Transit
+    End Enum
+    Public State As Scenario
 
-    Private Shared Event StartGame()
+    Public Shared Event StartGame()
     Public Shared Sub StartGame_Call()
         RaiseEvent StartGame()
     End Sub
     Public Shared Sub StartGame_Handle() Handles Me.StartGame
         Warping = Warp.None
-        ReDim xList(ShipCount - 1)
-        Randomize()
-
-        centerShip = New FriendlyShip(New Clunker, 0)
-        xList(0) = centerShip
-        xList(0).Position = New Point((6000 * Rnd()) - 3000, (6000 * Rnd()) - 3000)
-        xList(1) = New PirateShip(New Clunker, 1)
-        xList(1).Position = New Point((6000 * Rnd()) - 3000, (6000 * Rnd()) - 3000)
-        For i As Integer = 2 To UBound(xList)
-            If Int(2 * Rnd()) = 0 Then
-                xList(i) = New FriendlyShip(New Clunker, i)
-            Else
-                xList(i) = New PirateShip(New Clunker, i)
-            End If
-            xList(i).Position = New Point((6000 * Rnd()) - 3000, (6000 * Rnd()) - 3000)
-        Next
+        Combat.Generate()
         GalaxyTimer.Enabled = True
     End Sub
 
@@ -185,7 +172,7 @@
                 End Select
         End Select
     End Sub
-    Private Class PlayerControl
+    Public Class PlayerControl
         '-----Helm-----
         Public Shared ThrottleUpCheck As Boolean = False
         Public Shared ThrottleDownCheck As Boolean = False
@@ -195,61 +182,61 @@
         Public Shared MatchSpeedCheck As Boolean = False
         Private Shared Sub ThrottleUp()
             If ThrottleUpCheck = True Then
-                centerShip.Helm.MatchSpeed = False
-                centerShip.Helm.Throttle.current = centerShip.Helm.Throttle.current + centerShip.Helm.Acceleration.current
-                If centerShip.Helm.Throttle.current > centerShip.Helm.Throttle.max Then
-                    centerShip.Helm.Throttle.current = centerShip.Helm.Throttle.max
+                Combat.centerShip.Helm.MatchSpeed = False
+                Combat.centerShip.Helm.Throttle.current = Combat.centerShip.Helm.Throttle.current + Combat.centerShip.Helm.Acceleration.current
+                If Combat.centerShip.Helm.Throttle.current > Combat.centerShip.Helm.Throttle.max Then
+                    Combat.centerShip.Helm.Throttle.current = Combat.centerShip.Helm.Throttle.max
                 End If
             End If
         End Sub
         Private Shared Sub ThrottleDown()
             If ThrottleDownCheck = True Then
-                centerShip.Helm.MatchSpeed = False
-                centerShip.Helm.Throttle.current = centerShip.Helm.Throttle.current - centerShip.Helm.Acceleration.current
-                If centerShip.Helm.Throttle.current < Helm.MinimumSpeed Then
-                    centerShip.Helm.Throttle.current = Helm.MinimumSpeed
+                Combat.centerShip.Helm.MatchSpeed = False
+                Combat.centerShip.Helm.Throttle.current = Combat.centerShip.Helm.Throttle.current - Combat.centerShip.Helm.Acceleration.current
+                If Combat.centerShip.Helm.Throttle.current < Helm.MinimumSpeed Then
+                    Combat.centerShip.Helm.Throttle.current = Helm.MinimumSpeed
                 End If
             End If
         End Sub
         Private Shared Sub TurnRight()
             If TurnRightCheck = True Then
-                centerShip.Helm.Direction = Helm.NormalizeDirection(centerShip.Helm.Direction + centerShip.Helm.TurnSpeed.current)
+                Combat.centerShip.Helm.Direction = Helm.NormalizeDirection(Combat.centerShip.Helm.Direction + Combat.centerShip.Helm.TurnSpeed.current)
             End If
         End Sub
         Private Shared Sub TurnLeft()
             If TurnLeftCheck = True Then
-                centerShip.Helm.Direction = Helm.NormalizeDirection(centerShip.Helm.Direction - centerShip.Helm.TurnSpeed.current)
+                Combat.centerShip.Helm.Direction = Helm.NormalizeDirection(Combat.centerShip.Helm.Direction - Combat.centerShip.Helm.TurnSpeed.current)
             End If
         End Sub
         Private Shared Sub WarpDrive()
             If WarpDriveCheck = True Then
-                If centerShip.Helm.Throttle.current > Helm.MinimumSpeed Then
-                    centerShip.Helm.Throttle.current = centerShip.Helm.Throttle.current - centerShip.Helm.Acceleration.current
-                    If centerShip.Helm.Throttle.current < Helm.MinimumSpeed Then
-                        centerShip.Helm.Throttle.current = Helm.MinimumSpeed
+                If Combat.centerShip.Helm.Throttle.current > Helm.MinimumSpeed Then
+                    Combat.centerShip.Helm.Throttle.current = Combat.centerShip.Helm.Throttle.current - Combat.centerShip.Helm.Acceleration.current
+                    If Combat.centerShip.Helm.Throttle.current < Helm.MinimumSpeed Then
+                        Combat.centerShip.Helm.Throttle.current = Helm.MinimumSpeed
                     End If
                 End If
-                If centerShip.Helm.Direction < Math.PI Then
-                    centerShip.Helm.Direction = centerShip.Helm.Direction - centerShip.Helm.TurnSpeed.current
-                    If centerShip.Helm.Direction < 0 Then
-                        centerShip.Helm.Direction = 0
+                If Combat.centerShip.Helm.Direction < Math.PI Then
+                    Combat.centerShip.Helm.Direction = Combat.centerShip.Helm.Direction - Combat.centerShip.Helm.TurnSpeed.current
+                    If Combat.centerShip.Helm.Direction < 0 Then
+                        Combat.centerShip.Helm.Direction = 0
                     End If
-                ElseIf centerShip.Helm.Direction > Math.PI Then
-                    centerShip.Helm.Direction = centerShip.Helm.Direction + centerShip.Helm.TurnSpeed.current
-                    If centerShip.Helm.Direction > 2 * Math.PI Then
-                        centerShip.Helm.Direction = 0
+                ElseIf Combat.centerShip.Helm.Direction > Math.PI Then
+                    Combat.centerShip.Helm.Direction = Combat.centerShip.Helm.Direction + Combat.centerShip.Helm.TurnSpeed.current
+                    If Combat.centerShip.Helm.Direction > 2 * Math.PI Then
+                        Combat.centerShip.Helm.Direction = 0
                     End If
                 End If
-                If Galaxy.centerShip.Helm.Throttle.current = Helm.MinimumSpeed And
+                If Combat.centerShip.Helm.Throttle.current = Helm.MinimumSpeed And
                     Galaxy.Warping <> Galaxy.Warp.Warping And
-                    Galaxy.centerShip.Helm.Direction = 0 Then
+                    Combat.centerShip.Helm.Direction = 0 Then
                     Galaxy.Warping = Galaxy.Warp.Entering
                 End If
             End If
         End Sub
         Private Shared Sub MatchSpeed()
             If MatchSpeedCheck = True Then
-                centerShip.Helm.MatchSpeed = True
+                Combat.centerShip.Helm.MatchSpeed = True
             End If
         End Sub
         '--------------
@@ -262,6 +249,7 @@
         Public Shared SelectTargetCheck As Boolean = False
         Private Shared Sub RotateRight()
             If RotateRightCheck = True Then
+                Dim centerShip As Ship = Combat.centerShip
                 '-----Primary-----
                 centerShip.Batteries.Primary.TurnDistance.current =
                     centerShip.Batteries.Primary.TurnDistance.current +
@@ -284,6 +272,7 @@
         End Sub
         Private Shared Sub RotateLeft()
             If RotateLeftCheck = True Then
+                Dim centerShip As Ship = Combat.centerShip
                 '-----Primary-----
                 centerShip.Batteries.Primary.TurnDistance.current =
                     centerShip.Batteries.Primary.TurnDistance.current -
@@ -306,9 +295,9 @@
         End Sub
         Private Shared Sub FirePrimary()
             If FirePrimaryCheck = True Then
-                For i As Integer = 0 To xList.Length - 1
-                    Dim adjacent As Integer = xList(i).Position.X - centerShip.Position.X
-                    Dim opposite As Integer = xList(i).Position.Y - centerShip.Position.Y
+                For i As Integer = 0 To combat.shipList.Length - 1
+                    Dim adjacent As Integer = combat.shipList(i).Position.X - Combat.centerShip.Position.X
+                    Dim opposite As Integer = combat.shipList(i).Position.Y - Combat.centerShip.Position.Y
                     Dim distance = Math.Sqrt((opposite ^ 2) + (adjacent ^ 2))
                     Dim direction As Double
                     If adjacent <> 0 Then
@@ -323,10 +312,11 @@
                         direction = (3 * Math.PI) / 2
                     End If
 
+                    Dim centerShip As Ship = Combat.centerShip
                     If distance < centerShip.Batteries.Primary.Range.current And distance <> 0 Then
                         If direction - centerShip.Helm.Direction - centerShip.Batteries.Primary.TurnDistance.current < Battery.PlayerArc / 2 And
                             direction - centerShip.Helm.Direction - centerShip.Batteries.Primary.TurnDistance.current > -Battery.PlayerArc / 2 Then
-                            centerShip.Batteries.Primary.FireWeapon(distance, xList(i))
+                            centerShip.Batteries.Primary.FireWeapon(distance, combat.shipList(i), direction)
                             Exit Sub
                         End If
                     End If
@@ -335,10 +325,10 @@
         End Sub
         Private Shared Sub FireSecondary()
             If FireSecondaryCheck = True Then
-                For i As Integer = 0 To xList.Length - 1
-                    If xList(i).MyAllegence <> Ship.Allegence.Player Then
-                        Dim adjacent As Integer = xList(i).Position.X - centerShip.Position.X
-                        Dim opposite As Integer = xList(i).Position.Y - centerShip.Position.Y
+                For i As Integer = 0 To combat.shipList.Length - 1
+                    If combat.shipList(i).MyAllegence <> Ship.Allegence.Player Then
+                        Dim adjacent As Integer = combat.shipList(i).Position.X - Combat.centerShip.Position.X
+                        Dim opposite As Integer = combat.shipList(i).Position.Y - Combat.centerShip.Position.Y
                         Dim distance = Math.Sqrt((opposite ^ 2) + (adjacent ^ 2))
                         Dim direction As Double
                         If adjacent <> 0 Then
@@ -353,10 +343,11 @@
                             direction = (3 * Math.PI) / 2
                         End If
 
+                        Dim centerShip As Ship = Combat.centerShip
                         If distance < centerShip.Batteries.Secondary.Range.current And distance <> 0 Then
                             If direction - centerShip.Helm.Direction - centerShip.Batteries.Secondary.TurnDistance.current < Battery.PlayerArc / 2 And
                                 direction - centerShip.Helm.Direction - centerShip.Batteries.Secondary.TurnDistance.current > -Battery.PlayerArc / 2 Then
-                                centerShip.Batteries.Secondary.FireWeapon(distance, xList(i))
+                                centerShip.Batteries.Secondary.FireWeapon(distance, combat.shipList(i), direction)
                                 Exit Sub
                             End If
                         End If
@@ -367,12 +358,12 @@
         Private Shared Sub SelectTarget()
             If SelectTargetCheck = True Then
                 Dim lastDistance As Integer
-                For i As Integer = 0 To xList.Length - 1
-                    If xList(i).MyAllegence <> Ship.Allegence.Player Then
-                        Dim distance As Integer = Math.Sqrt(((xList(i).Position.X - centerShip.Position.X) ^ 2) + ((xList(i).Position.Y - centerShip.Position.Y) ^ 2))
+                For i As Integer = 0 To combat.shipList.Length - 1
+                    If combat.shipList(i).MyAllegence <> Ship.Allegence.Player Then
+                        Dim distance As Integer = Math.Sqrt(((combat.shipList(i).Position.X - Combat.centerShip.Position.X) ^ 2) + ((combat.shipList(i).Position.Y - Combat.centerShip.Position.Y) ^ 2))
                         If (distance < lastDistance And distance <> 0) Or lastDistance = 0 Then
                             lastDistance = distance
-                            centerShip.Helm.Target = xList(i)
+                            Combat.centerShip.Helm.Target = combat.shipList(i)
                         End If
                     End If
                 Next
@@ -387,22 +378,22 @@
         Public Shared LeftBoostCheck As Boolean = False
         Private Shared Sub ForwardBoost()
             If ForwardBoostCheck = True Then
-                centerShip.Shielding.LastHit = Shields.Sides.FrontShield
+                Combat.centerShip.Shielding.LastHit = Shields.Sides.FrontShield
             End If
         End Sub
         Private Shared Sub RightBoost()
             If RightBoostCheck = True Then
-                centerShip.Shielding.LastHit = Shields.Sides.RightShield
+                Combat.centerShip.Shielding.LastHit = Shields.Sides.RightShield
             End If
         End Sub
         Private Shared Sub RearBoost()
             If RearBoostCheck = True Then
-                centerShip.Shielding.LastHit = Shields.Sides.BackShield
+                Combat.centerShip.Shielding.LastHit = Shields.Sides.BackShield
             End If
         End Sub
         Private Shared Sub LeftBoost()
             If LeftBoostCheck = True Then
-                centerShip.Shielding.LastHit = Shields.Sides.LeftShield
+                Combat.centerShip.Shielding.LastHit = Shields.Sides.LeftShield
             End If
         End Sub
         '-------------------
@@ -412,12 +403,12 @@
         Public Shared CoolCheck As Boolean = False
         Private Shared Sub Heat()
             If HeatCheck = True Then
-                centerShip.Engineering.Rate = centerShip.Engineering.Rate + (Engineering.RateOfChange * 10)
+                Combat.centerShip.Engineering.Rate = Combat.centerShip.Engineering.Rate + (Engineering.RateOfChange * 10)
             End If
         End Sub
         Private Shared Sub Cool()
             If CoolCheck = True Then
-                centerShip.Engineering.Rate = centerShip.Engineering.Rate - (Engineering.RateOfChange * 10)
+                Combat.centerShip.Engineering.Rate = Combat.centerShip.Engineering.Rate - (Engineering.RateOfChange * 10)
             End If
         End Sub
         '---------------------
@@ -451,45 +442,11 @@
         End Sub
     End Class
 
-    Public Shared Sub RemoveShip(ByRef nShip As Ship)
-        For i As Integer = nShip.Index To UBound(xList)
-            If i <> UBound(xList) Then
-                xList(i) = xList(i + 1)
-                xList(i).Index = i
-            End If
-        Next
-        ReDim Preserve xList(UBound(xList) - 1)
-    End Sub
-
-    Public Shared Sub Recenter()
-        For Each i As Ship In xList
-            If i.MyAllegence = Ship.Allegence.Player Then
-                centerShip = i
-                For Each e As ServerSideClient In Server.ServerComms.Ports
-                    Select Case e.MyStation
-                        Case Station.StationTypes.Helm
-                            centerShip.Helm.PlayerControled = True
-                        Case Station.StationTypes.Batteries
-                            centerShip.Batteries.PlayerControled = True
-                        Case Station.StationTypes.Shielding
-                            centerShip.Batteries.PlayerControled = True
-                        Case Station.StationTypes.Engineering
-                            centerShip.Engineering.PlayerControled = True
-                    End Select
-                Next
-                Exit Sub
-            End If
-        Next
-        GalaxyTimer.Enabled = False
-        Console.WriteLine("Player is Defeated")
-    End Sub
-
     Public Shared Sub UpdateGalaxy() Handles GalaxyTimer.Tick
+        Combat.UpdateCombatSenario()
         Dim friendly As Integer
         Dim enemy As Integer
-        PlayerControl.RunPlayerControls()
-        Ship.UpdateShip_Call()
-        For Each i As Ship In xList
+        For Each i As Ship In Combat.shipList
             If i.MyAllegence = Ship.Allegence.Player Then
                 friendly = friendly + 1
             ElseIf i.MyAllegence = Ship.Allegence.Pirate Then
@@ -504,24 +461,24 @@
             Case Warp.Exiting
                 Warping = Warp.None
         End Select
-        ReDim shipPositions(UBound(xList))
+        ReDim craftPositions(UBound(Combat.shipList))
         '------------------
 
         '-----Set new positions-----
-        For i As Integer = 0 To UBound(xList)
-            Dim x As Integer = xList(i).Position.X - centerShip.Position.X
-            Dim y As Integer = xList(i).Position.Y - centerShip.Position.Y
+        For i As Integer = 0 To UBound(Combat.shipList)
+            Dim x As Integer = Combat.shipList(i).Position.X - Combat.centerShip.Position.X
+            Dim y As Integer = Combat.shipList(i).Position.Y - Combat.centerShip.Position.Y
             Dim col As Color
-            Select Case xList(i).MyAllegence
+            Select Case Combat.shipList(i).MyAllegence
                 Case Ship.Allegence.Player
                     col = Color.Green
                 Case Ship.Allegence.Pirate
                     col = Color.Red
             End Select
-            shipPositions(i) = New GraphicPosition(col, xList(i).Hit, xList(i).Firing, x, y, xList(i).Helm.Direction)
+            craftPositions(i) = New GraphicPosition(col, Combat.shipList(i).Hit, Combat.shipList(i).Firing, x, y, Combat.shipList(i).Helm.Direction)
         Next
         '---------------------------
-        Server.ServerComms.UpdateServerMessage_Call(centerShip, shipPositions, Warping)
+        Server.ServerComms.UpdateServerMessage_Call(Combat.centerShip, craftPositions, Warping)
     End Sub
 
 End Class

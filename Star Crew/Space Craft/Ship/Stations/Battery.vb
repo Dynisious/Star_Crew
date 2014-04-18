@@ -24,22 +24,22 @@ Public Class Battery
             Primary.UpdateWeapon()
             Secondary.UpdateWeapon()
 
-            If PlayerControled = False And Galaxy.xList.Length <> 1 Then
-                Dim shipDirections(Galaxy.xList.Length - 1) As Double
-                Dim shipDistances(Galaxy.xList.Length - 1) As Integer
+            If PlayerControled = False And Combat.shipList.Length <> 1 Then
+                Dim shipDirections(Combat.shipList.Length - 1) As Double
+                Dim shipDistances(Combat.shipList.Length - 1) As Integer
                 Parent.Helm.Target = Nothing
                 Dim Opposite As Integer
                 Dim Adjacent As Integer
                 Dim target As Ship = Nothing
                 Dim targetDistance As Integer
                 Dim targetDirection As Double
-                ReDim shipDirections(Galaxy.xList.Length - 1)
-                ReDim shipDistances(Galaxy.xList.Length - 1)
+                ReDim shipDirections(Combat.shipList.Length - 1)
+                ReDim shipDistances(Combat.shipList.Length - 1)
                 ReDim Parent.Helm.evadeList(-1)
                 '-----Set Target Distances and Directions-----
                 For i As Integer = 0 To shipDistances.Length - 1
-                    Opposite = Galaxy.xList(i).Position.Y - Parent.Position.Y
-                    Adjacent = Galaxy.xList(i).Position.X - Parent.Position.X
+                    Opposite = Combat.shipList(i).Position.Y - Parent.Position.Y
+                    Adjacent = Combat.shipList(i).Position.X - Parent.Position.X
                     If Adjacent <> 0 Then
                         shipDirections(i) = Math.Tanh(Opposite / Adjacent)
                         If Adjacent < 0 Then
@@ -53,7 +53,7 @@ Public Class Battery
                     End If
                     shipDistances(i) = Math.Sqrt((Adjacent ^ 2) + (Opposite ^ 2))
 
-                    If ReferenceEquals(Parent, Galaxy.xList(i)) = False And shipDistances(i) < Helm.MinimumDistance And
+                    If ReferenceEquals(Parent, Combat.shipList(i)) = False And shipDistances(i) < Helm.MinimumDistance And
                         shipDirections(i) - Parent.Helm.Direction < (3 * Math.PI) / 4 And
                         shipDirections(i) - Parent.Helm.Direction > -(3 * Math.PI) / 4 Then
                         ReDim Preserve Parent.Helm.evadeList(Parent.Helm.evadeList.Length)
@@ -66,16 +66,16 @@ Public Class Battery
                 Dim lastDistance As Integer
                 For i As Integer = 0 To shipDistances.Length - 1
                     '-----Select Target to Shoot-----
-                    If ReferenceEquals(Parent, Galaxy.xList(i)) = False Then
+                    If ReferenceEquals(Parent, Combat.shipList(i)) = False Then
                         If (shipDistances(i) <= lastDistance Or lastDistance = 0) And
-                            Galaxy.xList(i).MyAllegence <> Parent.MyAllegence Then
+                            Combat.shipList(i).MyAllegence <> Parent.MyAllegence Then
                             If Parent.TargetLock = False Then
-                                Parent.Helm.Target = Galaxy.xList(i)
+                                Parent.Helm.Target = Combat.shipList(i)
                             End If
                             If (shipDirections(i) - Parent.Helm.Direction) < (Math.PI / 2) And
                                 (shipDirections(i) - Parent.Helm.Direction) > -(Math.PI / 2) Then
                                 lastDistance = shipDistances(i)
-                                target = Galaxy.xList(i)
+                                target = Combat.shipList(i)
                                 targetDirection = shipDirections(i)
                                 targetDistance = shipDistances(i)
                             End If
@@ -132,14 +132,14 @@ Public Class Battery
                     '-----Primary-----
                     If targetDirection - Parent.Helm.Direction - Primary.TurnDistance.current > -(HitArc / 2) And
                         targetDirection - Parent.Helm.Direction - Primary.TurnDistance.current < (HitArc / 2) Then
-                        Primary.FireWeapon(targetDistance, target)
+                        Primary.FireWeapon(targetDistance, target, targetDirection)
                     End If
                     '-----------------
 
                     '-----Secondary-----
                     If targetDirection - Parent.Helm.Direction - Secondary.TurnDistance.current > -(HitArc / 2) And
                         targetDirection - Parent.Helm.Direction - Secondary.TurnDistance.current < (HitArc / 2) Then
-                        Secondary.FireWeapon(targetDistance, target)
+                        Secondary.FireWeapon(targetDistance, target, targetDirection)
                     End If
                     '-------------------
                     '------------------------

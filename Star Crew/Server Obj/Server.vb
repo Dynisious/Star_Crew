@@ -153,7 +153,7 @@ Module Server
                 Try
                     Dim num As Integer = CInt(Console.ReadLine)
                     If num >= 2 Then
-                        Galaxy.ShipCount = num
+                        Combat.ShipCount = num
                         Console.WriteLine("Count Set")
                         Console.WriteLine()
                     Else
@@ -204,15 +204,16 @@ Module Server
                     End If
                 Next
                 Console.WriteLine((MyStation.ToString() + ": Has been connected"))
+                Dim centerShip As Ship = Combat.centerShip
                 Select Case MyStation
                     Case Station.StationTypes.Helm
-                        Galaxy.centerShip.Helm.PlayerControled = True
+                        centerShip.Helm.PlayerControled = True
                     Case Station.StationTypes.Batteries
-                        Galaxy.centerShip.Batteries.PlayerControled = True
+                        centerShip.Batteries.PlayerControled = True
                     Case Station.StationTypes.Shielding
-                        Galaxy.centerShip.Shielding.PlayerControled = True
+                        centerShip.Shielding.PlayerControled = True
                     Case Station.StationTypes.Engineering
-                        Galaxy.centerShip.Engineering.PlayerControled = True
+                        centerShip.Engineering.PlayerControled = True
                 End Select
             Else
                 Try
@@ -332,13 +333,13 @@ Module Server
                     If resetControl = True Then
                         Select Case CType(i, ServerSideClient).MyStation
                             Case Station.StationTypes.Helm
-                                Galaxy.centerShip.Helm.PlayerControled = False
+                                Combat.centerShip.Helm.PlayerControled = False
                             Case Station.StationTypes.Batteries
-                                Galaxy.centerShip.Batteries.PlayerControled = False
+                                Combat.centerShip.Batteries.PlayerControled = False
                             Case Station.StationTypes.Shielding
-                                Galaxy.centerShip.Shielding.PlayerControled = False
+                                Combat.centerShip.Shielding.PlayerControled = False
                             Case Station.StationTypes.Engineering
-                                Galaxy.centerShip.Engineering.PlayerControled = False
+                                Combat.centerShip.Engineering.PlayerControled = False
                         End Select
                     End If
                     Dim index = Array.IndexOf(Ports, i)
