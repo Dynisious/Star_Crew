@@ -1,18 +1,12 @@
 ﻿<Serializable()>
 Public MustInherit Class Ship
-    <NonSerialized()>
+    Inherits SpaceCraft
+    Public InCombat As Boolean = False
     Public Firing As Boolean = False
     Public Hit As Boolean = False
     Public Dead As Boolean = False
     Public TargetLock As Boolean = False
     Public Hull As StatDbl
-    Public Index As Integer
-    Public Position As Point
-    Public Enum Allegence
-        Player
-        Pirate
-    End Enum
-    Public MyAllegence As Allegence
     '-----Helm-----
     Public Helm As New Helm(Me)
     '--------------
@@ -26,14 +20,14 @@ Public MustInherit Class Ship
     Public Engineering As New Engineering(Me)
     '---------------------
 
-    Public Sub New(ByVal nShipStats As Layout, ByVal nIndex As Integer, ByVal nAllegence As Allegence)
+    Public Sub New(ByVal nShipStats As Layout, ByVal nIndex As Integer, ByVal nAllegence As Galaxy.Allegence)
         MyAllegence = nAllegence
         nShipStats.SetLayout(Me)
         Index = nIndex
     End Sub
 
     Public Sub TakeDamage(ByRef nWeapon As Weapon, ByRef shooter As Ship, ByVal direction As Double)
-        If MyAllegence = Allegence.Pirate Then
+        If MyAllegence = Galaxy.Allegence.Pirate Then
             Dim DirectionRelativeToShooter = direction - shooter.Helm.Direction - nWeapon.TurnDistance.current
             Dim BatteriesRealWorld = shooter.Helm.Direction + nWeapon.TurnDistance.current
             Dim a = 1
@@ -139,18 +133,18 @@ Public MustInherit Class Ship
         RaiseEvent ShipUpdate()
     End Sub
     Public Overridable Sub UpdateShip_Handle() Handles MyClass.ShipUpdate
-        Hit = False
-        Firing = False
-        Batteries.Update()
-        Engineering.Update()
-        Shielding.Update()
-        Helm.Update()
-        Dim fly As Decimal = Position.X + (Math.Cos(Helm.Direction) *
-                                   (Helm.Throttle.current * (Engineering.Engines.current / Engineering.Engines.max)))
-        Position.X = Position.X + (Math.Cos(Helm.Direction) *
-                                   (Helm.Throttle.current * (Engineering.Engines.current / Engineering.Engines.max)))
-        Position.Y = Position.Y + (Math.Sin(Helm.Direction) *
-                                   (Helm.Throttle.current * (Engineering.Engines.current / Engineering.Engines.max)))
+        If InCombat = True Then
+            Hit = False
+            Firing = False
+            Batteries.Update()
+            Engineering.Update()
+            Shielding.Update()
+            Helm.Update()
+            Position.X = Position.X + (Math.Cos(Helm.Direction) *
+                                       (Helm.Throttle.current * (Engineering.Engines.current / Engineering.Engines.max)))
+            Position.Y = Position.Y + (Math.Sin(Helm.Direction) *
+                                       (Helm.Throttle.current * (Engineering.Engines.current / Engineering.Engines.max)))
+        End If
     End Sub
 
 End Class

@@ -115,6 +115,7 @@
     <Compile Include="Server Obj\Combat.vb" />
     <Compile Include="Server Obj\Galaxy.vb" />
     <Compile Include="Graphics\GraphicPosition.vb" />
+    <Compile Include="Server Obj\Sector.vb" />
     <Compile Include="Server Obj\Server.vb" />
     <Compile Include="Client Obj\Screen.vb">
       <SubType>Form</SubType>
@@ -139,6 +140,9 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
     <Compile Include="Server Obj\ServerMessage.vb" />
+    <Compile Include="Space Craft\Fleet\Fleet.vb" />
+    <Compile Include="Space Craft\Fleet\FriendlyFleet.vb" />
+    <Compile Include="Space Craft\Fleet\PirateFleet.vb" />
     <Compile Include="Space Craft\Ship\StatInt.vb" />
     <Compile Include="Space Craft\Ship\StatDbl.vb" />
     <Compile Include="Space Craft\Ship\FriendlyShip.vb" />
@@ -155,6 +159,7 @@
     <Compile Include="Space Craft\Ship\Weapons\Weapon Layouts\Rattler.vb" />
     <Compile Include="Space Craft\Ship\Weapons\Weapon Layouts\WeaponLayout.vb" />
     <Compile Include="Space Craft\Ship\Weapons\Weapon.vb" />
+    <Compile Include="Space Craft\SpaceCraft.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="My Project\Resources.resx">

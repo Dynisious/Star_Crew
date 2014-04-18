@@ -1,18 +1,18 @@
 ﻿Public Class Combat
     Public Shared centerShip As Ship
-    Public Shared ShipCount As Integer = 50
-    Public Shared PlayerShips(ShipCount - 1) As Ship
     Public Shared shipList() As Ship
 
-    Public Shared Sub Generate()
-        ReDim shipList(ShipCount - 1)
+    Public Shared Sub Generate(ByRef Enemies As Fleet)
+        ReDim shipList(UBound(Sector.centerFleet.ShipList) + Enemies.ShipList.Length)
         Randomize()
 
         centerShip = New FriendlyShip(New Clunker, 0)
         shipList(0) = centerShip
         shipList(0).Position = New Point((6000 * Rnd()) - 3000, (6000 * Rnd()) - 3000)
+        shipList(0).InCombat = True
         shipList(1) = New PirateShip(New Clunker, 1)
         shipList(1).Position = New Point((6000 * Rnd()) - 3000, (6000 * Rnd()) - 3000)
+        shipList(1).InCombat = True
         For i As Integer = 2 To UBound(shipList)
             If Int(2 * Rnd()) = 0 Then
                 shipList(i) = New FriendlyShip(New Clunker, i)
@@ -20,12 +20,13 @@
                 shipList(i) = New PirateShip(New Clunker, i)
             End If
             shipList(i).Position = New Point((6000 * Rnd()) - 3000, (6000 * Rnd()) - 3000)
+            shipList(i).InCombat = True
         Next
     End Sub
 
     Public Shared Sub Recenter()
         For Each i As Ship In shipList
-            If i.MyAllegence = Ship.Allegence.Player Then
+            If i.MyAllegence = Galaxy.Allegence.Player Then
                 centerShip = i
                 For Each e As Net.Sockets.Socket In ServerComms.Ports
                     If e.GetType Is GetType(ServerSideClient) Then

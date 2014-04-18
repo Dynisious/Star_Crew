@@ -10,7 +10,6 @@ Module Server
         Play
         KickPlayer
         Clear
-        SetShipCount
         max
     End Enum
     Private commandList As New Dictionary(Of commands, String) From {
@@ -20,8 +19,7 @@ Module Server
         {commands.Suspend, "/stop"},
         {commands.Play, "/play"},
         {commands.KickPlayer, "/kick"},
-        {commands.Clear, "/clr"},
-        {commands.SetShipCount, "/setships"}
+        {commands.Clear, "/clr"}
     }
     Private helpList As New Dictionary(Of commands, String) From {
         {commands.Close, "/cls :      Closes the application"},
@@ -30,9 +28,7 @@ Module Server
         {commands.Suspend, "/stop :     Pauses the execution of the game"},
         {commands.Play, "/play :        Resumes the execution of the game"},
         {commands.KickPlayer, "/kick :      Removes the player from the game"},
-        {commands.Clear, "/clr :        Clears the screen"},
-        {commands.SetShipCount, "/setships :         Sets the number of ships " + Environment.NewLine +
-            "that spawn at the start of the game; must be equal or high than 2"}
+        {commands.Clear, "/clr :        Clears the screen"}
     }
     Public OutputScreen As New Screen
     Public client As New Threading.Thread(AddressOf OutputScreen.Open)
@@ -147,23 +143,6 @@ Module Server
                 Console.WriteLine("-----Star Crew-----")
                 Console.WriteLine("for help with commands type '/help'")
                 Console.WriteLine()
-            Case commands.SetShipCount
-                Console.WriteLine()
-                Console.WriteLine("Type how many ships you want")
-                Try
-                    Dim num As Integer = CInt(Console.ReadLine)
-                    If num >= 2 Then
-                        Combat.ShipCount = num
-                        Console.WriteLine("Count Set")
-                        Console.WriteLine()
-                    Else
-                        Console.WriteLine("Error : Number too low")
-                        Console.WriteLine()
-                    End If
-                Catch ex As Exception
-                    Console.WriteLine("Error : Invalide Input")
-                    Console.WriteLine()
-                End Try
             Case commands.max
                 Console.WriteLine("Error: Command not recognised")
                 Console.WriteLine("Check spelling and capitals and try again")

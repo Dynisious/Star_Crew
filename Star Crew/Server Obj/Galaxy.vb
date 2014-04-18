@@ -1,6 +1,7 @@
 ﻿Public Class Galaxy
     Public Shared WithEvents GalaxyTimer As New Timer With {.Interval = 100, .Enabled = False}
     Private Shared craftPositions(-1) As GraphicPosition
+    Private Shared SectorList(0) As Sector
     Public Enum Warp
         None
         Entering
@@ -12,7 +13,11 @@
         Battle
         Transit
     End Enum
-    Public State As Scenario
+    Public Shared State As Scenario = Scenario.Battle
+    Public Enum Allegence
+        Player
+        Pirate
+    End Enum
 
     Public Shared Event StartGame()
     Public Shared Sub StartGame_Call()
@@ -20,7 +25,8 @@
     End Sub
     Public Shared Sub StartGame_Handle() Handles Me.StartGame
         Warping = Warp.None
-        Combat.Generate()
+        SectorList(0) = New Sector(2)
+        Combat.Generate(New PirateFleet(1))
         GalaxyTimer.Enabled = True
     End Sub
 
@@ -326,7 +332,7 @@
         Private Shared Sub FireSecondary()
             If FireSecondaryCheck = True Then
                 For i As Integer = 0 To combat.shipList.Length - 1
-                    If combat.shipList(i).MyAllegence <> Ship.Allegence.Player Then
+                    If combat.shipList(i).MyAllegence <> galaxy.allegence.Player Then
                         Dim adjacent As Integer = combat.shipList(i).Position.X - Combat.centerShip.Position.X
                         Dim opposite As Integer = combat.shipList(i).Position.Y - Combat.centerShip.Position.Y
                         Dim distance = Math.Sqrt((opposite ^ 2) + (adjacent ^ 2))
@@ -359,7 +365,7 @@
             If SelectTargetCheck = True Then
                 Dim lastDistance As Integer
                 For i As Integer = 0 To combat.shipList.Length - 1
-                    If combat.shipList(i).MyAllegence <> Ship.Allegence.Player Then
+                    If combat.shipList(i).MyAllegence <> galaxy.allegence.Player Then
                         Dim distance As Integer = Math.Sqrt(((combat.shipList(i).Position.X - Combat.centerShip.Position.X) ^ 2) + ((combat.shipList(i).Position.Y - Combat.centerShip.Position.Y) ^ 2))
                         If (distance < lastDistance And distance <> 0) Or lastDistance = 0 Then
                             lastDistance = distance
@@ -443,42 +449,36 @@
     End Class
 
     Public Shared Sub UpdateGalaxy() Handles GalaxyTimer.Tick
-        Combat.UpdateCombatSenario()
-        Dim friendly As Integer
-        Dim enemy As Integer
-        For Each i As Ship In Combat.shipList
-            If i.MyAllegence = Ship.Allegence.Player Then
-                friendly = friendly + 1
-            ElseIf i.MyAllegence = Ship.Allegence.Pirate Then
-                enemy = enemy + 1
-            End If
-        Next
+        Select Case State
+            Case Scenario.Transit
 
-        '-----Set Warp-----
-        Select Case Warping
-            Case Warp.Entering
-                Warping = Warp.Warping
-            Case Warp.Exiting
-                Warping = Warp.None
+            Case Scenario.Battle
+                Combat.UpdateCombatSenario()
+                '-----Set Warp-----
+                Select Case Warping
+                    Case Warp.Entering
+                        Warping = Warp.Warping
+                    Case Warp.Exiting
+                        Warping = Warp.None
+                End Select
+                ReDim craftPositions(UBound(Combat.shipList))
+                '------------------
+                '-----Set new positions-----
+                For i As Integer = 0 To UBound(Combat.shipList)
+                    Dim x As Integer = Combat.shipList(i).Position.X - Combat.centerShip.Position.X
+                    Dim y As Integer = Combat.shipList(i).Position.Y - Combat.centerShip.Position.Y
+                    Dim col As Color
+                    Select Case Combat.shipList(i).MyAllegence
+                        Case galaxy.allegence.Player
+                            col = Color.Green
+                        Case galaxy.allegence.Pirate
+                            col = Color.Red
+                    End Select
+                    craftPositions(i) = New GraphicPosition(col, Combat.shipList(i).Hit, Combat.shipList(i).Firing, x, y, Combat.shipList(i).Helm.Direction)
+                Next
+                '---------------------------
+                Server.ServerComms.UpdateServerMessage_Call(Combat.centerShip, craftPositions, Warping)
         End Select
-        ReDim craftPositions(UBound(Combat.shipList))
-        '------------------
-
-        '-----Set new positions-----
-        For i As Integer = 0 To UBound(Combat.shipList)
-            Dim x As Integer = Combat.shipList(i).Position.X - Combat.centerShip.Position.X
-            Dim y As Integer = Combat.shipList(i).Position.Y - Combat.centerShip.Position.Y
-            Dim col As Color
-            Select Case Combat.shipList(i).MyAllegence
-                Case Ship.Allegence.Player
-                    col = Color.Green
-                Case Ship.Allegence.Pirate
-                    col = Color.Red
-            End Select
-            craftPositions(i) = New GraphicPosition(col, Combat.shipList(i).Hit, Combat.shipList(i).Firing, x, y, Combat.shipList(i).Helm.Direction)
-        Next
-        '---------------------------
-        Server.ServerComms.UpdateServerMessage_Call(Combat.centerShip, craftPositions, Warping)
     End Sub
 
 End Class
