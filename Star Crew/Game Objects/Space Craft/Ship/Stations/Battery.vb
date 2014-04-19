@@ -66,19 +66,17 @@ Public Class Battery
                 Dim lastDistance As Integer
                 For i As Integer = 0 To shipDistances.Length - 1
                     '-----Select Target to Shoot-----
-                    If ReferenceEquals(Parent, Combat.shipList(i)) = False Then
-                        If (shipDistances(i) <= lastDistance Or lastDistance = 0) And
+                    If (shipDistances(i) <= lastDistance Or lastDistance = 0) And
                             Combat.shipList(i).MyAllegence <> Parent.MyAllegence Then
-                            If Parent.TargetLock = False Then
-                                Parent.Helm.Target = Combat.shipList(i)
-                            End If
-                            If (shipDirections(i) - Parent.Helm.Direction) < (Math.PI / 2) And
-                                (shipDirections(i) - Parent.Helm.Direction) > -(Math.PI / 2) Then
-                                lastDistance = shipDistances(i)
-                                target = Combat.shipList(i)
-                                targetDirection = shipDirections(i)
-                                targetDistance = shipDistances(i)
-                            End If
+                        If Parent.TargetLock = False Then
+                            Parent.Helm.Target = Combat.shipList(i)
+                        End If
+                        If (shipDirections(i) - Parent.Helm.Direction) < (Math.PI / 2) And
+                            (shipDirections(i) - Parent.Helm.Direction) > -(Math.PI / 2) Then
+                            lastDistance = shipDistances(i)
+                            target = Combat.shipList(i)
+                            targetDirection = shipDirections(i)
+                            targetDistance = shipDistances(i)
                         End If
                     End If
                     '--------------------------------

@@ -112,10 +112,10 @@
   <ItemGroup>
     <Compile Include="Client Obj\Client.vb" />
     <Compile Include="Client Obj\ClientMessage.vb" />
-    <Compile Include="Server Obj\Combat.vb" />
-    <Compile Include="Server Obj\Galaxy.vb" />
+    <Compile Include="Game Objects\Combat.vb" />
+    <Compile Include="Game Objects\Galaxy.vb" />
     <Compile Include="Graphics\GraphicPosition.vb" />
-    <Compile Include="Server Obj\Sector.vb" />
+    <Compile Include="Game Objects\Sector.vb" />
     <Compile Include="Server Obj\Server.vb" />
     <Compile Include="Client Obj\Screen.vb">
       <SubType>Form</SubType>
@@ -140,26 +140,26 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
     <Compile Include="Server Obj\ServerMessage.vb" />
-    <Compile Include="Space Craft\Fleet\Fleet.vb" />
-    <Compile Include="Space Craft\Fleet\FriendlyFleet.vb" />
-    <Compile Include="Space Craft\Fleet\PirateFleet.vb" />
-    <Compile Include="Space Craft\Ship\StatInt.vb" />
-    <Compile Include="Space Craft\Ship\StatDbl.vb" />
-    <Compile Include="Space Craft\Ship\FriendlyShip.vb" />
-    <Compile Include="Space Craft\Ship\PirateShip.vb" />
-    <Compile Include="Space Craft\Ship\Ship Layouts\Layout.vb" />
-    <Compile Include="Space Craft\Ship\Ship Layouts\Clunker.vb" />
-    <Compile Include="Space Craft\Ship\Ship Layouts\Scrap.vb" />
-    <Compile Include="Space Craft\Ship\Ship.vb" />
-    <Compile Include="Space Craft\Ship\Stations\Battery.vb" />
-    <Compile Include="Space Craft\Ship\Stations\Engineering.vb" />
-    <Compile Include="Space Craft\Ship\Stations\Helm.vb" />
-    <Compile Include="Space Craft\Ship\Stations\Shields.vb" />
-    <Compile Include="Space Craft\Ship\Stations\Station.vb" />
-    <Compile Include="Space Craft\Ship\Weapons\Weapon Layouts\Rattler.vb" />
-    <Compile Include="Space Craft\Ship\Weapons\Weapon Layouts\WeaponLayout.vb" />
-    <Compile Include="Space Craft\Ship\Weapons\Weapon.vb" />
-    <Compile Include="Space Craft\SpaceCraft.vb" />
+    <Compile Include="Game Objects\Space Craft\Fleet\Fleet.vb" />
+    <Compile Include="Game Objects\Space Craft\Fleet\FriendlyFleet.vb" />
+    <Compile Include="Game Objects\Space Craft\Fleet\PirateFleet.vb" />
+    <Compile Include="Game Objects\Space Craft\Ship\StatInt.vb" />
+    <Compile Include="Game Objects\Space Craft\Ship\StatDbl.vb" />
+    <Compile Include="Game Objects\Space Craft\Ship\FriendlyShip.vb" />
+    <Compile Include="Game Objects\Space Craft\Ship\PirateShip.vb" />
+    <Compile Include="Game Objects\Space Craft\Ship\Ship Layouts\Layout.vb" />
+    <Compile Include="Game Objects\Space Craft\Ship\Ship Layouts\Clunker.vb" />
+    <Compile Include="Game Objects\Space Craft\Ship\Ship Layouts\Scrap.vb" />
+    <Compile Include="Game Objects\Space Craft\Ship\Ship.vb" />
+    <Compile Include="Game Objects\Space Craft\Ship\Stations\Battery.vb" />
+    <Compile Include="Game Objects\Space Craft\Ship\Stations\Engineering.vb" />
+    <Compile Include="Game Objects\Space Craft\Ship\Stations\Helm.vb" />
+    <Compile Include="Game Objects\Space Craft\Ship\Stations\Shields.vb" />
+    <Compile Include="Game Objects\Space Craft\Ship\Stations\Station.vb" />
+    <Compile Include="Game Objects\Space Craft\Ship\Weapons\Weapon Layouts\Rattler.vb" />
+    <Compile Include="Game Objects\Space Craft\Ship\Weapons\Weapon Layouts\WeaponLayout.vb" />
+    <Compile Include="Game Objects\Space Craft\Ship\Weapons\Weapon.vb" />
+    <Compile Include="Game Objects\Space Craft\SpaceCraft.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="My Project\Resources.resx">

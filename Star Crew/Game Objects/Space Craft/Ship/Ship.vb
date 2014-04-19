@@ -24,6 +24,7 @@ Public MustInherit Class Ship
         MyAllegence = nAllegence
         nShipStats.SetLayout(Me)
         Index = nIndex
+        Position = New Point(Int(SpawnBox * Rnd()), Int(SpawnBox * Rnd()))
     End Sub
 
     Public Sub TakeDamage(ByRef nWeapon As Weapon, ByRef shooter As Ship, ByVal direction As Double)

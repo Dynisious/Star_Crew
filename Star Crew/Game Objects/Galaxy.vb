@@ -1,19 +1,20 @@
 ﻿Public Class Galaxy
     Public Shared WithEvents GalaxyTimer As New Timer With {.Interval = 100, .Enabled = False}
     Private Shared craftPositions(-1) As GraphicPosition
+    Public Shared centerSector As Sector
     Private Shared SectorList(0) As Sector
     Public Enum Warp
         None
         Entering
-        Exiting
         Warping
     End Enum
     Public Shared Warping As Warp = Warp.None
+    Public Shared WarpCounter As Integer
     Public Enum Scenario
         Battle
         Transit
     End Enum
-    Public Shared State As Scenario = Scenario.Battle
+    Public Shared State As Scenario
     Public Enum Allegence
         Player
         Pirate
@@ -24,9 +25,13 @@
         RaiseEvent StartGame()
     End Sub
     Public Shared Sub StartGame_Handle() Handles Me.StartGame
+        Randomize()
         Warping = Warp.None
-        SectorList(0) = New Sector(2)
-        Combat.Generate(New PirateFleet(1))
+        SectorList(0) = New Sector(1)
+        Sector.centerFleet = New FriendlyFleet(-1)
+        SectorList(0).AddFleet(Sector.centerFleet)
+        centerSector = SectorList(0)
+        Combat.Generate(centerSector.fleetList(0))
         GalaxyTimer.Enabled = True
     End Sub
 
@@ -458,8 +463,17 @@
                 Select Case Warping
                     Case Warp.Entering
                         Warping = Warp.Warping
-                    Case Warp.Exiting
-                        Warping = Warp.None
+                        For Each i As Ship In Combat.shipList
+                            i.InCombat = False
+                        Next
+                        WarpCounter = 100
+                    Case Warp.Warping
+                        If WarpCounter = 0 Then
+                            Warping = Warp.None
+                            State = Scenario.Transit
+                        Else
+                            WarpCounter = WarpCounter - 1
+                        End If
                 End Select
                 ReDim craftPositions(UBound(Combat.shipList))
                 '------------------
