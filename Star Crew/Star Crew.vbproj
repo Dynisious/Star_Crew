@@ -114,6 +114,7 @@
     <Compile Include="Client Obj\ClientMessage.vb" />
     <Compile Include="Game Objects\Combat.vb" />
     <Compile Include="Game Objects\Galaxy.vb" />
+    <Compile Include="Game Objects\Space Craft\Fleet\NeutralFleet.vb" />
     <Compile Include="Graphics\GraphicPosition.vb" />
     <Compile Include="Game Objects\Sector.vb" />
     <Compile Include="Server Obj\Server.vb" />

@@ -1,4 +1,5 @@
-﻿Public Class FriendlyFleet
+﻿<Serializable()>
+Public Class FriendlyFleet
     Inherits Fleet
 
     Public Sub New(ByVal nIndex As Integer)

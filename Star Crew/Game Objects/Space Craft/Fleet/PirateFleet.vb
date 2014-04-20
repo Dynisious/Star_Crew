@@ -1,4 +1,5 @@
-﻿Public Class PirateFleet
+﻿<Serializable()>
+Public Class PirateFleet
     Inherits Fleet
 
     Public Sub New(ByVal nIndex As Integer)

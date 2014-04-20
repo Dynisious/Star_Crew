@@ -269,7 +269,7 @@
             lblThrottle.Name = "lblThrottle"
             lblThrottle.Size = New System.Drawing.Size(200, 30)
             lblThrottle.TabIndex = 9
-            lblThrottle.Text = "Throttle: 0/0"
+            lblThrottle.Text = "Speed: 0/0"
             lblThrottle.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
             '
             'lblEngines
@@ -466,15 +466,15 @@
         Private Shared Sub UserKeyInterfacer_PreviewKeyDown(ByVal sender As Object, ByVal e As PreviewKeyDownEventArgs) Handles UserKeyInterfacer.PreviewKeyDown
             Select Case Client.myMessage.Station
                 Case Station.StationTypes.Helm
-                    If e.KeyCode = Keys.Up Then 'Throttle Up
+                    If e.KeyCode = Keys.Up Then 'parent.speed Up
                         Client.SendCommand_Call(Helm.Commands.ThrottleUp, 1)
-                    ElseIf e.KeyCode = Keys.Down Then 'Throttle Down
+                    ElseIf e.KeyCode = Keys.Down Then 'parent.speed Down
                         Client.SendCommand_Call(Helm.Commands.ThrottleDown, 1)
                     ElseIf e.KeyCode = Keys.Right Then 'Turn Right
                         Client.SendCommand_Call(Helm.Commands.TurnRight, 1)
                     ElseIf e.KeyCode = Keys.Left Then 'Turn Left
                         Client.SendCommand_Call(Helm.Commands.TurnLeft, 1)
-                    ElseIf e.KeyCode = Keys.J And e.Control = True Then 'Warp Drive
+                    ElseIf e.KeyCode = Keys.J Then 'Warp Drive
                         Client.SendCommand_Call(Helm.Commands.WarpDrive, 1)
                     ElseIf e.KeyCode = Keys.M Then 'Match Speed
                         Client.SendCommand_Call(Helm.Commands.MatchSpeed, 1)
@@ -514,15 +514,15 @@
         Private Shared Sub UserKeyInterfacer_KeyUp(ByVal sender As Object, ByVal e As KeyEventArgs) Handles UserKeyInterfacer.KeyUp
             Select Case Client.myMessage.Station
                 Case Station.StationTypes.Helm
-                    If e.KeyCode = Keys.Up Then 'Throttle Up
+                    If e.KeyCode = Keys.Up Then 'parent.speed Up
                         Client.SendCommand_Call(Helm.Commands.ThrottleUp, 0)
-                    ElseIf e.KeyCode = Keys.Down Then 'Throttle Down
+                    ElseIf e.KeyCode = Keys.Down Then 'parent.speed Down
                         Client.SendCommand_Call(Helm.Commands.ThrottleDown, 0)
                     ElseIf e.KeyCode = Keys.Right Then 'Turn Right
                         Client.SendCommand_Call(Helm.Commands.TurnRight, 0)
                     ElseIf e.KeyCode = Keys.Left Then 'Turn Left
                         Client.SendCommand_Call(Helm.Commands.TurnLeft, 0)
-                    ElseIf e.KeyCode = Keys.J And e.Control = True Then 'Warp Drive
+                    ElseIf e.KeyCode = Keys.J Then 'Warp Drive
                         Client.SendCommand_Call(Helm.Commands.WarpDrive, 0)
                     ElseIf e.KeyCode = Keys.M Then 'Match Speed
                         Client.SendCommand_Call(Helm.Commands.MatchSpeed, 0)
@@ -611,41 +611,46 @@
 
     Private Shared Sub UpdateScreen_Handle() Handles Tick.Tick
         If Client.Connected = True And Client.IncomingMessage IsNot Nothing Then
-            Screen.GamePlayLayout.lblHull.Text = "Hull: " + CStr(Math.Round(Client.IncomingMessage.Ship.Hull.current, 2)) + "/" + CStr(Client.IncomingMessage.Ship.Hull.max)
-            Screen.GamePlayLayout.lblThrottle.Text = "Throttle: " + CStr(CInt(Client.IncomingMessage.Ship.Helm.Throttle.current)) + "/" + CStr(CInt(Client.IncomingMessage.Ship.Helm.Throttle.max))
+            If Client.IncomingMessage.Craft IsNot Nothing Then
+                Screen.GamePlayLayout.lblThrottle.Text = "Speed: " + CStr(CInt(Client.IncomingMessage.Craft.Speed.current)) + "/" + CStr(CInt(Client.IncomingMessage.Craft.Speed.max))
+                If Client.IncomingMessage.Craft.GetType = GetType(FriendlyShip) Then
+                    Dim nShip As Ship = CType(Client.IncomingMessage.Craft, Ship)
+                    Screen.GamePlayLayout.lblHull.Text = "Hull: " + CStr(Math.Round(nShip.Hull.current, 2)) + "/" + CStr(nShip.Hull.max)
 
-            Screen.GamePlayLayout.lblForward.Text = "Fore: " + CStr(CInt(Client.IncomingMessage.Ship.Shielding.ShipShields(Shields.Sides.FrontShield).current)) + "/" + CStr(Client.IncomingMessage.Ship.Shielding.ShipShields(Shields.Sides.FrontShield).max)
-            Screen.GamePlayLayout.lblRight.Text = "Starboard: " + CStr(CInt(Client.IncomingMessage.Ship.Shielding.ShipShields(Shields.Sides.RightShield).current)) + "/" + CStr(Client.IncomingMessage.Ship.Shielding.ShipShields(Shields.Sides.RightShield).max)
-            Screen.GamePlayLayout.lblRear.Text = "Aft: " + CStr(CInt(Client.IncomingMessage.Ship.Shielding.ShipShields(Shields.Sides.BackShield).current)) + "/" + CStr(Client.IncomingMessage.Ship.Shielding.ShipShields(Shields.Sides.BackShield).max)
-            Screen.GamePlayLayout.lblLeft.Text = "Port: " + CStr(CInt(Client.IncomingMessage.Ship.Shielding.ShipShields(Shields.Sides.LeftShield).current)) + "/" + CStr(Client.IncomingMessage.Ship.Shielding.ShipShields(Shields.Sides.LeftShield).max)
-            Select Case Client.IncomingMessage.Ship.Shielding.LastHit
-                Case Shields.Sides.FrontShield
-                    Screen.GamePlayLayout.lblForward.BackColor = Color.LightBlue
-                    Screen.GamePlayLayout.lblRight.BackColor = Color.Transparent
-                    Screen.GamePlayLayout.lblRear.BackColor = Color.Transparent
-                    Screen.GamePlayLayout.lblLeft.BackColor = Color.Transparent
-                Case Shields.Sides.RightShield
-                    Screen.GamePlayLayout.lblForward.BackColor = Color.Transparent
-                    Screen.GamePlayLayout.lblRight.BackColor = Color.LightBlue
-                    Screen.GamePlayLayout.lblRear.BackColor = Color.Transparent
-                    Screen.GamePlayLayout.lblLeft.BackColor = Color.Transparent
-                Case Shields.Sides.BackShield
-                    Screen.GamePlayLayout.lblForward.BackColor = Color.Transparent
-                    Screen.GamePlayLayout.lblRight.BackColor = Color.Transparent
-                    Screen.GamePlayLayout.lblRear.BackColor = Color.LightBlue
-                    Screen.GamePlayLayout.lblLeft.BackColor = Color.Transparent
-                Case Shields.Sides.LeftShield
-                    Screen.GamePlayLayout.lblForward.BackColor = Color.Transparent
-                    Screen.GamePlayLayout.lblRight.BackColor = Color.Transparent
-                    Screen.GamePlayLayout.lblRear.BackColor = Color.Transparent
-                    Screen.GamePlayLayout.lblLeft.BackColor = Color.LightBlue
-            End Select
-            Screen.GamePlayLayout.lblPrimary.Text = "Primary: " + CStr(Client.IncomingMessage.Ship.Batteries.Primary.Integrety.current) + "/" + CStr(Client.IncomingMessage.Ship.Batteries.Primary.Integrety.max)
-            Screen.GamePlayLayout.lblSecondary.Text = "Secondary: " + CStr(Client.IncomingMessage.Ship.Batteries.Secondary.Integrety.current) + "/" + CStr(Client.IncomingMessage.Ship.Batteries.Secondary.Integrety.max)
-            Screen.GamePlayLayout.lblPowerCore.Text = "Power Core: " + CStr(Client.IncomingMessage.Ship.Engineering.PowerCore.current) + "/" + CStr(Client.IncomingMessage.Ship.Engineering.PowerCore.max)
-            Screen.GamePlayLayout.lblEngines.Text = "Engines: " + CStr(Client.IncomingMessage.Ship.Engineering.Engines.current) + "/" + CStr(Client.IncomingMessage.Ship.Engineering.Engines.max)
-            Screen.GamePlayLayout.lblCoreTemp.Text = "Core Temp: " + CStr(Math.Round(Client.IncomingMessage.Ship.Engineering.Heat, 2)) + "*e^5/100*e^5"
-            Screen.GamePlayLayout.lblTempRate.Text = "Temp Rate: " + CStr(Math.Round(Client.IncomingMessage.Ship.Engineering.Rate, 2)) + "*e^5"
+                    Screen.GamePlayLayout.lblForward.Text = "Fore: " + CStr(CInt(nShip.Shielding.ShipShields(Shields.Sides.FrontShield).current)) + "/" + CStr(nShip.Shielding.ShipShields(Shields.Sides.FrontShield).max)
+                    Screen.GamePlayLayout.lblRight.Text = "Starboard: " + CStr(CInt(nShip.Shielding.ShipShields(Shields.Sides.RightShield).current)) + "/" + CStr(nShip.Shielding.ShipShields(Shields.Sides.RightShield).max)
+                    Screen.GamePlayLayout.lblRear.Text = "Aft: " + CStr(CInt(nShip.Shielding.ShipShields(Shields.Sides.BackShield).current)) + "/" + CStr(nShip.Shielding.ShipShields(Shields.Sides.BackShield).max)
+                    Screen.GamePlayLayout.lblLeft.Text = "Port: " + CStr(CInt(nShip.Shielding.ShipShields(Shields.Sides.LeftShield).current)) + "/" + CStr(nShip.Shielding.ShipShields(Shields.Sides.LeftShield).max)
+                    Select Case nShip.Shielding.LastHit
+                        Case Shields.Sides.FrontShield
+                            Screen.GamePlayLayout.lblForward.BackColor = Color.LightBlue
+                            Screen.GamePlayLayout.lblRight.BackColor = Color.Transparent
+                            Screen.GamePlayLayout.lblRear.BackColor = Color.Transparent
+                            Screen.GamePlayLayout.lblLeft.BackColor = Color.Transparent
+                        Case Shields.Sides.RightShield
+                            Screen.GamePlayLayout.lblForward.BackColor = Color.Transparent
+                            Screen.GamePlayLayout.lblRight.BackColor = Color.LightBlue
+                            Screen.GamePlayLayout.lblRear.BackColor = Color.Transparent
+                            Screen.GamePlayLayout.lblLeft.BackColor = Color.Transparent
+                        Case Shields.Sides.BackShield
+                            Screen.GamePlayLayout.lblForward.BackColor = Color.Transparent
+                            Screen.GamePlayLayout.lblRight.BackColor = Color.Transparent
+                            Screen.GamePlayLayout.lblRear.BackColor = Color.LightBlue
+                            Screen.GamePlayLayout.lblLeft.BackColor = Color.Transparent
+                        Case Shields.Sides.LeftShield
+                            Screen.GamePlayLayout.lblForward.BackColor = Color.Transparent
+                            Screen.GamePlayLayout.lblRight.BackColor = Color.Transparent
+                            Screen.GamePlayLayout.lblRear.BackColor = Color.Transparent
+                            Screen.GamePlayLayout.lblLeft.BackColor = Color.LightBlue
+                    End Select
+                    Screen.GamePlayLayout.lblPrimary.Text = "Primary: " + CStr(nShip.Batteries.Primary.Integrety.current) + "/" + CStr(nShip.Batteries.Primary.Integrety.max)
+                    Screen.GamePlayLayout.lblSecondary.Text = "Secondary: " + CStr(nShip.Batteries.Secondary.Integrety.current) + "/" + CStr(nShip.Batteries.Secondary.Integrety.max)
+                    Screen.GamePlayLayout.lblPowerCore.Text = "Power Core: " + CStr(nShip.Engineering.PowerCore.current) + "/" + CStr(nShip.Engineering.PowerCore.max)
+                    Screen.GamePlayLayout.lblEngines.Text = "Engines: " + CStr(nShip.Engineering.Engines.current) + "/" + CStr(nShip.Engineering.Engines.max)
+                    Screen.GamePlayLayout.lblCoreTemp.Text = "Core Temp: " + CStr(Math.Round(nShip.Engineering.Heat, 2)) + "*e5/100*e5"
+                    Screen.GamePlayLayout.lblTempRate.Text = "Temp Rate: " + CStr(Math.Round(nShip.Engineering.Rate, 2)) + "*e5"
+                End If
+            End If
         ElseIf Client.Connected = False Then
             Dim temp As New MenuScreenLayout
             Tick.Enabled = False

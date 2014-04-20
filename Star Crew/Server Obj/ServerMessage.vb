@@ -1,18 +1,16 @@
 ﻿<Serializable()>
 Public Class ServerMessage
-    Public Ship As Ship
+    Public Craft As SpaceCraft
     Public Positions() As GraphicPosition
-    Public Warping As Galaxy.Warp
+    Public Warping As Galaxy.Warp = -1
+    Public State As Galaxy.Scenario = -1
 
-    Public Sub New(ByVal ncenterCraft As Ship, ByVal nPositions() As GraphicPosition, ByVal nWarping As Galaxy.Warp)
-        Ship = ncenterCraft
+    Public Sub New(ByVal nCraft As SpaceCraft, ByVal nPositions() As GraphicPosition,
+                   ByVal nWarping As Galaxy.Warp, ByVal nState As Galaxy.Scenario)
+        Craft = nCraft
         Positions = nPositions
         Warping = nWarping
-    End Sub
-    Public Sub New(ByVal nData As ServerMessage)
-        Ship = nData.Ship
-        Positions = nData.Positions
-        Warping = nData.Warping
+        State = nState
     End Sub
 
     Public Shared Function ConstructMessage() As Byte()

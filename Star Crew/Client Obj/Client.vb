@@ -3,8 +3,10 @@
     Public Shared MyConnector As Net.Sockets.TcpClient
     Public Shared myMessage As New ClientMessage
     Public Shared IncomingMessage As ServerMessage
+    Public Shared messageData As ServerMessage
     Public Shared comms As Threading.Thread
     Private Shared stars(200) As Star
+    Private Shared IDGeni As New Runtime.Serialization.ObjectIDGenerator
 
     Public Class Star
         Public Position As Point
@@ -31,9 +33,9 @@
             End If
 
 
-            Dim direction As Double = IncomingMessage.Ship.Helm.Direction + Math.PI
-            Position = New Point(Position.X + (IncomingMessage.Ship.Helm.Throttle.current * Math.Cos(direction) * Speed),
-                                 Position.Y + (IncomingMessage.Ship.Helm.Throttle.current * Math.Sin(direction) * Speed))
+            Dim direction As Double = IncomingMessage.Craft.Direction + Math.PI
+            Position = New Point(Position.X + (IncomingMessage.Craft.Speed.current * Math.Cos(direction) * Speed),
+                                 Position.Y + (IncomingMessage.Craft.Speed.current * Math.Sin(direction) * Speed))
             If Position.X <= 2 Then
                 Position = New Point(Position.X + Screen.ImageSize.X - 5, Position.Y)
             ElseIf Position.X >= Screen.GamePlayLayout.picDisplayGraphics.Width - 3 Then
@@ -113,7 +115,7 @@
             comms.Abort()
         Catch ex As InvalidOperationException
             Console.WriteLine()
-            Console.WriteLine("Error : That Position is already filled")
+            Console.WriteLine("Error : The Client was disconnected unexpectedly")
             Console.WriteLine(ex.ToString)
             Console.WriteLine()
             MyConnector.Close()
@@ -121,7 +123,7 @@
             comms.Abort()
         Catch ex As Runtime.Serialization.SerializationException
             Console.WriteLine()
-            Console.WriteLine("Error : That Position is already filled")
+            Console.WriteLine("Error : The Client was disconnected unexpectedly")
             Console.WriteLine(ex.ToString)
             Console.WriteLine()
             MyConnector.Close()
@@ -174,20 +176,25 @@
     End Sub
 
     Private Shared WithEvents Tick As New Timer With {.Interval = 100, .Enabled = False}
-    Private Shared primaryDirection As Double
-    Private Shared primaryRadius As Integer
-    Private Shared secondaryDirection As Double
-    Private Shared secondaryRadius As Integer
+    Public Shared primaryDirection As Double
+    Public Shared primaryRadius As Integer
+    Public Shared secondaryDirection As Double
+    Public Shared secondaryRadius As Integer
     Private Shared Sub UpdateGraphics() Handles Tick.Tick
         If IncomingMessage IsNot Nothing Then
-            Dim messageData As New ServerMessage(IncomingMessage)
-            primaryDirection = messageData.Ship.Helm.Direction + IncomingMessage.Ship.Batteries.Primary.TurnDistance.current
-            primaryRadius = IncomingMessage.Ship.Batteries.Primary.Range.current
-            secondaryDirection = IncomingMessage.Ship.Helm.Direction + IncomingMessage.Ship.Batteries.Secondary.TurnDistance.current
-            secondaryRadius = IncomingMessage.Ship.Batteries.Secondary.Range.current
+            messageData = IncomingMessage
+            If processed = False Then
+                processed = True
+            End If
             For Each i As Star In stars
                 i.Update()
             Next
+            If messageData.Craft.GetType = GetType(FriendlyShip) Then
+                primaryDirection = Helm.NormalizeDirection(messageData.Craft.Direction + CType(messageData.Craft, FriendlyShip).Batteries.Primary.TurnDistance.current)
+                primaryRadius = CType(messageData.Craft, FriendlyShip).Batteries.Primary.Range.current
+                secondaryDirection = Helm.NormalizeDirection(messageData.Craft.Direction + CType(messageData.Craft, FriendlyShip).Batteries.Secondary.TurnDistance.current)
+                secondaryRadius = CType(messageData.Craft, FriendlyShip).Batteries.Secondary.Range.current
+            End If
 
             '-----Set Background-----
             Dim bmp As Bitmap
@@ -225,7 +232,7 @@
                 End If
             Next
 
-            If messageData.Warping <> Galaxy.Warp.Warping Then
+            If messageData.Warping <> Galaxy.Warp.Warping And messageData.State = Galaxy.Scenario.Battle Then
                 '-----Batteries Arc-----
                 '-----Primary Arc-----
                 For i As Integer = 1 To primaryRadius
@@ -261,7 +268,7 @@
             End If
 
             For i As Integer = 0 To UBound(messageData.Positions)
-                If (messageData.Warping = Galaxy.Warp.None) Or (messageData.Warping = Galaxy.Warp.Warping And i = messageData.Ship.Index) Then
+                If (messageData.Warping = Galaxy.Warp.None) Or (messageData.Warping = Galaxy.Warp.Warping And i = messageData.Craft.Index) Then
                     Dim col As Color = messageData.Positions(i).Col
                     If messageData.Positions(i).Hit = True Then
                         col = Color.Orange
@@ -285,33 +292,35 @@
                 End If
             Next
 
-            '-----Batteries Target-----
-            If messageData.Ship.Helm.Target IsNot Nothing And messageData.Warping <> Galaxy.Warp.Warping Then
-                If messageData.Ship.Helm.Target.Hit = False Then
-                    Dim col As Color = messageData.Positions(messageData.Ship.Helm.Target.Index).Col
-                    If messageData.Positions(messageData.Ship.Helm.Target.Index).Hit = True Then
-                        col = Color.Orange
-                    End If
-                    For x As Integer = -3 To 3
-                        For y As Integer = -3 To 3
-                            bmp.SetPixel(messageData.Positions(messageData.Ship.Helm.Target.Index).X + x,
-                                         messageData.Positions(messageData.Ship.Helm.Target.Index).Y + y, Color.Blue)
+            If messageData.Craft.GetType = GetType(FriendlyShip) Then
+                '-----Batteries Target-----
+                If CType(messageData.Craft, Ship).Helm.Target IsNot Nothing And messageData.Warping <> Galaxy.Warp.Warping Then
+                    If CType(messageData.Craft, Ship).Helm.Target.Hit = False Then
+                        Dim col As Color = messageData.Positions(CType(messageData.Craft, Ship).Helm.Target.Index).Col
+                        If messageData.Positions(CType(messageData.Craft, Ship).Helm.Target.Index).Hit = True Then
+                            col = Color.Orange
+                        End If
+                        For x As Integer = -3 To 3
+                            For y As Integer = -3 To 3
+                                bmp.SetPixel(messageData.Positions(CType(messageData.Craft, Ship).Helm.Target.Index).X + x,
+                                             messageData.Positions(CType(messageData.Craft, Ship).Helm.Target.Index).Y + y, Color.Blue)
+                            Next
                         Next
-                    Next
-                    col = messageData.Positions(messageData.Ship.Helm.Target.Index).Col
-                    If messageData.Positions(messageData.Ship.Helm.Target.Index).Firing = True Then
-                        col = Color.Orange
-                    End If
-                    For x As Integer = -1 To 1
-                        For y As Integer = -1 To 1
-                            Dim xStart As Integer = messageData.Positions(messageData.Ship.Helm.Target.Index).X + (Math.Cos(messageData.Positions(messageData.Ship.Helm.Target.Index).Direction) * 11)
-                            Dim yStart As Integer = messageData.Positions(messageData.Ship.Helm.Target.Index).Y + (Math.Sin(messageData.Positions(messageData.Ship.Helm.Target.Index).Direction) * 11)
-                            bmp.SetPixel(xStart + x, yStart + y, col)
+                        col = messageData.Positions(CType(messageData.Craft, Ship).Helm.Target.Index).Col
+                        If messageData.Positions(CType(messageData.Craft, Ship).Helm.Target.Index).Firing = True Then
+                            col = Color.Orange
+                        End If
+                        For x As Integer = -1 To 1
+                            For y As Integer = -1 To 1
+                                Dim xStart As Integer = messageData.Positions(CType(messageData.Craft, Ship).Helm.Target.Index).X + (Math.Cos(messageData.Positions(CType(messageData.Craft, Ship).Helm.Target.Index).Direction) * 11)
+                                Dim yStart As Integer = messageData.Positions(CType(messageData.Craft, Ship).Helm.Target.Index).Y + (Math.Sin(messageData.Positions(CType(messageData.Craft, Ship).Helm.Target.Index).Direction) * 11)
+                                bmp.SetPixel(xStart + x, yStart + y, col)
+                            Next
                         Next
-                    Next
+                    End If
                 End If
+                '--------------------------
             End If
-            '--------------------------
             '-------------------
             Screen.GamePlayLayout.picDisplayGraphics.Image = bmp
         End If

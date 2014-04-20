@@ -7,7 +7,7 @@
     '-----Helm-----
     Public Enum HelmStats
         Turn
-        Throttle
+        Speed
         Acceleration
         Max
     End Enum
@@ -51,8 +51,8 @@
         '--------------
         '-----Helm-----
         nShip.Helm.TurnSpeed = NewHelmStats(HelmStats.Turn)
-        nShip.Helm.Throttle = NewHelmStats(HelmStats.Throttle)
-        nShip.Helm.Acceleration = NewHelmStats(HelmStats.Acceleration)
+        nShip.Helm.Parent.Speed = NewHelmStats(HelmStats.Speed)
+        nShip.Acceleration = NewHelmStats(HelmStats.Acceleration)
         '--------------
         '-----Batteries-----
         NewBatteryWeapons(BatteryWeapons.Primary).TurnDistance.max = NewBatteryWeapons(BatteryWeapons.Primary).TurnDistance.max * TurnScale

@@ -6,7 +6,7 @@
         NewHull = New StatDbl(1000, 1000)
         '-----Helm-----
         NewHelmStats(HelmStats.Acceleration) = New StatDbl(0, 0)
-        NewHelmStats(HelmStats.Throttle) = New StatDbl(0, 0)
+        NewHelmStats(HelmStats.speed) = New StatDbl(0, 0)
         NewHelmStats(HelmStats.Turn) = New StatDbl(0, 0)
         '--------------
         '-----Batteries-----

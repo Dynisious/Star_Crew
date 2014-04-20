@@ -1,10 +1,7 @@
 ﻿<Serializable()>
 Public Class Helm
     Inherits Station
-    Public Direction As Double
     Public TurnSpeed As StatDbl
-    Public Throttle As StatDbl
-    Public Acceleration As StatDbl
     Private evadeRight As Boolean = False
     Private brakes As Boolean = False
     Public Shared ReadOnly MinimumSpeed As Integer = 5
@@ -37,8 +34,8 @@ Public Class Helm
                     Exit Sub
                 End If
                 Dim distance As Integer
-                Dim opposite As Double = (Target.Position.Y + (Math.Sin(Target.Helm.Direction) * Target.Helm.Throttle.current)) - Parent.Position.Y
-                Dim adjacent As Double = (Target.Position.X + (Math.Cos(Target.Helm.Direction) * Target.Helm.Throttle.current)) - Parent.Position.X
+                Dim opposite As Double = (Target.Position.Y + (Math.Sin(Target.Direction) * Target.Helm.Parent.Speed.current)) - Parent.Position.Y
+                Dim adjacent As Double = (Target.Position.X + (Math.Cos(Target.Direction) * Target.Helm.Parent.Speed.current)) - Parent.Position.X
                 distance = Math.Sqrt((opposite * opposite) + (adjacent * adjacent))
 
                 If adjacent <> 0 Then
@@ -55,8 +52,8 @@ Public Class Helm
                 '-------------------------------------------
 
                 '-----Speed-----
-                If NormalizeDirection(targetDirection - Direction) > (3 * Math.PI) / 4 And
-                    NormalizeDirection(targetDirection - Direction) < (5 * Math.PI) / 4 And
+                If NormalizeDirection(targetDirection - Parent.Direction) > (3 * Math.PI) / 4 And
+                    NormalizeDirection(targetDirection - Parent.Direction) < (5 * Math.PI) / 4 And
                     distance < 100 Then 'The enemy is behind you
                     '-----Steering-----
                     Randomize()
@@ -76,15 +73,15 @@ Public Class Helm
                     End If
                     '------------------
 
-                    finalSpeed = Throttle.max
-                ElseIf Throttle.current <> Target.Helm.Throttle.current And
-                    distance < MinimumDistance + (((Throttle.current - Target.Helm.Throttle.current) / Acceleration.current) * Throttle.current) And
-                    targetDirection - Direction < Math.PI / 2 And
-                    targetDirection - Direction > -Math.PI / 2 Then 'Match the enemies speed
-                    finalSpeed = Target.Helm.Throttle.current
-                ElseIf distance > StandardDistance And targetDirection - Direction < Math.PI / 2 And
-                    targetDirection - Direction > -Math.PI / 2 Then 'Charge the enemy
-                    finalSpeed = Throttle.max
+                    finalSpeed = Parent.Speed.max
+                ElseIf Parent.Speed.current <> Target.Helm.Parent.Speed.current And
+                    distance < MinimumDistance + (((Parent.Speed.current - Target.Helm.Parent.Speed.current) / Parent.Acceleration.current) * Parent.Speed.current) And
+                    targetDirection - Parent.Direction < Math.PI / 2 And
+                    targetDirection - Parent.Direction > -Math.PI / 2 Then 'Match the enemies speed
+                    finalSpeed = Target.Helm.Parent.Speed.current
+                ElseIf distance > StandardDistance And targetDirection - Parent.Direction < Math.PI / 2 And
+                    targetDirection - Parent.Direction > -Math.PI / 2 Then 'Charge the enemy
+                    finalSpeed = Parent.Speed.max
                 End If
                 If distance < MinimumDistance Then
                     If targetDirection < Math.PI Then
@@ -106,44 +103,44 @@ Public Class Helm
             '---------------
 
             '-----Steering and Speed-----
-            If Math.Sqrt((targetDirection - Direction) ^ 2) < TurnSpeed.current Then
-                Direction = targetDirection
-            ElseIf NormalizeDirection(targetDirection - Direction) < Math.PI Then
-                Direction = NormalizeDirection(Direction + TurnSpeed.current)
+            If Math.Sqrt((targetDirection - Parent.Direction) ^ 2) < TurnSpeed.current Then
+                Parent.Direction = targetDirection
+            ElseIf NormalizeDirection(targetDirection - Parent.Direction) < Math.PI Then
+                Parent.Direction = NormalizeDirection(Parent.Direction + TurnSpeed.current)
             Else
-                Direction = NormalizeDirection(Direction - TurnSpeed.current)
+                Parent.Direction = NormalizeDirection(Parent.Direction - TurnSpeed.current)
             End If
             If ReferenceEquals(Parent, Combat.centerShip) Then
                 Dim a = 1
             End If
 
-            If Throttle.current < finalSpeed Then
-                Throttle.current = Throttle.current + Acceleration.current
-                If Throttle.current > finalSpeed Then
-                    Throttle.current = finalSpeed
+            If parent.speed.current < finalSpeed Then
+                Parent.Speed.current = Parent.Speed.current + Parent.Acceleration.current
+                If parent.speed.current > finalSpeed Then
+                    parent.speed.current = finalSpeed
                 End If
             Else
-                Throttle.current = Throttle.current - Acceleration.current
-                If Throttle.current < finalSpeed Then
-                    Throttle.current = finalSpeed
+                Parent.Speed.current = Parent.Speed.current - Parent.Acceleration.current
+                If parent.speed.current < finalSpeed Then
+                    parent.speed.current = finalSpeed
                 End If
             End If
             '----------------------------
         ElseIf Parent IsNot Nothing Then
             '-----Match Enemies Speed-----
             If MatchSpeed = True And Target IsNot Nothing Then
-                If Throttle.current > Target.Helm.Throttle.current Then
-                    Throttle.current = Throttle.current - Acceleration.current
-                    If Throttle.current < Target.Helm.Throttle.current Then
-                        Throttle.current = Target.Helm.Throttle.current
+                If Parent.Speed.current > Target.Speed.current Then
+                    Parent.Speed.current = Parent.Speed.current - Parent.Acceleration.current
+                    If Parent.Speed.current < Target.Speed.current Then
+                        Parent.Speed.current = Target.Helm.Parent.Speed.current
                     End If
-                ElseIf Throttle.current < Target.Helm.Throttle.current Then
-                    Throttle.current = Throttle.current + Acceleration.current
-                    If Throttle.current > Target.Helm.Throttle.current Then
-                        Throttle.current = Target.Helm.Throttle.current
+                ElseIf Parent.Speed.current < Target.Speed.current Then
+                    Parent.Speed.current = Parent.Speed.current + Parent.Acceleration.current
+                    If Parent.Speed.current > Target.Speed.current Then
+                        Parent.Speed.current = Target.Speed.current
                     End If
-                    If Throttle.current > Throttle.max Then
-                        Throttle.current = Throttle.max
+                    If Parent.Speed.current > Parent.Speed.max Then
+                        Parent.Speed.current = Parent.Speed.max
                     End If
                 End If
             Else

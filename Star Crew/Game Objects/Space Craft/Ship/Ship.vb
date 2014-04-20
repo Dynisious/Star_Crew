@@ -2,11 +2,10 @@
 Public MustInherit Class Ship
     Inherits SpaceCraft
     Public InCombat As Boolean = False
-    Public Firing As Boolean = False
-    Public Hit As Boolean = False
-    Public Dead As Boolean = False
     Public TargetLock As Boolean = False
     Public Hull As StatDbl
+    Public Firing As Boolean = False
+    Public Hit As Boolean = False
     '-----Helm-----
     Public Helm As New Helm(Me)
     '--------------
@@ -28,11 +27,6 @@ Public MustInherit Class Ship
     End Sub
 
     Public Sub TakeDamage(ByRef nWeapon As Weapon, ByRef shooter As Ship, ByVal direction As Double)
-        If MyAllegence = Galaxy.Allegence.Pirate Then
-            Dim DirectionRelativeToShooter = direction - shooter.Helm.Direction - nWeapon.TurnDistance.current
-            Dim BatteriesRealWorld = shooter.Helm.Direction + nWeapon.TurnDistance.current
-            Dim a = 1
-        End If
         Dim sideHit As Shields.Sides
         Dim adjacent As Integer = (nWeapon.Parent.Parent.Position.X - Position.X)
         Dim opposite As Integer = (nWeapon.Parent.Parent.Position.Y - Position.Y)
@@ -48,7 +42,7 @@ Public MustInherit Class Ship
         Else
             incomingVector = (3 * Math.PI) / 2
         End If
-        incomingVector = Helm.NormalizeDirection(incomingVector - Helm.Direction)
+        incomingVector = Helm.NormalizeDirection(incomingVector - direction)
 
         If incomingVector <= Math.PI / 4 Or incomingVector >= (7 * Math.PI) / 4 Then
             sideHit = Shields.Sides.FrontShield
@@ -114,8 +108,13 @@ Public MustInherit Class Ship
     End Sub
 
     Public Overridable Sub DestroyShip()
-        If Dead = 0 Then
-            Combat.RemoveShip(Me)
+        If Dead = False Then
+            If InCombat = True Then
+                Combat.RemoveShip(Me)
+                If ReferenceEquals(Combat.centerShip, Me) = True Then
+                    Combat.Recenter()
+                End If
+            End If
             Helm.Parent = Nothing
             Batteries.Parent = Nothing
             Batteries.Primary.Parent = Nothing
@@ -123,13 +122,10 @@ Public MustInherit Class Ship
             Shielding.Parent = Nothing
             Engineering.Parent = Nothing
             Dead = True
-            If ReferenceEquals(Combat.centerShip, Me) = True Then
-                Combat.Recenter()
-            End If
         End If
     End Sub
 
-    Public Shared Event ShipUpdate()
+    Private Shared Event ShipUpdate()
     Public Shared Sub UpdateShip_Call()
         RaiseEvent ShipUpdate()
     End Sub
@@ -141,10 +137,8 @@ Public MustInherit Class Ship
             Engineering.Update()
             Shielding.Update()
             Helm.Update()
-            Position.X = Position.X + (Math.Cos(Helm.Direction) *
-                                       (Helm.Throttle.current * (Engineering.Engines.current / Engineering.Engines.max)))
-            Position.Y = Position.Y + (Math.Sin(Helm.Direction) *
-                                       (Helm.Throttle.current * (Engineering.Engines.current / Engineering.Engines.max)))
+            Position.X = Position.X + (Math.Cos(Direction) * (Speed.current * (Engineering.Engines.current / Engineering.Engines.max)))
+            Position.Y = Position.Y + (Math.Sin(Direction) * (Speed.current * (Engineering.Engines.current / Engineering.Engines.max)))
         End If
     End Sub
 

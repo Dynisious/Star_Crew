@@ -33,17 +33,20 @@ Module Server
     Public OutputScreen As New Screen
     Public client As New Threading.Thread(AddressOf OutputScreen.Open)
     Public comms As New Threading.Thread(AddressOf ServerComms.StartCommunications)
+    Public processed As Boolean
 
     Public Sub Main()
         client.Start()
         Console.WriteLine("-----Star Crew-----")
-        Console.WriteLine("for help with commands type '/help'")
-        Console.WriteLine()
-        Console.WriteLine("-----Station Controls-----")
-        Console.WriteLine("Helm: Steer the helm with the 'Left' and 'Right' arrow keys." + Environment.NewLine +
-                          "Throttle Up and Down the the 'Up' and 'Down' arrow keys." + Environment.NewLine +
+        Console.WriteLine("for help with commands type '/help'" + Environment.NewLine +
+                          Environment.NewLine +
+                          "-----Station Controls-----" + Environment.NewLine +
+                          "Helm (Must be maned at all times): Steer the helm with the" + Environment.NewLine +
+                          "'Left' and 'Right' arrow keys." + Environment.NewLine +
+                          "Speed Up and Down the the 'Up' and 'Down' arrow keys." + Environment.NewLine +
                           "Have the computer Match your targets speed automatically with 'M'." + Environment.NewLine +
-                          "Once you have killed all Enemies press 'Control + J' to exit to Warp Speed." + Environment.NewLine +
+                          "Press 'J' to exit combat to Warp Speed." + Environment.NewLine +
+                          "Steer the Fleet while flying in the sector as you steer the Helm" + Environment.NewLine +
                           Environment.NewLine +
                           "Batteries: Rotate both Guns with the 'Left' and 'Right' arrow keys." + Environment.NewLine +
                           "Fire the Primary Gun with 'A'." + Environment.NewLine +
@@ -54,8 +57,18 @@ Module Server
                           Environment.NewLine +
                           "Engineering: Control the Power Core's Temperature with the 'Up' and 'Down'" + Environment.NewLine +
                           "Arrow Keys; keep the temperature as close to 50*e^5 as possible or the Power" + Environment.NewLine +
-                          "Core will not be at full efficiency.")
-        Console.WriteLine()
+                          "Core will not be at full efficiency." + Environment.NewLine +
+                          Environment.NewLine +
+                          "-----Sector Mechanics-----" + Environment.NewLine +
+                          "Green: Green Fleets are Friendly and if you come close enough to them they" + Environment.NewLine +
+                          "will add their forces to yours." + Environment.NewLine +
+                          "Red: Red Fleets are the enemy and they will also combine forces to combat" + Environment.NewLine +
+                          "yours." + Environment.NewLine +
+                          "Yellow: Yellow Fleets are Neutral and will Repair any ships in a Fleet" + Environment.NewLine +
+                          "up to 40% hull." + Environment.NewLine +
+                          "Interaction: To interact with a Fleet collide your Fleet into it." + Environment.NewLine +
+                          "Objective: The Objective of this game is to eleminate all Enemy Fleets." + Environment.NewLine +
+                          Environment.NewLine)
         While True
             Dim str As String = Console.ReadLine().Trim(ChrW(0))
             If str.StartsWith("/") Then
@@ -126,11 +139,13 @@ Module Server
                         Case Else
                             Console.WriteLine("Station not recognised. Check for capitals and spelling")
                     End Select
-                    For Each i As ServerSideClient In ServerComms.Ports
-                        If i.MyStation = stationType Then
-                            ServerComms.RemoveClient(i, True)
-                            Console.WriteLine(str + ": Has been kicked")
-                            Exit Sub
+                    For Each i As Socket In ServerComms.Ports
+                        If i.GetType = GetType(ServerSideClient) Then
+                            If CType(i, ServerSideClient).MyStation = stationType Then
+                                ServerComms.RemoveClient(i, True)
+                                Console.WriteLine(str + ": Has been kicked")
+                                Exit Sub
+                            End If
                         End If
                     Next
                     If stationType <> Station.StationTypes.Max Then
@@ -221,12 +236,12 @@ Module Server
         Public Shared MyListener As New TcpListener("1225")
         Public Shared Ports() As Socket = {MyListener.Server}
 
-        Public Shared Event UpdateServerMessage(ByVal nShip As Ship, ByVal nPositions() As GraphicPosition, ByVal nWarp As Galaxy.Warp)
-        Public Shared Sub UpdateServerMessage_Call(ByVal nShip As Ship, ByVal nPositions() As GraphicPosition, ByVal nWarp As Galaxy.Warp)
-            RaiseEvent UpdateServerMessage(nShip, nPositions, nWarp)
+        Public Shared Event UpdateServerMessage(ByVal nCraft As SpaceCraft, ByVal nPositions() As GraphicPosition, ByVal nWarp As Galaxy.Warp, ByVal nState As Galaxy.Scenario)
+        Public Shared Sub UpdateServerMessage_Call(ByVal nCraft As SpaceCraft, ByVal nPositions() As GraphicPosition, ByVal nWarp As Galaxy.Warp, ByVal nState As Galaxy.Scenario)
+            RaiseEvent UpdateServerMessage(nCraft, nPositions, nWarp, nState)
         End Sub
-        Private Shared Sub UpdateServerMessage_Handle(ByVal nShip As Ship, ByVal nPositions() As GraphicPosition, ByVal nWarp As Galaxy.Warp) Handles MyClass.UpdateServerMessage
-            MessageToSend = New ServerMessage(nShip, nPositions, nWarp)
+        Private Shared Sub UpdateServerMessage_Handle(ByVal nCraft As SpaceCraft, ByVal nPositions() As GraphicPosition, ByVal nWarp As Galaxy.Warp, ByVal nState As Galaxy.Scenario) Handles MyClass.UpdateServerMessage
+            MessageToSend = New ServerMessage(nCraft, nPositions, nWarp, nState)
         End Sub
 
         Public Shared Sub StartCommunications()

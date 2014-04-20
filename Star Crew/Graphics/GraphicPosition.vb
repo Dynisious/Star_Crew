@@ -15,4 +15,5 @@ Public Class GraphicPosition
         Y = nY
         Direction = nDirection
     End Sub
+
 End Class
