@@ -13,8 +13,8 @@ Public Class Sector
                 End If
             Next
         End If
-        For i As Integer = 0 To Int(4 * Rnd())
-            AddFleet(New NeutralFleet(i))
+        For i As Integer = 0 To 2
+            AddFleet(New NeutralFleet(-1))
         Next
     End Sub
 

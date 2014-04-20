@@ -3,7 +3,8 @@ Public MustInherit Class Fleet
     Inherits SpaceCraft
     Public currentSector As Sector
     Public ShipList As New List(Of Ship)
-    Public Shared ReadOnly TurnSpeed As Double = ((2 * Math.PI) / 90)
+    Public TurnSpeed As Double
+    Public Shared ReadOnly DetectRange As Integer = 200
     Public Shared ReadOnly InteractRange As Integer = 20
     Private TurnRight = True
 
@@ -11,7 +12,7 @@ Public MustInherit Class Fleet
         Randomize()
         MyAllegence = nAllegence
         Index = nIndex
-        For i As Integer = 0 To Int(Rnd() * 15) + 14
+        For i As Integer = 0 To Int(Rnd() * 11) + 9
             Select Case nAllegence
                 Case Galaxy.Allegence.Player
                     ShipList.Add(New FriendlyShip(New Clunker, i))
@@ -40,6 +41,7 @@ Public MustInherit Class Fleet
         If ShipList.Count <> 0 Then
             Dim lowestSpeed As Double
             Dim lowestAcceleration As Double
+            Dim lowestTurnSpeed As Double
             For Each i As Ship In ShipList
                 If i.Helm.Parent.Speed.max < lowestSpeed Or lowestSpeed = 0 Then
                     lowestSpeed = i.Helm.Parent.Speed.max
@@ -47,9 +49,13 @@ Public MustInherit Class Fleet
                 If i.Acceleration.max < lowestAcceleration Or lowestAcceleration = 0 Then
                     lowestAcceleration = i.Acceleration.max
                 End If
+                If i.Helm.TurnSpeed.current < lowestTurnSpeed Or lowestTurnSpeed = 0 Then
+                    lowestTurnSpeed = i.Helm.TurnSpeed.current
+                End If
             Next
-            Speed = New StatDbl(0, lowestSpeed * 0.8)
-            Acceleration = New StatDbl(lowestAcceleration, 0)
+            Speed = New StatDbl(0, lowestSpeed * 0.6)
+            Acceleration = New StatDbl(lowestAcceleration * 1.5, 0)
+            TurnSpeed = lowestAcceleration
         ElseIf Dead = False Then
             currentSector.RemoveFleet(Me)
         End If
@@ -61,11 +67,9 @@ Public MustInherit Class Fleet
     End Sub
     Public Overridable Sub UpdateFleet_Handle() Handles MyClass.FleetUpdate
         If ReferenceEquals(Me, Sector.centerFleet) = False And Dead = False Then
-            Dim hasTarget As Boolean = False
-            Dim targetDistance As Integer
+            Dim targetDistance As Integer = DetectRange
             Dim targetDirection As Double
             Dim targetSpeed As Integer = 3
-
             If MyAllegence = Galaxy.Allegence.Neutral Then
                 targetSpeed = 0
             End If
@@ -74,7 +78,7 @@ Public MustInherit Class Fleet
                 Dim x As Integer = i.Position.X - Position.X
                 Dim y As Integer = i.Position.Y - Position.Y
                 Dim distance As Integer = Math.Sqrt((x ^ 2) + (y ^ 2))
-                If (distance <= targetDistance Or targetDistance = 0) And ReferenceEquals(Me, i) = False Then
+                If (distance <= targetDistance Or (i.MyAllegence = Galaxy.Allegence.Neutral And targetDistance = DetectRange)) And ReferenceEquals(Me, i) = False Then
                     If distance <= InteractRange Then
                         If i.MyAllegence = Galaxy.Allegence.Neutral Then
                             NeutralFleet.Heal(Me)
@@ -87,7 +91,6 @@ Public MustInherit Class Fleet
                             Exit Sub
                         End If
                     Else
-                        hasTarget = True
                         targetDistance = distance
                         If x <> 0 Then
                             targetDirection = Math.Tanh(y / x)
@@ -104,39 +107,24 @@ Public MustInherit Class Fleet
                 End If
             Next
 
-            If hasTarget = True Then
-                If targetDirection - Direction + (Math.PI / 2) < Math.PI Then
-                    targetSpeed = Speed.max
-                End If
-                If targetDirection - Direction > 0 Then
-                    Direction = Direction + TurnSpeed
-                    If targetDirection - Direction < 0 Then
-                        Direction = targetDirection
-                    Else
-                        Direction = Helm.NormalizeDirection(Direction)
-                    End If
-                ElseIf targetDirection - Direction < 0 Then
-                    Direction = Direction - TurnSpeed
-                    If targetDirection - Direction > 0 Then
-                        Direction = targetDirection
-                    Else
-                        Direction = Helm.NormalizeDirection(Direction)
-                    End If
-                End If
-            Else
-                If Int(Rnd() * 30) = 0 Then
-                    If TurnRight = True Then
-                        TurnRight = False
-                    Else
-                        TurnRight = True
-                    End If
-                End If
-                If TurnRight = True Then
-                    Direction = Direction + TurnSpeed
+
+            If targetDirection - Direction + (Math.PI / 2) < Math.PI Then
+                targetSpeed = Speed.max
+            End If
+            If targetDirection - Direction > 0 Then
+                Direction = Direction + TurnSpeed
+                If targetDirection - Direction < 0 Then
+                    Direction = targetDirection
                 Else
-                    Direction = Direction - TurnSpeed
+                    Direction = Helm.NormalizeDirection(Direction)
                 End If
-                Direction = Helm.NormalizeDirection(Direction)
+            ElseIf targetDirection - Direction < 0 Then
+                Direction = Direction - TurnSpeed
+                If targetDirection - Direction > 0 Then
+                    Direction = targetDirection
+                Else
+                    Direction = Helm.NormalizeDirection(Direction)
+                End If
             End If
             If Speed.current < targetSpeed Then
                 Speed.current = Speed.current + Acceleration.current

@@ -28,7 +28,8 @@
     Public Shared Sub StartGame_Handle() Handles Me.StartGame
         Randomize()
         Warping = Warp.None
-        SectorList(0) = New Sector(10)
+        State = Scenario.Transit
+        SectorList(0) = New Sector(13)
         Sector.centerFleet = New FriendlyFleet(-1)
         SectorList(0).AddFleet(Sector.centerFleet)
         centerSector = SectorList(0)
@@ -470,10 +471,10 @@
                     End If
                 End If
                 If PlayerControl.TurnRightCheck = True Then
-                    Sector.centerFleet.Direction = Helm.NormalizeDirection(Sector.centerFleet.Direction + Fleet.TurnSpeed)
+                    Sector.centerFleet.Direction = Helm.NormalizeDirection(Sector.centerFleet.Direction + Sector.centerFleet.TurnSpeed)
                 End If
                 If PlayerControl.TurnLeftCheck = True Then
-                    Sector.centerFleet.Direction = Helm.NormalizeDirection(Sector.centerFleet.Direction - Fleet.TurnSpeed)
+                    Sector.centerFleet.Direction = Helm.NormalizeDirection(Sector.centerFleet.Direction - Sector.centerFleet.TurnSpeed)
                 End If
                 Fleet.UpdateFleet_Call()
 
@@ -495,9 +496,6 @@
                 Next
                 '---------------------------
                 Server.ServerComms.UpdateServerMessage_Call(Sector.centerFleet, craftPositions, Warping, State)
-                If processed = True Then
-                    processed = False
-                End If
             Case Scenario.Battle
                 Combat.UpdateCombatSenario()
                 '-----Set Warp-----
@@ -512,8 +510,8 @@
                         If WarpCounter = 0 Then
                             Warping = Warp.None
                             State = Scenario.Transit
-                            Sector.centerFleet.Position = New Point(Rnd() * SpaceCraft.SpawnBox,
-                                                                    Rnd() * SpaceCraft.SpawnBox)
+                            Sector.centerFleet.Position = New Point(Sector.centerFleet.Position.X + (Math.Cos(Sector.centerFleet.Direction) * 2 * Fleet.DetectRange),
+                                                                    Sector.centerFleet.Position.Y + (Math.Sin(Sector.centerFleet.Direction) * 2 * Fleet.DetectRange))
                             Fleet.SetStats_Call()
                         Else
                             WarpCounter = WarpCounter - 1

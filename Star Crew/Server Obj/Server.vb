@@ -33,7 +33,6 @@ Module Server
     Public OutputScreen As New Screen
     Public client As New Threading.Thread(AddressOf OutputScreen.Open)
     Public comms As New Threading.Thread(AddressOf ServerComms.StartCommunications)
-    Public processed As Boolean
 
     Public Sub Main()
         client.Start()

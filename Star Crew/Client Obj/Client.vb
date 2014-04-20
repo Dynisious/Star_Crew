@@ -183,9 +183,6 @@
     Private Shared Sub UpdateGraphics() Handles Tick.Tick
         If IncomingMessage IsNot Nothing Then
             messageData = IncomingMessage
-            If processed = False Then
-                processed = True
-            End If
             For Each i As Star In stars
                 i.Update()
             Next
