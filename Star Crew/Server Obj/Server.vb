@@ -190,23 +190,22 @@ Module Server
                 Dim receivedBuffLength As Integer = Receive(receiveBuff, 0, receiveBuff.Length, SocketFlags.None)
                 Dim str As Integer = System.Text.Encoding.ASCII.GetString(receiveBuff, 0, receivedBuffLength).Trim(ChrW(0))
                 MyStation = CInt(str)
-                For i As Integer = 1 To UBound(ServerComms.Ports)
+                For i As Integer = 1 To ServerComms.Ports.Count - 1
                     If ReferenceEquals(Me, ServerComms.Ports(i)) = False And CType(ServerComms.Ports(i), ServerSideClient).MyStation = MyStation Then
                         ServerComms.RemoveClient(Me, False)
                         Exit Sub
                     End If
                 Next
                 Console.WriteLine((MyStation.ToString() + ": Has been connected"))
-                Dim centerShip As Ship = Combat.centerShip
                 Select Case MyStation
                     Case Station.StationTypes.Helm
-                        centerShip.Helm.PlayerControled = True
+                        Combat.centerShip.Helm.PlayerControled = True
                     Case Station.StationTypes.Batteries
-                        centerShip.Batteries.PlayerControled = True
+                        Combat.centerShip.Batteries.PlayerControled = True
                     Case Station.StationTypes.Shielding
-                        centerShip.Shielding.PlayerControled = True
+                        Combat.centerShip.Shielding.PlayerControled = True
                     Case Station.StationTypes.Engineering
-                        centerShip.Engineering.PlayerControled = True
+                        Combat.centerShip.Engineering.PlayerControled = True
                 End Select
             Else
                 Try
@@ -215,6 +214,10 @@ Module Server
                         Galaxy.RunCommand_Call(bf.Deserialize(fs))
                     End Using
                 Catch ex As Runtime.Serialization.SerializationException
+                    Server.ServerComms.RemoveClient(Me, True)
+                Catch ex As InvalidOperationException
+                    Server.ServerComms.RemoveClient(Me, True)
+                Catch ex As IO.IOException
                     Server.ServerComms.RemoveClient(Me, True)
                 Catch ex As Exception
                     Console.WriteLine()
@@ -233,7 +236,8 @@ Module Server
         Public Shared MessageToSend As ServerMessage
         Public Shared MessageBuff() As Byte
         Public Shared MyListener As New TcpListener("1225")
-        Public Shared Ports() As Socket = {MyListener.Server}
+        Public Shared Ports As New List(Of Socket)
+        Private Shared SendRecieveList As New List(Of Socket)
 
         Public Shared Event UpdateServerMessage(ByVal nCraft As SpaceCraft, ByVal nPositions() As GraphicPosition, ByVal nWarp As Galaxy.Warp, ByVal nState As Galaxy.Scenario)
         Public Shared Sub UpdateServerMessage_Call(ByVal nCraft As SpaceCraft, ByVal nPositions() As GraphicPosition, ByVal nWarp As Galaxy.Warp, ByVal nState As Galaxy.Scenario)
@@ -244,28 +248,24 @@ Module Server
         End Sub
 
         Public Shared Sub StartCommunications()
-            Ports(0) = MyListener.Server
+            Ports.Add(MyListener.Server)
             MyListener.Start()
             Console.WriteLine("Server is now listening on " + MyListener.Server.LocalEndPoint.ToString)
 
             While True
                 Listen()
+                Send()
             End While
         End Sub
 
         Private Shared Sub Listen()
-            '-----Creat List-----
-            Dim socketList As New ArrayList
-            For Each i As Socket In Ports
-                socketList.Add(i)
-            Next
-            '--------------------
-
+            SendRecieveList.AddRange(Ports)
             '-----Recieve Messages-----
-            Socket.Select(socketList, Nothing, Nothing, -1)
-            For Each i As Socket In socketList
+            Socket.Select(SendRecieveList, Nothing, Nothing, -1)
+            For Each i As Socket In SendRecieveList
                 If ReferenceEquals(i, MyListener.Server) = True Then
                     AddClient(MyListener.AcceptSocket())
+                    Exit For
                 Else
                     For Each e As Socket In Ports
                         If ReferenceEquals(i, e) Then
@@ -276,19 +276,22 @@ Module Server
                 End If
             Next
             '--------------------------
+            SendRecieveList.Clear()
+            SendRecieveList.TrimExcess()
+        End Sub
 
+        Private Shared Sub Send()
+            SendRecieveList.AddRange(Ports)
             '-----Send Messages to Clients-----
             MessageBuff = ServerMessage.ConstructMessage()
-            socketList.Clear()
-            For Each i As Socket In Ports
-                socketList.Add(i)
-            Next
-            If socketList.Count > 0 Then
-                Socket.Select(Nothing, socketList, Nothing, -1)
-                For Each i As Socket In socketList
+            If SendRecieveList.Count > 1 Then
+                Socket.Select(Nothing, SendRecieveList, Nothing, -1)
+                For Each i As ServerSideClient In SendRecieveList
                     Try
                         i.Send(MessageBuff)
                     Catch ex As SocketException
+                        RemoveClient(i, True)
+                    Catch ex As InvalidOperationException
                         RemoveClient(i, True)
                     Catch ex As Exception
                         Console.WriteLine()
@@ -302,16 +305,14 @@ Module Server
                 Next
             End If
             '----------------------------------
+            SendRecieveList.Clear()
+            SendRecieveList.TrimExcess()
         End Sub
 
         Public Shared Sub AddClient(ByRef nSocket As Socket)
-            If Ports.Length < 4 Then
-                ReDim Preserve Ports(Ports.Length)
-                Ports(UBound(Ports)) = New ServerSideClient(nSocket.DuplicateAndClose(Process.GetCurrentProcess.Id))
-                Dim socketList As New ArrayList
-                socketList.Add(Ports(UBound(Ports)))
-                Socket.Select(socketList, Nothing, Nothing, -1)
-                CType(Ports(UBound(Ports)), ServerSideClient).DecodeMessage()
+            If Ports.Count < 5 Then
+                Ports.Add(New ServerSideClient(nSocket.DuplicateAndClose(Process.GetCurrentProcess.Id)))
+                Listen()
             Else
                 Dim temp As Socket = MyListener.AcceptSocket()
                 Console.WriteLine(temp.RemoteEndPoint.ToString + ": Could not be connected. Server is full")
@@ -335,25 +336,8 @@ Module Server
                                 Combat.centerShip.Engineering.PlayerControled = False
                         End Select
                     End If
-                    Dim index = Array.IndexOf(Ports, i)
-                    If index < UBound(Ports) Then
-                        For e As Integer = index To UBound(Ports) - 1
-                            Ports(e) = Ports(e + 1)
-                        Next
-                    End If
-                    ReDim Preserve Ports(UBound(Ports) - 1)
-                    Exit For
-                End If
-            Next
-            For Each i As Socket In Ports
-                If ReferenceEquals(i, nSocket) = True Then
-                    Dim index = Array.IndexOf(Ports, i)
-                    If index < UBound(Ports) Then
-                        For e As Integer = index To UBound(Ports) - 1
-                            Ports(e) = Ports(e + 1)
-                        Next
-                    End If
-                    ReDim Preserve Ports(UBound(Ports) - 1)
+                    Ports.Remove(i)
+                    Ports.TrimExcess()
                     Exit For
                 End If
             Next

@@ -26,21 +26,19 @@ Public Class Sector
         End If
     End Sub
 
-    Public Sub RemoveFleet(ByRef nFleet As Fleet)
+    Public Sub RemoveFleet(ByRef nFleet As Fleet, ByVal Kill As Boolean)
         If nFleet.MyAllegence <> Galaxy.Allegence.Neutral Then
             fleetList.RemoveAt(nFleet.Index)
             fleetList.TrimExcess()
             For i As Integer = nFleet.Index To fleetList.Count - 1
                 fleetList(i).Index = i
             Next
-            nFleet.Dead = True
-            nFleet.ShipList.Clear()
-            nFleet.ShipList.TrimExcess()
+            If Kill = True Then
+                nFleet.Dead = True
+                nFleet.ShipList.Clear()
+                nFleet.ShipList.TrimExcess()
+            End If
         End If
-    End Sub
-
-    Public Shared Sub UpdateSector()
-        Fleet.UpdateFleet_Call()
     End Sub
 
 End Class

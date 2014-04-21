@@ -87,11 +87,11 @@
         End If
         health2 = health2 - overallDamage
         If health2 <= 0 Then
-            For Each i As Ship In fleet2.ShipList
-                i.DestroyShip()
+            For i As Integer = 0 To fleet2.ShipList.Count - 1
+                fleet2.ShipList(0).DestroyShip()
             Next
             fleet2.ShipList.TrimExcess()
-            fleet2.currentSector.RemoveFleet(fleet2)
+            fleet2.currentSector.RemoveFleet(fleet2, True)
             Exit Sub
         Else
             For Each i As Ship In fleet2.ShipList
@@ -114,11 +114,11 @@
         End If
         health1 = health1 - overallDamage
         If health1 <= 0 Then
-            For Each i As Ship In fleet1.ShipList
-                i.DestroyShip()
+            For i As Integer = 0 To fleet1.ShipList.Count - 1
+                fleet1.ShipList(0).DestroyShip()
             Next
             fleet1.ShipList.TrimExcess()
-            fleet1.currentSector.RemoveFleet(fleet1)
+            fleet1.currentSector.RemoveFleet(fleet1, True)
             Exit Sub
         Else
             For Each i As Ship In fleet1.ShipList

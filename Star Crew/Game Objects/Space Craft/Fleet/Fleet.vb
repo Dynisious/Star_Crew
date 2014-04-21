@@ -57,7 +57,7 @@ Public MustInherit Class Fleet
             Acceleration = New StatDbl(lowestAcceleration * 1.5, 0)
             TurnSpeed = lowestAcceleration
         ElseIf Dead = False Then
-            currentSector.RemoveFleet(Me)
+            currentSector.RemoveFleet(Me, True)
         End If
     End Sub
 
@@ -87,7 +87,7 @@ Public MustInherit Class Fleet
                             Exit Sub
                         ElseIf i.MyAllegence = MyAllegence And ReferenceEquals(i, Sector.centerFleet) = False Then
                             ShipList.AddRange(i.ShipList)
-                            currentSector.RemoveFleet(i)
+                            currentSector.RemoveFleet(i, True)
                             Exit Sub
                         End If
                     Else
@@ -148,7 +148,7 @@ Public MustInherit Class Fleet
                             NeutralFleet.Heal(Me)
                         Case Galaxy.Allegence.Player
                             ShipList.AddRange(i.ShipList)
-                            currentSector.RemoveFleet(i)
+                            currentSector.RemoveFleet(i, True)
                             Exit Sub
                     End Select
                 End If

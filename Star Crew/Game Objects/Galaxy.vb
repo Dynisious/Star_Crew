@@ -2,7 +2,6 @@
     Public Shared WithEvents GalaxyTimer As New Timer With {.Interval = 100, .Enabled = False}
     Private Shared craftPositions(-1) As GraphicPosition
     Public Shared centerSector As Sector
-    Private Shared SectorList(0) As Sector
     Public Enum Warp
         None
         Entering
@@ -29,10 +28,10 @@
         Randomize()
         Warping = Warp.None
         State = Scenario.Transit
-        SectorList(0) = New Sector(13)
+        centerSector = New Sector(20)
         Sector.centerFleet = New FriendlyFleet(-1)
-        SectorList(0).AddFleet(Sector.centerFleet)
-        centerSector = SectorList(0)
+        centerSector.fleetList.Insert(0, Sector.centerFleet)
+        centerSector.AddFleet(Sector.centerFleet)
         Fleet.SetStats_Call()
         GalaxyTimer.Enabled = True
     End Sub
