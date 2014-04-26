@@ -30,9 +30,11 @@ Public Class Sector
         If nFleet.MyAllegence <> Galaxy.Allegence.Neutral Then
             fleetList.RemoveAt(nFleet.Index)
             fleetList.TrimExcess()
-            For i As Integer = nFleet.Index To fleetList.Count - 1
-                fleetList(i).Index = i
-            Next
+            If nFleet.Index < fleetList.Count - 1 Then
+                For i As Integer = nFleet.Index To fleetList.Count - 1
+                    fleetList(i).Index = i
+                Next
+            End If
             If Kill = True Then
                 nFleet.Dead = True
                 nFleet.ShipList.Clear()

@@ -106,20 +106,14 @@
         Try
             IncomingMessage = bf.Deserialize(MyConnector.GetStream())
         Catch ex As Net.Sockets.SocketException
-            Console.WriteLine()
-            Console.WriteLine("Error : The Client was disconnected unexpectedly")
             MyConnector.Close()
             Connected = False
             comms.Abort()
         Catch ex As InvalidOperationException
-            Console.WriteLine()
-            Console.WriteLine("Error : The Client was disconnected unexpectedly")
             MyConnector.Close()
             Connected = False
             comms.Abort()
         Catch ex As Runtime.Serialization.SerializationException
-            Console.WriteLine()
-            Console.WriteLine("Error : The Client was disconnected unexpectedly")
             MyConnector.Close()
             Connected = False
             comms.Abort()
@@ -144,8 +138,6 @@
             Try
                 MyConnector.Client.Send(fs.ToArray())
             Catch ex As Net.Sockets.SocketException
-                Console.WriteLine()
-                Console.WriteLine("Error : The Client was disconnected unexpectedly")
                 MyConnector.Close()
                 Connected = False
                 comms.Abort()

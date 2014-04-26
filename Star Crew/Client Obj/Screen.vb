@@ -563,7 +563,7 @@
     End Class
 
     Public Sub Open()
-        Application.Run(Me)
+        Windows.Forms.Application.Run(Me)
     End Sub
 
     Public Sub New()
