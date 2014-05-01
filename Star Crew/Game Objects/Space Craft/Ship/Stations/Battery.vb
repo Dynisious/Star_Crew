@@ -1,5 +1,4 @@
-﻿<Serializable()>
-Public Class Battery
+﻿Public Class Battery
     Inherits Station
     Public Primary As Weapon
     Public Secondary As Weapon
@@ -24,22 +23,22 @@ Public Class Battery
             Primary.UpdateWeapon()
             Secondary.UpdateWeapon()
 
-            If PlayerControled = False And Combat.shipList.Count <> 1 Then
-                Dim shipDirections(Combat.shipList.Count - 1) As Double
-                Dim shipDistances(Combat.shipList.Count - 1) As Integer
+            If PlayerControled = False And ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList.Count <> 1 Then
+                Dim shipDirections(ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList.Count - 1) As Double
+                Dim shipDistances(ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList.Count - 1) As Integer
                 Parent.Helm.Target = Nothing
                 Dim Opposite As Integer
                 Dim Adjacent As Integer
                 Dim target As Ship = Nothing
                 Dim targetDistance As Integer
                 Dim targetDirection As Double
-                ReDim shipDirections(Combat.shipList.Count - 1)
-                ReDim shipDistances(Combat.shipList.Count - 1)
+                ReDim shipDirections(ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList.Count - 1)
+                ReDim shipDistances(ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList.Count - 1)
                 ReDim Parent.Helm.evadeList(-1)
                 '-----Set Target Distances and Directions-----
                 For i As Integer = 0 To shipDistances.Length - 1
-                    Opposite = Combat.shipList(i).Position.Y - Parent.Position.Y
-                    Adjacent = Combat.shipList(i).Position.X - Parent.Position.X
+                    Opposite = ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i).Position.Y - Parent.Position.Y
+                    Adjacent = ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i).Position.X - Parent.Position.X
                     If Adjacent <> 0 Then
                         shipDirections(i) = Math.Tanh(Opposite / Adjacent)
                         If Adjacent < 0 Then
@@ -53,7 +52,7 @@ Public Class Battery
                     End If
                     shipDistances(i) = Math.Sqrt((Adjacent ^ 2) + (Opposite ^ 2))
 
-                    If ReferenceEquals(Parent, Combat.shipList(i)) = False And shipDistances(i) < Helm.MinimumDistance And
+                    If ReferenceEquals(Parent, ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i)) = False And shipDistances(i) < Helm.MinimumDistance And
                         shipDirections(i) - Parent.Direction < (3 * Math.PI) / 4 And
                         shipDirections(i) - Parent.Direction > -(3 * Math.PI) / 4 Then
                         ReDim Preserve Parent.Helm.evadeList(Parent.Helm.evadeList.Length)
@@ -67,14 +66,14 @@ Public Class Battery
                 For i As Integer = 0 To shipDistances.Length - 1
                     '-----Select Target to Shoot-----
                     If (shipDistances(i) <= lastDistance Or lastDistance = 0) And
-                            Combat.shipList(i).MyAllegence <> Parent.MyAllegence Then
+                            ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i).MyAllegence <> Parent.MyAllegence Then
                         If Parent.TargetLock = False Then
-                            Parent.Helm.Target = Combat.shipList(i)
+                            Parent.Helm.Target = ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i)
                         End If
                         If (shipDirections(i) - Parent.Direction) < (Math.PI / 2) And
                             (shipDirections(i) - Parent.Direction) > -(Math.PI / 2) Then
                             lastDistance = shipDistances(i)
-                            target = Combat.shipList(i)
+                            target = ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i)
                             targetDirection = shipDirections(i)
                             targetDistance = shipDistances(i)
                         End If

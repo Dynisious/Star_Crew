@@ -117,7 +117,7 @@
     <Compile Include="Game Objects\Space Craft\Fleet\NeutralFleet.vb" />
     <Compile Include="Graphics\GraphicPosition.vb" />
     <Compile Include="Game Objects\Sector.vb" />
-    <Compile Include="Server Obj\Server.vb" />
+    <Compile Include="Server Obj\ConsoleWindow.vb" />
     <Compile Include="Client Obj\Screen.vb">
       <SubType>Form</SubType>
     </Compile>
@@ -140,6 +140,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <Compile Include="Server Obj\Server.vb" />
     <Compile Include="Server Obj\ServerMessage.vb" />
     <Compile Include="Game Objects\Space Craft\Fleet\Fleet.vb" />
     <Compile Include="Game Objects\Space Craft\Fleet\FriendlyFleet.vb" />
@@ -161,6 +162,7 @@
     <Compile Include="Game Objects\Space Craft\Ship\Weapons\Weapon Layouts\WeaponLayout.vb" />
     <Compile Include="Game Objects\Space Craft\Ship\Weapons\Weapon.vb" />
     <Compile Include="Game Objects\Space Craft\SpaceCraft.vb" />
+    <Compile Include="Server Obj\ServerSideClient.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="My Project\Resources.resx">
@@ -171,6 +173,7 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Client Obj\Screen.resx">
       <DependentUpon>Screen.vb</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
@@ -215,6 +218,15 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Graphics\NormalSpace.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Graphics\Friendly.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Graphics\Pirate.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Graphics\Station.bmp" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

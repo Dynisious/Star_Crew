@@ -1,41 +1,59 @@
-﻿Public Class Client
-    Public Shared Connected As Boolean = False
-    Public Shared MyConnector As Net.Sockets.TcpClient
-    Public Shared myMessage As New ClientMessage
-    Public Shared IncomingMessage As ServerMessage
-    Public Shared messageData As ServerMessage
-    Public Shared comms As Threading.Thread
-    Private Shared stars(200) As Star
-    Private Shared IDGeni As New Runtime.Serialization.ObjectIDGenerator
+﻿Imports System.Drawing
+Imports System.Drawing.Drawing2D
+Public Class Client
+    Public Connected As Boolean = False
+    Public MyConnector As Net.Sockets.TcpClient
+    Public myMessage As New ClientMessage
+    Public IncomingMessage As ServerMessage
+    Public Comms As Threading.Thread
+    Private stars(200) As Star
+    Private ReadOnly BlankShipSpace As New Bitmap(40, 40)
+    Private BytesToReceive As Integer
+    Private BytesReceived As Integer
+    Private MessageBuff(11000) As Byte
+    Private ByteBuff(3) As Byte
+    Private BinarySerializer As New Runtime.Serialization.Formatters.Binary.BinaryFormatter
+    Private SendBuff() As Byte
 
     Public Class Star
         Public Position As Point
-        Public Flash As Boolean = False
+        Public Diamiter As Integer = 8
+        Private Flash As Boolean = False
         Private count As Integer
         Public Shared Speed As Double = 1
         Public Shared ReadOnly WarpSpeed As Integer = 20
+        Private Shared Event Update()
 
         Public Sub New(ByVal nPosition As Point)
             Position = nPosition
         End Sub
 
-        Public Sub Update()
+        Public Shared Sub Update_Call()
+            RaiseEvent Update()
+        End Sub
+        Private Sub Update_Handle() Handles MyClass.Update
             If Flash = False Then
                 If Int(80 * Rnd()) = 0 Then
                     Flash = True
                 End If
-                count = 8
+                count = 10
             ElseIf count = 1 Then
                 count = 0
                 Flash = False
+                Diamiter = 8
             Else
                 count = count - 1
+                If Diamiter > 1 Then
+                    Diamiter = Diamiter - 1
+                Else
+                    Diamiter = Diamiter + 1
+                End If
             End If
 
 
-            Dim direction As Double = IncomingMessage.Craft.Direction + Math.PI
-            Position = New Point(Position.X + (IncomingMessage.Craft.Speed.current * Math.Cos(direction) * Speed),
-                                 Position.Y + (IncomingMessage.Craft.Speed.current * Math.Sin(direction) * Speed))
+            Dim direction As Double = ConsoleWindow.OutputScreen.MyClient.IncomingMessage.Direction + Math.PI
+            Position = New Point(Position.X + (ConsoleWindow.OutputScreen.MyClient.IncomingMessage.Speed.current * Math.Cos(direction) * Speed),
+                                 Position.Y + (ConsoleWindow.OutputScreen.MyClient.IncomingMessage.Speed.current * Math.Sin(direction) * Speed))
             If Position.X <= 2 Then
                 Position = New Point(Position.X + Screen.ImageSize.X - 5, Position.Y)
             ElseIf Position.X >= Screen.GamePlayLayout.picDisplayGraphics.Width - 3 Then
@@ -47,7 +65,7 @@
                 Position = New Point(Position.X, Position.Y - Screen.ImageSize.Y + 5)
             End If
 
-            If IncomingMessage.Warping = Galaxy.Warp.Warping Then
+            If ConsoleWindow.OutputScreen.MyClient.IncomingMessage.Warping = Galaxy.Warp.Warping Then
                 Speed = WarpSpeed
             Else
                 Speed = 1
@@ -64,8 +82,8 @@
                 stars(i) = New Star(New Point(Int((594 * Rnd()) + 3), Int((594 * Rnd())) + 3))
             Next
             Tick.Enabled = True
-            comms = New Threading.Thread(AddressOf RunComms_Call)
-            comms.Start()
+            Comms = New Threading.Thread(AddressOf StartComms)
+            Comms.Start()
         Catch ex As Net.Sockets.SocketException
             Console.WriteLine()
             Console.WriteLine("Error: Could not connect to server")
@@ -76,47 +94,43 @@
         End Try
     End Sub
 
-    Private Shared Event SendCommand(ByVal command As Integer, ByVal value As Integer)
-    Public Shared Sub SendCommand_Call(ByVal command As Integer, ByVal value As Integer)
-        RaiseEvent SendCommand(command, value)
-    End Sub
-    Private Shared Sub SendCommand_Handle(ByVal command As Integer, ByVal value As Integer) Handles Me.SendCommand
+    Public Sub SendCommand(ByVal command As Integer, ByVal value As Integer)
         myMessage.Command = command
         myMessage.Value = value
     End Sub
 
-    Private Shared Event RunComms()
-    Private Shared Sub RunComms_Call()
-        Dim buff() As Byte = System.Text.ASCIIEncoding.ASCII.GetBytes(CInt(myMessage.Station))
-        MyConnector.Client.Send(buff)
+    Private Sub StartComms()
+        MyConnector.Client.Send(BitConverter.GetBytes(myMessage.Station))
 
         While True
-            RaiseEvent RunComms()
+            RunComms()
         End While
     End Sub
-    Private Shared Sub RunComms_Handle() Handles Me.RunComms
-        '-----Make an ArrayList for the socket-----
-        Dim socket As New ArrayList
-        socket.Add(MyConnector.Client)
-        '------------------------------------------
-
-        Dim bf As New Runtime.Serialization.Formatters.Binary.BinaryFormatter
+    Private Sub RunComms()
         '-----Recieve Message-----
-        Net.Sockets.Socket.Select(socket, Nothing, Nothing, -1)
+        BytesReceived = 0
+        BytesToReceive = 0
         Try
-            IncomingMessage = bf.Deserialize(MyConnector.GetStream())
+            '-----Get Number of Bytes to Receive-----
+            While BytesReceived < 4
+                BytesReceived = BytesReceived +
+                    MyConnector.Client.Receive(ByteBuff, BytesReceived, 4 - BytesReceived, Net.Sockets.SocketFlags.None)
+            End While
+            BytesToReceive = BitConverter.ToInt32(ByteBuff, 0)
+            '----------------------------------------
+
+            '-----Receive the Message-----
+            BytesReceived = 0
+            While BytesReceived < BytesToReceive
+                BytesReceived = BytesReceived +
+            MyConnector.Client.Receive(MessageBuff, BytesReceived, BytesToReceive - BytesReceived, Net.Sockets.SocketFlags.None)
+            End While
+            IncomingMessage = BinarySerializer.Deserialize(New IO.MemoryStream(MessageBuff, 0, BytesToReceive))
+            '-----------------------------
         Catch ex As Net.Sockets.SocketException
             MyConnector.Close()
             Connected = False
-            comms.Abort()
-        Catch ex As InvalidOperationException
-            MyConnector.Close()
-            Connected = False
-            comms.Abort()
-        Catch ex As Runtime.Serialization.SerializationException
-            MyConnector.Close()
-            Connected = False
-            comms.Abort()
+            Comms.Abort()
         Catch ex As Exception
             Console.WriteLine()
             Console.WriteLine("Error : There was an unexpected and unhandled exception.")
@@ -127,185 +141,141 @@
             Console.WriteLine()
             MyConnector.Close()
             Connected = False
-            comms.Abort()
+            Comms.Abort()
         End Try
         '-------------------------
 
         '-----Send Message-----
-        Net.Sockets.Socket.Select(Nothing, socket, Nothing, -1)
-        Using fs As New IO.MemoryStream
-            bf.Serialize(fs, myMessage)
-            Try
-                MyConnector.Client.Send(fs.ToArray())
-            Catch ex As Net.Sockets.SocketException
-                MyConnector.Close()
-                Connected = False
-                comms.Abort()
-            Catch ex As Exception
-                Console.WriteLine()
-                Console.WriteLine("Error : There was an unexpected and unhandled exception.")
-                Console.WriteLine("please submit it as an issue at the URL bellow")
-                Console.WriteLine("https://github.com/Dynisious/Star_Crew/issues")
-                Console.WriteLine()
-                Console.WriteLine(ex.ToString)
-                Console.WriteLine()
-                MyConnector.Close()
-                Connected = False
-                comms.Abort()
-            End Try
-            myMessage.Command = -1
-            myMessage.Value = -1
-        End Using
+        Try
+            Dim byteStream As New IO.MemoryStream()
+            BinarySerializer.Serialize(byteStream, myMessage)
+            SendBuff = byteStream.ToArray
+            MyConnector.Client.Blocking = True
+            MyConnector.Client.Send(BitConverter.GetBytes(SendBuff.Length))
+            MyConnector.Client.Blocking = True
+            MyConnector.Client.Send(SendBuff)
+            byteStream.Close()
+        Catch ex As Net.Sockets.SocketException
+            MyConnector.Close()
+            Connected = False
+            Comms.Abort()
+        Catch ex As Exception
+            Console.WriteLine()
+            Console.WriteLine("Error : There was an unexpected and unhandled exception.")
+            Console.WriteLine("please submit it as an issue at the URL bellow")
+            Console.WriteLine("https://github.com/Dynisious/Star_Crew/issues")
+            Console.WriteLine()
+            Console.WriteLine(ex.ToString)
+            Console.WriteLine()
+            MyConnector.Close()
+            Connected = False
+            Comms.Abort()
+        End Try
+        myMessage.Command = -1
+        myMessage.Value = -1
         '----------------------
     End Sub
 
-    Private Shared WithEvents Tick As New Timer With {.Interval = 100, .Enabled = False}
-    Public Shared primaryDirection As Double
-    Public Shared primaryRadius As Integer
-    Public Shared secondaryDirection As Double
-    Public Shared secondaryRadius As Integer
-    Private Shared Sub UpdateGraphics() Handles Tick.Tick
+    Private WithEvents Tick As New Timer With {.Interval = 100, .Enabled = True}
+    Public primaryDirection As Double
+    Public primaryRec As Rectangle
+    Public secondaryDirection As Double
+    Public secondaryRec As Rectangle
+
+    Private Sub UpdateGraphics() Handles Tick.Tick
         If IncomingMessage IsNot Nothing Then
-            For Each i As Star In stars
-                i.Update()
-            Next
-            If IncomingMessage.Positions(0).X = 0 And IncomingMessage.Positions(0).Y = 0 Then
-                messageData = IncomingMessage
-                If messageData.Craft.GetType = GetType(FriendlyShip) Then
-                    primaryDirection = Helm.NormalizeDirection(messageData.Craft.Direction + CType(messageData.Craft, FriendlyShip).Batteries.Primary.TurnDistance.current)
-                    primaryRadius = CType(messageData.Craft, FriendlyShip).Batteries.Primary.Range.current
-                    secondaryDirection = Helm.NormalizeDirection(messageData.Craft.Direction + CType(messageData.Craft, FriendlyShip).Batteries.Secondary.TurnDistance.current)
-                    secondaryRadius = CType(messageData.Craft, FriendlyShip).Batteries.Secondary.Range.current
-                End If
+            Dim MessageData As ServerMessage = IncomingMessage
+            Star.Update_Call()
+            If MessageData.CenterShip IsNot Nothing Then
+                primaryDirection = Helm.NormalizeDirection(MessageData.Direction + MessageData.Primary.TurnDistance.current)
+                Dim Width As Integer = MessageData.Primary.Range.current * 2
+                Dim Height As Integer = MessageData.Primary.Range.current * 2
+                Dim startX As Integer = (Screen.ImageSize.X / 2) - MessageData.Primary.Range.current
+                Dim startY As Integer = (Screen.ImageSize.Y / 2) - MessageData.Primary.Range.current
+                primaryRec = New Rectangle(startX, startY, Width, Height)
 
-                '-----Set Background-----
-                Dim bmp As Bitmap
-                Select Case messageData.Warping
-                    Case Galaxy.Warp.None
-                        bmp = My.Resources.NormalSpace.Clone
-                    Case Galaxy.Warp.Warping
-                        bmp = My.Resources.Warping.Clone
-                End Select
-                '------------------------
-
-                '-----Put on Radar-----
-                For i As Integer = 0 To UBound(messageData.Positions)
-                    Dim distance As Integer = Math.Sqrt((messageData.Positions(i).X ^ 2) + (messageData.Positions(i).Y ^ 2))
-                    If distance > 200 Then
-                        Dim scale As Double = distance / 200
-                        messageData.Positions(i).X = (messageData.Positions(i).X / scale)
-                        messageData.Positions(i).Y = (messageData.Positions(i).Y / scale)
-                    End If
-                    messageData.Positions(i).X = messageData.Positions(i).X + ((Screen.ImageSize.X / 2) - 1)
-                    messageData.Positions(i).Y = messageData.Positions(i).Y + ((Screen.ImageSize.Y / 2) - 1)
-                Next
-                '----------------------
-
-                '-----Render-----
-                For Each i As Star In stars
-                    If i.Flash = True Then
-                        For x As Integer = -2 To 2
-                            For y As Integer = -2 To 2
-                                bmp.SetPixel(i.Position.X + x, i.Position.Y + y, Color.White)
-                            Next
-                        Next
-                    Else
-                        bmp.SetPixel(i.Position.X, i.Position.Y, Color.White)
-                    End If
-                Next
-
-                If messageData.Warping <> Galaxy.Warp.Warping And messageData.State = Galaxy.Scenario.Battle Then
-                    '-----Batteries Arc-----
-                    '-----Primary Arc-----
-                    For i As Integer = 1 To primaryRadius
-                        Dim x As Integer = Math.Cos(primaryDirection + -(Battery.PlayerArc / 2)) * i
-                        Dim y As Integer = Math.Sin(primaryDirection + -(Battery.PlayerArc / 2)) * i
-                        bmp.SetPixel(x + ((Screen.ImageSize.X / 2) - 1), y + ((Screen.ImageSize.Y / 2) - 1), Color.Yellow)
-                        x = Math.Cos(primaryDirection + (Battery.PlayerArc / 2)) * i
-                        y = Math.Sin(primaryDirection + (Battery.PlayerArc / 2)) * i
-                        bmp.SetPixel(x + ((Screen.ImageSize.X / 2) - 1), y + ((Screen.ImageSize.Y / 2) - 1), Color.Yellow)
-                    Next
-                    For i As Double = -(Battery.PlayerArc / 2) To (Battery.PlayerArc / 2) Step Battery.PlayerArc / (2 * Math.PI)
-                        Dim x As Integer = Math.Cos(primaryDirection + i) * primaryRadius
-                        Dim y As Integer = Math.Sin(primaryDirection + i) * primaryRadius
-                        bmp.SetPixel(x + ((Screen.ImageSize.X / 2) - 1), y + ((Screen.ImageSize.Y / 2) - 1), Color.Yellow)
-                    Next
-                    '---------------------
-                    '-----Secondary Arc-----
-                    For i As Integer = 1 To secondaryRadius
-                        Dim x As Integer = Math.Cos(secondaryDirection + -(Battery.PlayerArc / 2)) * i
-                        Dim y As Integer = Math.Sin(secondaryDirection + -(Battery.PlayerArc / 2)) * i
-                        bmp.SetPixel(x + ((Screen.ImageSize.X / 2) - 1), y + ((Screen.ImageSize.Y / 2) - 1), Color.Yellow)
-                        x = Math.Cos(secondaryDirection + (Battery.PlayerArc / 2)) * i
-                        y = Math.Sin(secondaryDirection + (Battery.PlayerArc / 2)) * i
-                        bmp.SetPixel(x + ((Screen.ImageSize.X / 2) - 1), y + ((Screen.ImageSize.Y / 2) - 1), Color.Yellow)
-                    Next
-                    For i As Double = -(Battery.PlayerArc / 2) To (Battery.PlayerArc / 2) Step Battery.PlayerArc / (2 * Math.PI)
-                        Dim x As Integer = Math.Cos(secondaryDirection + i) * secondaryRadius
-                        Dim y As Integer = Math.Sin(secondaryDirection + i) * secondaryRadius
-                        bmp.SetPixel(x + ((Screen.ImageSize.X / 2) - 1), y + ((Screen.ImageSize.Y / 2) - 1), Color.Yellow)
-                    Next
-                    '-----------------------
-                    '-----------------------
-                End If
-
-                For i As Integer = 0 To UBound(messageData.Positions)
-                    If (messageData.Warping = Galaxy.Warp.None) Or (messageData.Warping = Galaxy.Warp.Warping And i = messageData.Craft.Index) Then
-                        Dim col As Color = messageData.Positions(i).Col
-                        If messageData.Positions(i).Hit = True Then
-                            col = Color.Orange
-                        End If
-                        For x As Integer = -3 To 3
-                            For y As Integer = -3 To 3
-                                bmp.SetPixel(messageData.Positions(i).X + x, messageData.Positions(i).Y + y, col)
-                            Next
-                        Next
-                        col = messageData.Positions(i).Col
-                        If messageData.Positions(i).Firing = True Then
-                            col = Color.Orange
-                        End If
-                        For x As Integer = -1 To 1
-                            For y As Integer = -1 To 1
-                                Dim xStart As Integer = messageData.Positions(i).X + (Math.Cos(messageData.Positions(i).Direction) * 11)
-                                Dim yStart As Integer = messageData.Positions(i).Y + (Math.Sin(messageData.Positions(i).Direction) * 11)
-                                bmp.SetPixel(xStart + x, yStart + y, col)
-                            Next
-                        Next
-                    End If
-                Next
-
-                If messageData.Craft.GetType = GetType(FriendlyShip) Then
-                    '-----Batteries Target-----
-                    If CType(messageData.Craft, Ship).Helm.Target IsNot Nothing And messageData.Warping <> Galaxy.Warp.Warping Then
-                        If CType(messageData.Craft, Ship).Helm.Target.Hit = False Then
-                            Dim col As Color = messageData.Positions(CType(messageData.Craft, Ship).Helm.Target.Index).Col
-                            If messageData.Positions(CType(messageData.Craft, Ship).Helm.Target.Index).Hit = True Then
-                                col = Color.Orange
-                            End If
-                            For x As Integer = -3 To 3
-                                For y As Integer = -3 To 3
-                                    bmp.SetPixel(messageData.Positions(CType(messageData.Craft, Ship).Helm.Target.Index).X + x,
-                                                 messageData.Positions(CType(messageData.Craft, Ship).Helm.Target.Index).Y + y, Color.Blue)
-                                Next
-                            Next
-                            col = messageData.Positions(CType(messageData.Craft, Ship).Helm.Target.Index).Col
-                            If messageData.Positions(CType(messageData.Craft, Ship).Helm.Target.Index).Firing = True Then
-                                col = Color.Orange
-                            End If
-                            For x As Integer = -1 To 1
-                                For y As Integer = -1 To 1
-                                    Dim xStart As Integer = messageData.Positions(CType(messageData.Craft, Ship).Helm.Target.Index).X + (Math.Cos(messageData.Positions(CType(messageData.Craft, Ship).Helm.Target.Index).Direction) * 11)
-                                    Dim yStart As Integer = messageData.Positions(CType(messageData.Craft, Ship).Helm.Target.Index).Y + (Math.Sin(messageData.Positions(CType(messageData.Craft, Ship).Helm.Target.Index).Direction) * 11)
-                                    bmp.SetPixel(xStart + x, yStart + y, col)
-                                Next
-                            Next
-                        End If
-                    End If
-                    '--------------------------
-                End If
-                '-------------------
-                Screen.GamePlayLayout.picDisplayGraphics.Image = bmp
+                secondaryDirection = Helm.NormalizeDirection(MessageData.Direction + MessageData.Secondary.TurnDistance.current)
+                Width = MessageData.Secondary.Range.current * 2
+                Height = MessageData.Secondary.Range.current * 2
+                startX = (Screen.ImageSize.X / 2) - (Width / 2)
+                startY = (Screen.ImageSize.Y / 2) - (Height / 2)
+                secondaryRec = New Rectangle(startX, startY, Width, Height)
             End If
+
+            '-----Set Background-----
+            Dim bmp As New Bitmap(Screen.ImageSize.X, Screen.ImageSize.Y)
+            Dim gDisplay As Graphics = Graphics.FromImage(bmp)
+            Select Case MessageData.Warping
+                Case Galaxy.Warp.None
+                    gDisplay.DrawImage(My.Resources.NormalSpace, New Point(0, 0))
+                Case Galaxy.Warp.Warping
+                    gDisplay.DrawImage(My.Resources.Warping, New Point(0, 0))
+            End Select
+            '------------------------
+
+            '-----Put on Radar-----
+            For i As Integer = 0 To UBound(MessageData.Positions)
+                Dim distance As Integer = Math.Sqrt((MessageData.Positions(i).X ^ 2) + (MessageData.Positions(i).Y ^ 2))
+                If distance > 200 Then
+                    Dim scale As Double = distance / 200
+                    MessageData.Positions(i).X = (MessageData.Positions(i).X / scale)
+                    MessageData.Positions(i).Y = (MessageData.Positions(i).Y / scale)
+                End If
+                MessageData.Positions(i).X = MessageData.Positions(i).X + ((Screen.ImageSize.X / 2) - 1)
+                MessageData.Positions(i).Y = MessageData.Positions(i).Y + ((Screen.ImageSize.Y / 2) - 1)
+            Next
+            '----------------------
+
+            '-----Render-----
+            For Each i As Star In stars
+                gDisplay.FillEllipse(Brushes.White, CInt(i.Position.X - (i.Diamiter / 2)), CInt(i.Position.Y - (i.Diamiter / 2)), CInt(i.Diamiter), CInt(i.Diamiter))
+            Next
+
+            If MessageData.Warping <> Galaxy.Warp.Warping And MessageData.State = Galaxy.Scenario.Battle And MessageData.CenterShip IsNot Nothing Then
+                '-----Batteries Arc-----
+                gDisplay.DrawPie(Pens.Yellow, primaryRec, CSng(180 * (primaryDirection - (Battery.PlayerArc / 2)) / Math.PI), CSng(180 * Battery.PlayerArc / Math.PI))
+
+                gDisplay.DrawPie(Pens.Yellow, secondaryRec, CSng(180 * (secondaryDirection - (Battery.PlayerArc / 2)) / Math.PI), CSng(180 * Battery.PlayerArc / Math.PI))
+                '-----------------------
+            End If
+
+            For i As Integer = 0 To UBound(MessageData.Positions)
+                If (MessageData.Warping = Galaxy.Warp.None) Or (MessageData.Warping = Galaxy.Warp.Warping And i = 0) Then
+                    Dim model As Bitmap
+                    Select Case MessageData.Positions(i).Allegience
+                        Case Galaxy.Allegence.Player
+                            model = My.Resources.Friendly
+                        Case Galaxy.Allegence.Pirate
+                            model = My.Resources.Pirate
+                        Case Galaxy.Allegence.Neutral
+                            model = My.Resources.Station
+                    End Select
+                    model.MakeTransparent()
+                    Dim g As Graphics = Graphics.FromImage(BlankShipSpace)
+                    g.Clear(Color.Transparent)
+                    g.TranslateTransform(BlankShipSpace.Width / 2, BlankShipSpace.Height / 2)
+                    g.RotateTransform(180 * MessageData.Positions(i).Direction / Math.PI)
+                    g.TranslateTransform(-(BlankShipSpace.Width / 2), -(BlankShipSpace.Height / 2))
+                    g.DrawImage(model, New Point(3, 3))
+                    gDisplay.DrawImage(BlankShipSpace, New Point(MessageData.Positions(i).X - (model.Width / 2), MessageData.Positions(i).Y - (model.Height / 2)))
+                End If
+            Next
+
+            If MessageData.CenterShip IsNot Nothing Then
+                '-----Batteries Target-----
+                If MessageData.TargetIndex > -1 And MessageData.Warping <> Galaxy.Warp.Warping And
+                    MessageData.TargetIndex < MessageData.Positions.Length Then
+                    Dim g As Graphics = Graphics.FromImage(BlankShipSpace)
+                    g.Clear(Color.Transparent)
+                    gDisplay.DrawRectangle(Pens.Blue,
+                                      MessageData.Positions(MessageData.TargetIndex).X - CInt((BlankShipSpace.Width / 2)),
+                                      MessageData.Positions(MessageData.TargetIndex).Y - CInt((BlankShipSpace.Height / 2)),
+                                      BlankShipSpace.Width, BlankShipSpace.Height)
+                End If
+                '--------------------------
+            End If
+            Screen.GamePlayLayout.picDisplayGraphics.Image = bmp
+            '-------------------
         End If
     End Sub
 

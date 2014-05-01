@@ -1,12 +1,11 @@
-﻿<Serializable()>
-Public Class Helm
+﻿Public Class Helm
     Inherits Station
     Public TurnSpeed As StatDbl
     Private evadeRight As Boolean = False
     Private brakes As Boolean = False
     Public Shared ReadOnly MinimumSpeed As Integer = 5
-    Public Shared ReadOnly StandardDistance As Integer = 70
-    Public Shared ReadOnly MinimumDistance As Integer = 30
+    Public Shared ReadOnly StandardDistance As Integer = 140
+    Public Shared ReadOnly MinimumDistance As Integer = 60
     Public Target As Ship
     Public evadeList(-1) As Double
     Public MatchSpeed As Boolean = False
@@ -24,7 +23,7 @@ Public Class Helm
     End Sub
 
     Public Overrides Sub Update()
-        If Parent IsNot Nothing And PlayerControled = False And Galaxy.Warping <> Galaxy.Warp.Warping Then
+        If Parent IsNot Nothing And PlayerControled = False And ConsoleWindow.GameServer.GameWorld.Warping <> Galaxy.Warp.Warping Then
             Dim targetDirection As Double
             Dim finalSpeed As Double = MinimumSpeed
             '-----Set Target Direction and Distance-----
@@ -54,7 +53,7 @@ Public Class Helm
                 '-----Speed-----
                 If NormalizeDirection(targetDirection - Parent.Direction) > (3 * Math.PI) / 4 And
                     NormalizeDirection(targetDirection - Parent.Direction) < (5 * Math.PI) / 4 And
-                    distance < 100 Then 'The enemy is behind you
+                    distance < 200 Then 'The enemy is behind you
                     '-----Steering-----
                     Randomize()
                     If 0 = Int(20 * Rnd()) Then
@@ -110,19 +109,16 @@ Public Class Helm
             Else
                 Parent.Direction = NormalizeDirection(Parent.Direction - TurnSpeed.current)
             End If
-            If ReferenceEquals(Parent, Combat.centerShip) Then
-                Dim a = 1
-            End If
 
-            If parent.speed.current < finalSpeed Then
+            If Parent.Speed.current < finalSpeed Then
                 Parent.Speed.current = Parent.Speed.current + Parent.Acceleration.current
-                If parent.speed.current > finalSpeed Then
-                    parent.speed.current = finalSpeed
+                If Parent.Speed.current > finalSpeed Then
+                    Parent.Speed.current = finalSpeed
                 End If
             Else
                 Parent.Speed.current = Parent.Speed.current - Parent.Acceleration.current
-                If parent.speed.current < finalSpeed Then
-                    parent.speed.current = finalSpeed
+                If Parent.Speed.current < finalSpeed Then
+                    Parent.Speed.current = finalSpeed
                 End If
             End If
             '----------------------------

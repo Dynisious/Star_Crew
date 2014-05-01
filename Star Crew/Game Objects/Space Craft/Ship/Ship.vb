@@ -1,15 +1,21 @@
 ﻿<Serializable()>
 Public MustInherit Class Ship
     Inherits SpaceCraft
+    <NonSerialized()>
     Public InCombat As Boolean = False
+    <NonSerialized()>
     Public TargetLock As Boolean = False
     Public Hull As StatDbl
+    <NonSerialized()>
     Public Firing As Boolean = False
+    <NonSerialized()>
     Public Hit As Boolean = False
     '-----Helm-----
+    <NonSerialized()>
     Public Helm As New Helm(Me)
     '--------------
     '-----Batteries-----
+    <NonSerialized()>
     Public Batteries As New Battery(Me)
     '-------------------
     '-----Shielding-----
@@ -110,9 +116,9 @@ Public MustInherit Class Ship
     Public Overridable Sub DestroyShip()
         If Dead = False Then
             If InCombat = True Then
-                Combat.RemoveShip(Me)
-                If ReferenceEquals(Combat.centerShip, Me) = True Then
-                    Combat.Recenter()
+                ConsoleWindow.GameServer.GameWorld.CombatSpace.RemoveShip(Me)
+                If ReferenceEquals(ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip, Me) = True Then
+                    ConsoleWindow.GameServer.GameWorld.CombatSpace.Recenter()
                 End If
             End If
             Helm.Parent = Nothing

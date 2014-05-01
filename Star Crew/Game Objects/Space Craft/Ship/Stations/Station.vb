@@ -1,6 +1,8 @@
 ﻿<Serializable()>
 Public MustInherit Class Station
+    <NonSerialized()>
     Public WithEvents Parent As Ship
+    <NonSerialized()>
     Public PlayerControled As Boolean = False
     Public Enum StationTypes
         Helm
@@ -9,8 +11,8 @@ Public MustInherit Class Station
         Engineering
         Max
     End Enum
-    Public Type As StationTypes
     Public Power As Integer
+    <NonSerialized()>
     Public Influx As Integer
 
     Public Sub New(ByRef nParent As Ship)

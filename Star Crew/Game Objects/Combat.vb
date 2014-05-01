@@ -1,9 +1,9 @@
 ﻿Public Class Combat
-    Public Shared centerShip As Ship = New FriendlyShip(New Clunker, -1)
-    Public Shared shipList As New List(Of Ship)
-    Public Shared EnemyFleet As Fleet
+    Public centerShip As Ship = New FriendlyShip(New Clunker, -1)
+    Public shipList As New List(Of Ship)
+    Public EnemyFleet As Fleet
 
-    Public Shared Sub Generate(ByRef Enemies As Fleet)
+    Public Sub Generate(ByRef Enemies As Fleet)
         EnemyFleet = Enemies
         shipList.Clear()
         shipList.AddRange(Sector.centerFleet.ShipList)
@@ -16,35 +16,33 @@
             shipList(i).Speed.current = Helm.MinimumSpeed
             shipList(i).Position = New Point(Rnd() * SpaceCraft.SpawnBox, Rnd() * SpaceCraft.SpawnBox)
         Next
-        Galaxy.State = Galaxy.Scenario.Battle
+        ConsoleWindow.GameServer.GameWorld.State = Galaxy.Scenario.Battle
     End Sub
 
-    Public Shared Sub Recenter()
+    Public Sub Recenter()
         If shipList(0).MyAllegence = Galaxy.Allegence.Player Then
             centerShip = shipList(0)
-            For Each e As Net.Sockets.Socket In ServerComms.Ports
-                If e.GetType Is GetType(ServerSideClient) Then
-                    Select Case CType(e, Server.ServerSideClient).MyStation
-                        Case Station.StationTypes.Helm
-                            CType(centerShip, Ship).Helm.PlayerControled = True
-                        Case Station.StationTypes.Batteries
-                            CType(centerShip, Ship).Batteries.PlayerControled = True
-                        Case Station.StationTypes.Shielding
-                            CType(centerShip, Ship).Batteries.PlayerControled = True
-                        Case Station.StationTypes.Engineering
-                            CType(centerShip, Ship).Engineering.PlayerControled = True
-                    End Select
-                End If
+            For Each e As ServerSideClient In GameServer.Clients
+                Select Case e.MyStation
+                    Case Station.StationTypes.Helm
+                        CType(centerShip, Ship).Helm.PlayerControled = True
+                    Case Station.StationTypes.Batteries
+                        CType(centerShip, Ship).Batteries.PlayerControled = True
+                    Case Station.StationTypes.Shielding
+                        CType(centerShip, Ship).Batteries.PlayerControled = True
+                    Case Station.StationTypes.Engineering
+                        CType(centerShip, Ship).Engineering.PlayerControled = True
+                End Select
             Next
             Exit Sub
         End If
-        Galaxy.GalaxyTimer.Enabled = False
+        ConsoleWindow.GameServer.GameWorld.GalaxyTimer.Enabled = False
         Console.WriteLine("Player is Defeated")
     End Sub
 
-    Public Shared Sub RemoveShip(ByRef nShip As Ship)
+    Public Sub RemoveShip(ByRef nShip As Ship)
         shipList.RemoveAt(nShip.Index)
-        For i As Integer = nShip.Index To shipList.Count - 1
+        For i As Integer = 0 To shipList.Count - 1
             shipList(i).Index = i
         Next
         shipList.TrimExcess()
@@ -55,12 +53,12 @@
         End If
     End Sub
 
-    Public Shared Sub UpdateCombatSenario()
-        Galaxy.PlayerControl.RunPlayerControls()
+    Public Sub UpdateCombatSenario()
+        ConsoleWindow.GameServer.GameWorld.RunPlayerControls()
         Ship.UpdateShip_Call()
     End Sub
 
-    Public Shared Sub AutoFight(ByRef fleet1 As Fleet, ByRef fleet2 As Fleet)
+    Public Sub AutoFight(ByRef fleet1 As Fleet, ByRef fleet2 As Fleet)
         Dim damage1 As Double
         Dim health1 As Double
         Dim shield1 As Double
@@ -91,7 +89,7 @@
                 fleet2.ShipList(0).DestroyShip()
             Next
             fleet2.ShipList.TrimExcess()
-            fleet2.currentSector.RemoveFleet(fleet2, True)
+            fleet2.currentSector.RemoveFleet(fleet2, True, True)
             Exit Sub
         Else
             For Each i As Ship In fleet2.ShipList
@@ -118,7 +116,7 @@
                 fleet1.ShipList(0).DestroyShip()
             Next
             fleet1.ShipList.TrimExcess()
-            fleet1.currentSector.RemoveFleet(fleet1, True)
+            fleet1.currentSector.RemoveFleet(fleet1, True, True)
             Exit Sub
         Else
             For Each i As Ship In fleet1.ShipList

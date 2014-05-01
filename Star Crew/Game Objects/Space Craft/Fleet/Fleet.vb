@@ -24,7 +24,7 @@ Public MustInherit Class Fleet
     End Sub
 
     Public Sub RemoveShip(ByRef nShip As Ship)
-        For i As Integer = 0 To ShipList.Count
+        For i As Integer = 0 To ShipList.Count - 1
             If ReferenceEquals(nShip, ShipList(i)) = True Then
                 ShipList.RemoveAt(i)
                 ShipList.TrimExcess()
@@ -38,26 +38,28 @@ Public MustInherit Class Fleet
         RaiseEvent SetStats()
     End Sub
     Private Sub SetStats_Handle() Handles MyClass.SetStats
-        If ShipList.Count <> 0 Then
+        If ShipList.Count > 0 Then
             Dim lowestSpeed As Double
             Dim lowestAcceleration As Double
             Dim lowestTurnSpeed As Double
             For Each i As Ship In ShipList
-                If i.Helm.Parent.Speed.max < lowestSpeed Or lowestSpeed = 0 Then
-                    lowestSpeed = i.Helm.Parent.Speed.max
-                End If
-                If i.Acceleration.max < lowestAcceleration Or lowestAcceleration = 0 Then
-                    lowestAcceleration = i.Acceleration.max
-                End If
-                If i.Helm.TurnSpeed.current < lowestTurnSpeed Or lowestTurnSpeed = 0 Then
-                    lowestTurnSpeed = i.Helm.TurnSpeed.current
+                If i.Dead = False Then
+                    If i.Helm.Parent.Speed.max < lowestSpeed Or lowestSpeed = 0 Then
+                        lowestSpeed = i.Helm.Parent.Speed.max
+                    End If
+                    If i.Acceleration.max < lowestAcceleration Or lowestAcceleration = 0 Then
+                        lowestAcceleration = i.Acceleration.max
+                    End If
+                    If i.Helm.TurnSpeed.current < lowestTurnSpeed Or lowestTurnSpeed = 0 Then
+                        lowestTurnSpeed = i.Helm.TurnSpeed.current
+                    End If
                 End If
             Next
             Speed = New StatDbl(0, lowestSpeed * 0.6)
             Acceleration = New StatDbl(lowestAcceleration * 1.5, 0)
             TurnSpeed = lowestAcceleration
         ElseIf Dead = False Then
-            currentSector.RemoveFleet(Me, True)
+            currentSector.RemoveFleet(Me, True, True)
         End If
     End Sub
 
@@ -83,11 +85,11 @@ Public MustInherit Class Fleet
                         If i.MyAllegence = Galaxy.Allegence.Neutral Then
                             NeutralFleet.Heal(Me)
                         ElseIf ReferenceEquals(i, Sector.centerFleet) = False And i.MyAllegence <> MyAllegence Then
-                            Combat.AutoFight(Me, i)
+                            ConsoleWindow.GameServer.GameWorld.CombatSpace.AutoFight(Me, i)
                             Exit Sub
                         ElseIf i.MyAllegence = MyAllegence And ReferenceEquals(i, Sector.centerFleet) = False Then
                             ShipList.AddRange(i.ShipList)
-                            currentSector.RemoveFleet(i, True)
+                            currentSector.RemoveFleet(i, True, False)
                             Exit Sub
                         End If
                     Else
@@ -143,12 +145,12 @@ Public MustInherit Class Fleet
                 If distance <= InteractRange And ReferenceEquals(i, Me) = False Then
                     Select Case i.MyAllegence
                         Case Galaxy.Allegence.Pirate
-                            Combat.Generate(i)
+                            ConsoleWindow.GameServer.GameWorld.CombatSpace.Generate(i)
                         Case Galaxy.Allegence.Neutral
                             NeutralFleet.Heal(Me)
                         Case Galaxy.Allegence.Player
                             ShipList.AddRange(i.ShipList)
-                            currentSector.RemoveFleet(i, True)
+                            currentSector.RemoveFleet(i, True, False)
                             Exit Sub
                     End Select
                 End If

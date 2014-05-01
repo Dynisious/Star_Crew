@@ -1,17 +1,23 @@
 ﻿<Serializable()>
 Public Class Weapon
+    <NonSerialized()>
     Public Parent As Battery
     Public Enum DamageTypes
         Laser
         Max
     End Enum
+    <NonSerialized()>
     Public Damage As StatDbl
+    <NonSerialized()>
     Public DamageType As DamageTypes
     Public Range As StatInt
+    <NonSerialized()>
     Public Ready As StatDbl
+    <NonSerialized()>
     Public Ammo As StatInt
     Public Integrety As StatInt
     Public TurnDistance As StatDbl
+    <NonSerialized()>
     Public TurnSpeed As StatDbl
 
     Public Sub New(ByVal nWeaponLayout As WeaponLayout)

@@ -1,6 +1,6 @@
 ﻿Public Class Screen
-    Private Shared WithEvents Tick As New Timer With {.Interval = 10, .Enabled = False}
-    Public Shared MyClient As Client
+    Private WithEvents Tick As New Timer With {.Interval = 10, .Enabled = False}
+    Public MyClient As Client
     Public Shared ReadOnly ImageSize As New Point(600, 600)
 
     Public Class MenuScreenLayout
@@ -9,7 +9,7 @@
         Public Shared WithEvents btnExit As System.Windows.Forms.Button
 
         Public Sub New()
-            Server.OutputScreen.Controls.Clear()
+            ConsoleWindow.OutputScreen.Controls.Clear()
             btnStartServer = New System.Windows.Forms.Button()
             btnStartClient = New System.Windows.Forms.Button()
             btnExit = New System.Windows.Forms.Button()
@@ -45,13 +45,13 @@
             btnExit.TabIndex = 2
             btnExit.Text = "Exit"
             btnExit.UseVisualStyleBackColor = True
-            Server.OutputScreen.Controls.Add(btnExit)
-            Server.OutputScreen.Controls.Add(btnStartClient)
-            Server.OutputScreen.Controls.Add(btnStartServer)
+            ConsoleWindow.OutputScreen.Controls.Add(btnExit)
+            ConsoleWindow.OutputScreen.Controls.Add(btnStartClient)
+            ConsoleWindow.OutputScreen.Controls.Add(btnStartServer)
         End Sub
 
         Private Shared Sub btnStartServer_Click() Handles btnStartServer.Click
-            Server.StartServer()
+            ConsoleWindow.GameServer.StartServer()
         End Sub
 
         Private Shared Sub btnStartClient_Click() Handles btnStartClient.Click
@@ -59,7 +59,7 @@
         End Sub
 
         Private Shared Sub btnExit_Click() Handles btnExit.Click
-            Server.comms.Abort()
+            ConsoleWindow.ServerThread.Abort()
             End
         End Sub
 
@@ -73,7 +73,7 @@
         Public Shared WithEvents DomainUpDown1 As System.Windows.Forms.DomainUpDown
 
         Public Sub New()
-            Server.OutputScreen.Controls.Clear()
+            ConsoleWindow.OutputScreen.Controls.Clear()
             txtIP = New System.Windows.Forms.TextBox()
             lblIP = New System.Windows.Forms.Label()
             btnEnter = New System.Windows.Forms.Button()
@@ -129,11 +129,11 @@
             DomainUpDown1.Size = New System.Drawing.Size(200, 23)
             DomainUpDown1.TabIndex = 4
 
-            Server.OutputScreen.Controls.Add(DomainUpDown1)
-            Server.OutputScreen.Controls.Add(btnMenu)
-            Server.OutputScreen.Controls.Add(btnEnter)
-            Server.OutputScreen.Controls.Add(lblIP)
-            Server.OutputScreen.Controls.Add(txtIP)
+            ConsoleWindow.OutputScreen.Controls.Add(DomainUpDown1)
+            ConsoleWindow.OutputScreen.Controls.Add(btnMenu)
+            ConsoleWindow.OutputScreen.Controls.Add(btnEnter)
+            ConsoleWindow.OutputScreen.Controls.Add(lblIP)
+            ConsoleWindow.OutputScreen.Controls.Add(txtIP)
         End Sub
 
         Private Shared Sub btnMenu_Click() Handles btnMenu.Click
@@ -155,8 +155,8 @@
                 End While
 
                 If count = 3 And DomainUpDown1.SelectedIndex <> -1 Then
-                    MyClient = New Client(txtIP.Text, DomainUpDown1.SelectedIndex)
-                    If Client.Connected = True Then
+                    ConsoleWindow.OutputScreen.MyClient = New Client(txtIP.Text, DomainUpDown1.SelectedIndex)
+                    If ConsoleWindow.OutputScreen.MyClient.Connected = True Then
                         Dim temp As New GamePlayLayout
                     End If
                 Else
@@ -191,7 +191,7 @@
         Public Shared WithEvents UserKeyInterfacer As System.Windows.Forms.Button
 
         Public Sub New()
-            Server.OutputScreen.Controls.Clear()
+            ConsoleWindow.OutputScreen.Controls.Clear()
             '-----Initialize Controls-----
             picDisplayGraphics = New System.Windows.Forms.PictureBox()
             pnlDisplays = New System.Windows.Forms.Panel()
@@ -435,10 +435,10 @@
             '--------------------------
 
             '-----Add Controls-----
-            Server.OutputScreen.Controls.Add(picDisplayGraphics)
-            Server.OutputScreen.Controls.Add(pnlDisplays)
-            Server.OutputScreen.Controls.Add(pnlMenuButtons)
-            Server.OutputScreen.Controls.Add(UserKeyInterfacer)
+            ConsoleWindow.OutputScreen.Controls.Add(picDisplayGraphics)
+            ConsoleWindow.OutputScreen.Controls.Add(pnlDisplays)
+            ConsoleWindow.OutputScreen.Controls.Add(pnlMenuButtons)
+            ConsoleWindow.OutputScreen.Controls.Add(UserKeyInterfacer)
             '----------------------
 
             '-----Display Controls-----
@@ -447,15 +447,15 @@
             pnlMenuButtons.ResumeLayout(False)
             '--------------------------
             UserKeyInterfacer.Focus()
-            If Client.Connected = False Then
+            If ConsoleWindow.OutputScreen.MyClient.Connected = False Then
                 Dim temp As New MenuScreenLayout
             Else
-                Tick.Enabled = True
+                ConsoleWindow.OutputScreen.Tick.Enabled = True
             End If
         End Sub
 
         Public Shared Sub btnMainMenu_Click() Handles btnMainMenu.Click
-            Client.MyConnector.Close()
+            ConsoleWindow.OutputScreen.MyClient.MyConnector.Close()
             Dim temp As New MenuScreenLayout
         End Sub
 
@@ -464,98 +464,98 @@
         End Sub
 
         Private Shared Sub UserKeyInterfacer_PreviewKeyDown(ByVal sender As Object, ByVal e As PreviewKeyDownEventArgs) Handles UserKeyInterfacer.PreviewKeyDown
-            Select Case Client.myMessage.Station
+            Select Case ConsoleWindow.OutputScreen.MyClient.myMessage.Station
                 Case Station.StationTypes.Helm
                     If e.KeyCode = Keys.Up Then 'parent.speed Up
-                        Client.SendCommand_Call(Helm.Commands.ThrottleUp, 1)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Helm.Commands.ThrottleUp, 1)
                     ElseIf e.KeyCode = Keys.Down Then 'parent.speed Down
-                        Client.SendCommand_Call(Helm.Commands.ThrottleDown, 1)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Helm.Commands.ThrottleDown, 1)
                     ElseIf e.KeyCode = Keys.Right Then 'Turn Right
-                        Client.SendCommand_Call(Helm.Commands.TurnRight, 1)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Helm.Commands.TurnRight, 1)
                     ElseIf e.KeyCode = Keys.Left Then 'Turn Left
-                        Client.SendCommand_Call(Helm.Commands.TurnLeft, 1)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Helm.Commands.TurnLeft, 1)
                     ElseIf e.KeyCode = Keys.J Then 'Warp Drive
-                        Client.SendCommand_Call(Helm.Commands.WarpDrive, 1)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Helm.Commands.WarpDrive, 1)
                     ElseIf e.KeyCode = Keys.M Then 'Match Speed
-                        Client.SendCommand_Call(Helm.Commands.MatchSpeed, 1)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Helm.Commands.MatchSpeed, 1)
                     End If
                 Case Station.StationTypes.Batteries
                     If e.KeyCode = Keys.Right Then 'Turn Right
-                        Client.SendCommand_Call(Battery.Commands.TurnRight, 1)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Battery.Commands.TurnRight, 1)
                     ElseIf e.KeyCode = Keys.Left Then 'Turn Left
-                        Client.SendCommand_Call(Battery.Commands.TurnLeft, 1)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Battery.Commands.TurnLeft, 1)
                     ElseIf e.KeyCode = Keys.M Then 'Set Target
-                        Client.SendCommand_Call(Battery.Commands.SetTarget, 1)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Battery.Commands.SetTarget, 1)
                     End If
                     If e.KeyCode = Keys.A Then 'Fire Primary
-                        Client.SendCommand_Call(Battery.Commands.FirePrimary, 1)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Battery.Commands.FirePrimary, 1)
                     End If
                     If e.KeyCode = Keys.D Then 'Fire Secondary
-                        Client.SendCommand_Call(Battery.Commands.FireSecondary, 1)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Battery.Commands.FireSecondary, 1)
                     End If
                 Case Station.StationTypes.Shielding
                     If e.KeyCode = Keys.Up Then 'Boost Forward
-                        Client.SendCommand_Call(Shields.Commands.BoostForward, 1)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Shields.Commands.BoostForward, 1)
                     ElseIf e.KeyCode = Keys.Right Then 'Boost Right
-                        Client.SendCommand_Call(Shields.Commands.BoostRight, 1)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Shields.Commands.BoostRight, 1)
                     ElseIf e.KeyCode = Keys.Down Then 'Boost Back
-                        Client.SendCommand_Call(Shields.Commands.BoostBack, 1)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Shields.Commands.BoostBack, 1)
                     ElseIf e.KeyCode = Keys.Left Then 'Boost Left
-                        Client.SendCommand_Call(Shields.Commands.BoostLeft, 1)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Shields.Commands.BoostLeft, 1)
                     End If
                 Case Station.StationTypes.Engineering
                     If e.KeyCode = Keys.Up Then 'Heat
-                        Client.SendCommand_Call(Engineering.Commands.Heat, 1)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Engineering.Commands.Heat, 1)
                     ElseIf e.KeyCode = Keys.Down Then 'Cool
-                        Client.SendCommand_Call(Engineering.Commands.Cool, 1)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Engineering.Commands.Cool, 1)
                     End If
             End Select
         End Sub
         Private Shared Sub UserKeyInterfacer_KeyUp(ByVal sender As Object, ByVal e As KeyEventArgs) Handles UserKeyInterfacer.KeyUp
-            Select Case Client.myMessage.Station
+            Select Case ConsoleWindow.OutputScreen.MyClient.myMessage.Station
                 Case Station.StationTypes.Helm
                     If e.KeyCode = Keys.Up Then 'parent.speed Up
-                        Client.SendCommand_Call(Helm.Commands.ThrottleUp, 0)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Helm.Commands.ThrottleUp, 0)
                     ElseIf e.KeyCode = Keys.Down Then 'parent.speed Down
-                        Client.SendCommand_Call(Helm.Commands.ThrottleDown, 0)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Helm.Commands.ThrottleDown, 0)
                     ElseIf e.KeyCode = Keys.Right Then 'Turn Right
-                        Client.SendCommand_Call(Helm.Commands.TurnRight, 0)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Helm.Commands.TurnRight, 0)
                     ElseIf e.KeyCode = Keys.Left Then 'Turn Left
-                        Client.SendCommand_Call(Helm.Commands.TurnLeft, 0)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Helm.Commands.TurnLeft, 0)
                     ElseIf e.KeyCode = Keys.J Then 'Warp Drive
-                        Client.SendCommand_Call(Helm.Commands.WarpDrive, 0)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Helm.Commands.WarpDrive, 0)
                     ElseIf e.KeyCode = Keys.M Then 'Match Speed
-                        Client.SendCommand_Call(Helm.Commands.MatchSpeed, 0)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Helm.Commands.MatchSpeed, 0)
                     End If
                 Case Station.StationTypes.Batteries
                     If e.KeyCode = Keys.Right Then 'Turn Right
-                        Client.SendCommand_Call(Battery.Commands.TurnRight, 0)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Battery.Commands.TurnRight, 0)
                     ElseIf e.KeyCode = Keys.Left Then 'Turn Left
-                        Client.SendCommand_Call(Battery.Commands.TurnLeft, 0)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Battery.Commands.TurnLeft, 0)
                     ElseIf e.KeyCode = Keys.M Then 'Set Target
-                        Client.SendCommand_Call(Battery.Commands.SetTarget, 0)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Battery.Commands.SetTarget, 0)
                     End If
                     If e.KeyCode = Keys.A Then 'Fire Primary
-                        Client.SendCommand_Call(Battery.Commands.FirePrimary, 0)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Battery.Commands.FirePrimary, 0)
                     End If
                     If e.KeyCode = Keys.D Then 'Fire Secondary
-                        Client.SendCommand_Call(Battery.Commands.FireSecondary, 0)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Battery.Commands.FireSecondary, 0)
                     End If
                 Case Station.StationTypes.Shielding
                     If e.KeyCode = Keys.Up Then 'Boost Forward
-                        Client.SendCommand_Call(Shields.Commands.BoostForward, 0)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Shields.Commands.BoostForward, 0)
                     ElseIf e.KeyCode = Keys.Right Then 'Boost Right
-                        Client.SendCommand_Call(Shields.Commands.BoostRight, 0)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Shields.Commands.BoostRight, 0)
                     ElseIf e.KeyCode = Keys.Down Then 'Boost Back
-                        Client.SendCommand_Call(Shields.Commands.BoostBack, 0)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Shields.Commands.BoostBack, 0)
                     ElseIf e.KeyCode = Keys.Left Then 'Boost Left
-                        Client.SendCommand_Call(Shields.Commands.BoostLeft, 0)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Shields.Commands.BoostLeft, 0)
                     End If
                 Case Station.StationTypes.Engineering
                     If e.KeyCode = Keys.Up Then 'Heat
-                        Client.SendCommand_Call(Engineering.Commands.Heat, 0)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Engineering.Commands.Heat, 0)
                     ElseIf e.KeyCode = Keys.Down Then 'Cool
-                        Client.SendCommand_Call(Engineering.Commands.Cool, 0)
+                        ConsoleWindow.OutputScreen.MyClient.SendCommand(Engineering.Commands.Cool, 0)
                     End If
             End Select
         End Sub
@@ -609,56 +609,83 @@
         Focus()
     End Sub
 
-    Private Shared Sub UpdateScreen_Handle() Handles Tick.Tick
-        If Client.Connected = True And Client.IncomingMessage IsNot Nothing Then
-            If Client.IncomingMessage.Craft IsNot Nothing Then
-                Screen.GamePlayLayout.lblThrottle.Text = "Speed: " + CStr(CInt(Client.IncomingMessage.Craft.Speed.current)) + "/" + CStr(CInt(Client.IncomingMessage.Craft.Speed.max))
-                If Client.IncomingMessage.Craft.GetType = GetType(FriendlyShip) Then
-                    Dim nShip As Ship = CType(Client.IncomingMessage.Craft, Ship)
-                    Screen.GamePlayLayout.lblHull.Text = "Hull: " + CStr(Math.Round(nShip.Hull.current, 2)) + "/" + CStr(nShip.Hull.max)
+    Private Sub UpdateScreen_Handle() Handles Tick.Tick
+        If ConsoleWindow.OutputScreen.MyClient.Connected = True And ConsoleWindow.OutputScreen.MyClient.IncomingMessage IsNot Nothing Then
+            Screen.GamePlayLayout.lblThrottle.Text = "Speed: " +
+                CStr(CInt(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.Speed.current)) +
+                "/" + CStr(CInt(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.Speed.max))
+            If ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip IsNot Nothing Then
+                Screen.GamePlayLayout.lblHull.Text = "Hull: " +
+                    CStr(Math.Round(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Hull.current, 2)) +
+                    "/" + CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Hull.max)
 
-                    Screen.GamePlayLayout.lblForward.Text = "Fore: " + CStr(CInt(nShip.Shielding.ShipShields(Shields.Sides.FrontShield).current)) + "/" + CStr(nShip.Shielding.ShipShields(Shields.Sides.FrontShield).max)
-                    Screen.GamePlayLayout.lblRight.Text = "Starboard: " + CStr(CInt(nShip.Shielding.ShipShields(Shields.Sides.RightShield).current)) + "/" + CStr(nShip.Shielding.ShipShields(Shields.Sides.RightShield).max)
-                    Screen.GamePlayLayout.lblRear.Text = "Aft: " + CStr(CInt(nShip.Shielding.ShipShields(Shields.Sides.BackShield).current)) + "/" + CStr(nShip.Shielding.ShipShields(Shields.Sides.BackShield).max)
-                    Screen.GamePlayLayout.lblLeft.Text = "Port: " + CStr(CInt(nShip.Shielding.ShipShields(Shields.Sides.LeftShield).current)) + "/" + CStr(nShip.Shielding.ShipShields(Shields.Sides.LeftShield).max)
-                    Select Case nShip.Shielding.LastHit
-                        Case Shields.Sides.FrontShield
-                            Screen.GamePlayLayout.lblForward.BackColor = Color.LightBlue
-                            Screen.GamePlayLayout.lblRight.BackColor = Color.Transparent
-                            Screen.GamePlayLayout.lblRear.BackColor = Color.Transparent
-                            Screen.GamePlayLayout.lblLeft.BackColor = Color.Transparent
-                        Case Shields.Sides.RightShield
-                            Screen.GamePlayLayout.lblForward.BackColor = Color.Transparent
-                            Screen.GamePlayLayout.lblRight.BackColor = Color.LightBlue
-                            Screen.GamePlayLayout.lblRear.BackColor = Color.Transparent
-                            Screen.GamePlayLayout.lblLeft.BackColor = Color.Transparent
-                        Case Shields.Sides.BackShield
-                            Screen.GamePlayLayout.lblForward.BackColor = Color.Transparent
-                            Screen.GamePlayLayout.lblRight.BackColor = Color.Transparent
-                            Screen.GamePlayLayout.lblRear.BackColor = Color.LightBlue
-                            Screen.GamePlayLayout.lblLeft.BackColor = Color.Transparent
-                        Case Shields.Sides.LeftShield
-                            Screen.GamePlayLayout.lblForward.BackColor = Color.Transparent
-                            Screen.GamePlayLayout.lblRight.BackColor = Color.Transparent
-                            Screen.GamePlayLayout.lblRear.BackColor = Color.Transparent
-                            Screen.GamePlayLayout.lblLeft.BackColor = Color.LightBlue
-                    End Select
-                    Screen.GamePlayLayout.lblPrimary.Text = "Primary: " + CStr(nShip.Batteries.Primary.Integrety.current) + "/" + CStr(nShip.Batteries.Primary.Integrety.max)
-                    Screen.GamePlayLayout.lblSecondary.Text = "Secondary: " + CStr(nShip.Batteries.Secondary.Integrety.current) + "/" + CStr(nShip.Batteries.Secondary.Integrety.max)
-                    Screen.GamePlayLayout.lblPowerCore.Text = "Power Core: " + CStr(nShip.Engineering.PowerCore.current) + "/" + CStr(nShip.Engineering.PowerCore.max)
-                    Screen.GamePlayLayout.lblEngines.Text = "Engines: " + CStr(nShip.Engineering.Engines.current) + "/" + CStr(nShip.Engineering.Engines.max)
-                    Screen.GamePlayLayout.lblCoreTemp.Text = "Core Temp: " + CStr(Math.Round(nShip.Engineering.Heat, 2)) + "*e5/100*e5"
-                    Screen.GamePlayLayout.lblTempRate.Text = "Temp Rate: " + CStr(Math.Round(nShip.Engineering.Rate, 2)) + "*e5"
-                End If
+                Screen.GamePlayLayout.lblForward.Text = "Fore: " +
+                    CStr(CInt(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Shielding.ShipShields(
+                                Shields.Sides.FrontShield).current)) +
+                    "/" + CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Shielding.ShipShields(
+                            Shields.Sides.FrontShield).max)
+                Screen.GamePlayLayout.lblRight.Text = "Starboard: " +
+                    CStr(CInt(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Shielding.ShipShields(
+                                Shields.Sides.RightShield).current)) +
+                    "/" + CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Shielding.ShipShields(
+                            Shields.Sides.RightShield).max)
+                Screen.GamePlayLayout.lblRear.Text = "Aft: " +
+                    CStr(CInt(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Shielding.ShipShields(
+                                Shields.Sides.BackShield).current)) +
+                    "/" + CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Shielding.ShipShields(
+                            Shields.Sides.BackShield).max)
+                Screen.GamePlayLayout.lblLeft.Text = "Port: " +
+                    CStr(CInt(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Shielding.ShipShields(
+                                Shields.Sides.LeftShield).current)) +
+                    "/" + CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Shielding.ShipShields(
+                            Shields.Sides.LeftShield).max)
+                Select Case ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Shielding.LastHit
+                    Case Shields.Sides.FrontShield
+                        Screen.GamePlayLayout.lblForward.BackColor = Color.LightBlue
+                        Screen.GamePlayLayout.lblRight.BackColor = Color.Transparent
+                        Screen.GamePlayLayout.lblRear.BackColor = Color.Transparent
+                        Screen.GamePlayLayout.lblLeft.BackColor = Color.Transparent
+                    Case Shields.Sides.RightShield
+                        Screen.GamePlayLayout.lblForward.BackColor = Color.Transparent
+                        Screen.GamePlayLayout.lblRight.BackColor = Color.LightBlue
+                        Screen.GamePlayLayout.lblRear.BackColor = Color.Transparent
+                        Screen.GamePlayLayout.lblLeft.BackColor = Color.Transparent
+                    Case Shields.Sides.BackShield
+                        Screen.GamePlayLayout.lblForward.BackColor = Color.Transparent
+                        Screen.GamePlayLayout.lblRight.BackColor = Color.Transparent
+                        Screen.GamePlayLayout.lblRear.BackColor = Color.LightBlue
+                        Screen.GamePlayLayout.lblLeft.BackColor = Color.Transparent
+                    Case Shields.Sides.LeftShield
+                        Screen.GamePlayLayout.lblForward.BackColor = Color.Transparent
+                        Screen.GamePlayLayout.lblRight.BackColor = Color.Transparent
+                        Screen.GamePlayLayout.lblRear.BackColor = Color.Transparent
+                        Screen.GamePlayLayout.lblLeft.BackColor = Color.LightBlue
+                End Select
+                Screen.GamePlayLayout.lblPrimary.Text = "Primary: " +
+                    CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.Primary.Integrety.current) +
+                    "/" + CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.Primary.Integrety.max)
+                Screen.GamePlayLayout.lblSecondary.Text = "Secondary: " +
+                    CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.Secondary.Integrety.current) +
+                    "/" + CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.Secondary.Integrety.max)
+                Screen.GamePlayLayout.lblPowerCore.Text = "Power Core: " +
+                    CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Engineering.PowerCore.current) +
+                    "/" + CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Engineering.PowerCore.max)
+                Screen.GamePlayLayout.lblEngines.Text = "Engines: " +
+                    CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Engineering.Engines.current) +
+                    "/" + CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Engineering.Engines.max)
+                Screen.GamePlayLayout.lblCoreTemp.Text = "Core Temp: " +
+                    CStr(Math.Round(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Engineering.Heat, 2)) + "*e5/100*e5"
+                Screen.GamePlayLayout.lblTempRate.Text = "Temp Rate: " +
+                    CStr(Math.Round(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Engineering.Rate, 2)) + "*e5"
             End If
-        ElseIf Client.Connected = False Then
+        ElseIf MyClient.Connected = False Then
             Dim temp As New MenuScreenLayout
             Tick.Enabled = False
         End If
     End Sub
 
     Private Sub Screen_FormClosing(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.FormClosing
-        Server.comms.Abort()
+        ConsoleWindow.ServerThread.Abort()
         End
     End Sub
 End Class

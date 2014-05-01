@@ -1,6 +1,7 @@
 ﻿<Serializable()>
 Public Class Shields
     Inherits Station
+    <NonSerialized()>
     Public DefenceBonuses(Weapon.DamageTypes.Max - 1) As Double
     Public Enum Sides
         FrontShield
@@ -17,6 +18,7 @@ Public Class Shields
         Tune
     End Enum
     Public ShipShields(Sides.Max - 1) As StatDbl
+    <NonSerialized()>
     Public DamagePerSide(Sides.Max - 1) As Integer
     Public LastHit As Sides 'The side that was last hit
     Public Enum Commands

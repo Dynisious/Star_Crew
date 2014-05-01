@@ -22,23 +22,28 @@ Public Class Sector
         fleetList.Add(nFleet)
         nFleet.currentSector = Me
         If ReferenceEquals(nFleet, centerFleet) = True Then
-            Galaxy.centerSector = Me
+            ConsoleWindow.GameServer.GameWorld.centerSector = Me
         End If
     End Sub
 
-    Public Sub RemoveFleet(ByRef nFleet As Fleet, ByVal Kill As Boolean)
+    Public Sub RemoveFleet(ByRef nFleet As Fleet, ByVal KillFleet As Boolean, ByVal KillShips As Boolean)
         If nFleet.MyAllegence <> Galaxy.Allegence.Neutral Then
             fleetList.RemoveAt(nFleet.Index)
             fleetList.TrimExcess()
-            If nFleet.Index < fleetList.Count - 1 Then
-                For i As Integer = nFleet.Index To fleetList.Count - 1
-                    fleetList(i).Index = i
-                Next
-            End If
-            If Kill = True Then
+            For i As Integer = 0 To fleetList.Count - 1
+                fleetList(i).Index = i
+            Next
+            If KillFleet = True Then
                 nFleet.Dead = True
-                nFleet.ShipList.Clear()
-                nFleet.ShipList.TrimExcess()
+                If KillShips = True Then
+                    For Each i As Ship In nFleet.ShipList
+                        i.DestroyShip()
+                    Next
+                    nFleet.ShipList.Clear()
+                    nFleet.ShipList.TrimExcess()
+                End If
+            Else
+                Dim a = 1
             End If
         End If
     End Sub
