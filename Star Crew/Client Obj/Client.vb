@@ -176,6 +176,7 @@ Public Class Client
         '-------------------------
 
         '-----Send Message-----
+        MyMessageMutex.WaitOne() 'Wait for the Mutex to be free
         Try
             Dim byteStream As New IO.MemoryStream() 'A MemoryStream object to use with the BinarySerialiser object
             BinarySerializer.Serialize(byteStream, myMessage) 'Serialise the myMessage object into byteStream
@@ -207,6 +208,7 @@ Public Class Client
         End Try
         myMessage.Command = -1 'Set the myMessage.Command value to -1 meaning their is nothing to send
         myMessage.Value = -1 'Set the myMessage.Value value to -1 meaning their is nothing to send
+        MyMessageMutex.ReleaseMutex() 'Release the Mutex
         '----------------------
     End Sub
 
