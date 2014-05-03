@@ -1,5 +1,5 @@
 ﻿<Serializable()>
-Public Class PirateFleet
+Public Class PirateFleet 'A Fleet aligned to Pirates
     Inherits Fleet
 
     Public Sub New(ByVal nIndex As Integer)

@@ -27,13 +27,13 @@
         {commands.KickPlayer, "/kick :      Removes the player from the game"},
         {commands.Clear, "/clr :        Clears the screen"}
     }
-    Public OutputScreen As New Screen
-    Public GameServer As New Server
-    Public client As New Threading.Thread(AddressOf OutputScreen.Open)
-    Public ServerThread As New Threading.Thread(AddressOf GameServer.StartCommunications)
+    Public OutputScreen As New Screen 'A Screen object for the GUI
+    Public GameServer As New Server 'A Server object to run a Server
+    Public client As New Threading.Thread(AddressOf OutputScreen.Open) 'A Thread object for OutputScreen
+    Public ServerThread As New Threading.Thread(AddressOf GameServer.StartCommunications) 'A Thread object for GameServer
 
-    Public Sub Main()
-        client.Start()
+    Public Sub Main() 'Starts the application
+        client.Start() 'Opens the GUI
         Console.WriteLine("-----Star Crew-----")
         Console.WriteLine("for help with commands type '/help'" + Environment.NewLine +
                           Environment.NewLine +
@@ -61,12 +61,13 @@
                           "will add their forces to yours." + Environment.NewLine +
                           "Red: Red Fleets are the enemy and they will also combine forces to combat" + Environment.NewLine +
                           "yours." + Environment.NewLine +
-                          "Yellow: Yellow Fleets are Neutral and will Repair any ships in a Fleet" + Environment.NewLine +
+                          "Yellow: Yellow indecates a station which will Repair all ships in a Fleet" + Environment.NewLine +
                           "up to 40% hull." + Environment.NewLine +
                           "Interaction: To interact with a Fleet collide your Fleet into it." + Environment.NewLine +
                           "Objective: The Objective of this game is to eleminate all Enemy Fleets." + Environment.NewLine +
                           Environment.NewLine)
-        While True
+
+        While True 'Loop for console commands
             Dim str As String = Console.ReadLine().Trim(ChrW(0))
             If str.StartsWith("/") Then
                 RunCommand(str)
@@ -74,7 +75,7 @@
         End While
     End Sub
 
-    Private Sub RunCommand(ByVal nCommand As String)
+    Private Sub RunCommand(ByVal nCommand As String) 'Run the specified console command
         Console.WriteLine()
         Dim command As commands = commands.max
         For Each i As KeyValuePair(Of commands, String) In commandList

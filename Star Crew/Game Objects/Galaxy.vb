@@ -1,40 +1,50 @@
-﻿Public Class Galaxy
-    Public WithEvents GalaxyTimer As New Timer With {.Interval = 100, .Enabled = False}
-    Private craftPositions(-1) As GraphicPosition
-    Public centerSector As Sector
-    Public Enum Warp
-        None
-        Entering
-        Warping
+﻿Public Class Galaxy 'Encapsulates and runs the Ships and Fleets of the Application
+    Public WithEvents GalaxyTimer As New Timer With {.Interval = 100, .Enabled = False} 'A Timer object that 'ticks' 10 times a second
+    Private craftPositions(-1) As GraphicPosition 'An Array of GraphicPosition objects that represents the Ships sent to the Clients
+    Public centerSector As Sector 'A reference to a Sector object which the Players Fleet currently inhabits
+    Public Enum Warp 'An Enumerator of the stages of 'warp'
+        None 'Normal Space
+        Entering 'Enter 'Warp'
+        Warping 'Actively 'Warping'
     End Enum
-    Public Warping As Warp = Warp.None
-    Public WarpCounter As Integer
-    Public Enum Scenario
-        Battle
-        Transit
+    Public Warping As Warp = Warp.None 'The current state of 'warp' the Galaxy is in
+    Public WarpCounter As Integer 'An Integer representing how many 10ths of a second the galaxy 'warps'
+    Public Enum Scenario 'An Enumorator of the States of travel the Player can be in
+        Battle 'Battling Ship to Ship
+        Transit 'Moving the Fleet to the next battle
     End Enum
-    Public State As Scenario = Scenario.Transit
-    Public Enum Allegence
-        Player
-        Pirate
-        Neutral
+    Public State As Scenario = Scenario.Transit 'The current state of the Galaxy
+    Public Enum Allegence 'An Enumorator of the different allegencies in the game
+        Player 'Alligned with the Players
+        Pirate 'Against the Player
+        Neutral 'Acts as a Station
     End Enum
-    Public CombatSpace As New Combat
-    Public MessageToSend As ServerMessage
+    Public CombatSpace As New Combat 'A Combat object that handles the 'Battle' state
+    Public MessageToSend As ServerMessage 'A ServerMessage object to be serialised and sent to the Clients
+    Public MessageMutex As Threading.Mutex 'A Mutex object to syncronize manipulation of the MessageToSend object
+    Private MutexCreated As Boolean 'A Boolean value indecating whether the Mutex was successfully created
 
     Public Sub StartGame()
         Randomize()
-        Warping = Warp.None
-        State = Scenario.Transit
-        centerSector = New Sector(20)
-        Sector.centerFleet = New FriendlyFleet(-1)
-        centerSector.fleetList.Insert(0, Sector.centerFleet)
-        centerSector.AddFleet(Sector.centerFleet)
-        Fleet.SetStats_Call()
-        GalaxyTimer.Enabled = True
+        Warping = Warp.None 'Reset the 'warp' stage
+        State = Scenario.Transit 'Reset the State of the Galaxy
+        centerSector = New Sector(20) 'A new Sector object with 20 AI Fleet objects
+        Sector.centerFleet = New FriendlyFleet(-1) 'Add a Fleet for the Players to control
+        centerSector.AddFleet(Sector.centerFleet, 0) 'Add the Player controled Fleet into the Sector
+        Fleet.SetStats_Call() 'Set the initial Stats of all Fleets
+        Dim user As String = Environment.UserDomainName + "\" + Environment.UserName 'The identity of the Mutex
+        Dim securityProtocols As New Security.AccessControl.MutexSecurity 'The security settings of the Mutex
+        securityProtocols.AddAccessRule(
+            New Security.AccessControl.MutexAccessRule(user,
+                                                       Security.AccessControl.MutexRights.Modify Or
+                                                       Security.AccessControl.MutexRights.Synchronize,
+                                                       Security.AccessControl.AccessControlType.Allow))
+        'Allow Threads to Access and Release the Mutex
+        MessageMutex = New Threading.Mutex(False, "MessageMutex", MutexCreated, securityProtocols) 'Create the Mutex object
+        GalaxyTimer.Enabled = True 'Start the Timer responsible for updating the game
     End Sub
 
-    Public Sub RunCommand(ByVal clientCommand As ClientMessage)
+    Public Sub RunCommand(ByVal clientCommand As ClientMessage) 'Change a Boolean value indecating whether the Client is pressing a key or not
         Select Case clientCommand.Station
             Case Star_Crew.Station.StationTypes.Helm
                 Select Case clientCommand.Command
@@ -179,12 +189,12 @@
         End Select
     End Sub
     '-----Helm-----
-    Public ThrottleUpCheck As Boolean = False
-    Public ThrottleDownCheck As Boolean = False
-    Public TurnRightCheck As Boolean = False
-    Public TurnLeftCheck As Boolean = False
-    Public WarpDriveCheck As Boolean = False
-    Public MatchSpeedCheck As Boolean = False
+    Public ThrottleUpCheck As Boolean = False 'True: Accelerate the Ship or Fleet
+    Public ThrottleDownCheck As Boolean = False 'True: Decelerate the Ship or Fleet
+    Public TurnRightCheck As Boolean = False 'True: Turn the Ship or Fleet right
+    Public TurnLeftCheck As Boolean = False 'True: Turn the Ship or Fleet left
+    Public WarpDriveCheck As Boolean = False 'True: Attempt to enter 'warp'
+    Public MatchSpeedCheck As Boolean = False 'True: Match the speed of the target automatically
     Private Sub ThrottleUp()
         If ThrottleUpCheck = True Then
             ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Helm.MatchSpeed = False
@@ -259,11 +269,11 @@
     '--------------
 
     '-----Batteries-----
-    Public RotateRightCheck As Boolean = False
-    Public RotateLeftCheck As Boolean = False
-    Public FirePrimaryCheck As Boolean = False
-    Public FireSecondaryCheck As Boolean = False
-    Public SelectTargetCheck As Boolean = False
+    Public RotateRightCheck As Boolean = False 'True: Rotate the Weapons Right
+    Public RotateLeftCheck As Boolean = False 'True: Rotate the Weapons Left
+    Public FirePrimaryCheck As Boolean = False 'True: Fire the Primary Weapon
+    Public FireSecondaryCheck As Boolean = False 'True: Fire the Secondary Weapon
+    Public SelectTargetCheck As Boolean = False 'True: Select the closest Target
     Private Sub RotateRight()
         If RotateRightCheck = True Then
             Dim centerShip As Ship = ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip
@@ -389,10 +399,10 @@
     '-------------------
 
     '-----Shielding-----
-    Public ForwardBoostCheck As Boolean = False
-    Public RightBoostCheck As Boolean = False
-    Public RearBoostCheck As Boolean = False
-    Public LeftBoostCheck As Boolean = False
+    Public ForwardBoostCheck As Boolean = False 'True: Prioritise power to the Fore Shield
+    Public RightBoostCheck As Boolean = False 'True: Prioritise power to the Starboard Shield
+    Public RearBoostCheck As Boolean = False 'True: Priorities power to the Aft Shield
+    Public LeftBoostCheck As Boolean = False 'True: Priorities power to the Port Shield
     Private Sub ForwardBoost()
         If ForwardBoostCheck = True Then
             ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Shielding.LastHit = Shields.Sides.FrontShield
@@ -416,8 +426,8 @@
     '-------------------
 
     '-----Engineering-----
-    Public HeatCheck As Boolean = False
-    Public CoolCheck As Boolean = False
+    Public HeatCheck As Boolean = False 'True: Increase the rate at which the heat increases
+    Public CoolCheck As Boolean = False 'True: Decrease the rate at which the heat increases
     Private Sub Heat()
         If HeatCheck = True Then
             ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Engineering.Rate = ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Engineering.Rate + (Engineering.RateOfChange * 10)
@@ -430,7 +440,7 @@
     End Sub
     '---------------------
 
-    Public Sub RunPlayerControls()
+    Public Sub RunPlayerControls() 'Implement the actions the player is attempting
         '-----Helm-----
         ThrottleUp()
         ThrottleDown()
@@ -458,78 +468,92 @@
         '---------------------
     End Sub
 
-    Public Sub UpdateGalaxy() Handles GalaxyTimer.Tick
+    Public Sub UpdateGalaxy() Handles GalaxyTimer.Tick 'Update the Galaxy object
         Select Case State
-            Case Scenario.Transit
-                If ThrottleUpCheck = True Then
+            Case Scenario.Transit 'Update Fleets
+                If ThrottleUpCheck = True Then 'Accelerate the Players Fleet
                     Sector.centerFleet.Speed.current = Sector.centerFleet.Speed.current + Sector.centerFleet.Acceleration.current
                     If Sector.centerFleet.Speed.current > Sector.centerFleet.Speed.max Then
                         Sector.centerFleet.Speed.current = Sector.centerFleet.Speed.max
                     End If
                 End If
-                If ThrottleDownCheck = True Then
+                If ThrottleDownCheck = True Then 'Decelerate the Players Fleet
                     Sector.centerFleet.Speed.current = Sector.centerFleet.Speed.current - Sector.centerFleet.Acceleration.current
                     If Sector.centerFleet.Speed.current < 0 Then
                         Sector.centerFleet.Speed.current = 0
                     End If
                 End If
-                If TurnRightCheck = True Then
+                If TurnRightCheck = True Then 'Turn the Players Fleet right
                     Sector.centerFleet.Direction = Helm.NormalizeDirection(Sector.centerFleet.Direction + Sector.centerFleet.TurnSpeed)
                 End If
-                If TurnLeftCheck = True Then
+                If TurnLeftCheck = True Then 'Turn the Players Fleet left
                     Sector.centerFleet.Direction = Helm.NormalizeDirection(Sector.centerFleet.Direction - Sector.centerFleet.TurnSpeed)
                 End If
-                Fleet.UpdateFleet_Call()
+                Fleet.UpdateFleet_Call() 'Update all Fleets
 
-                ReDim craftPositions(centerSector.fleetList.Count - 1)
-                '-----Set new positions-----
+                ReDim craftPositions(centerSector.fleetList.Count - 1) 'Clear and resize the Array of GraphicPosition objects apropriately
+                '-----Set new positions----- 'Create new GraphicPosition positions
                 For i As Integer = 0 To centerSector.fleetList.Count - 1
-                    Dim x As Integer = centerSector.fleetList(i).Position.X - Sector.centerFleet.Position.X
-                    Dim y As Integer = centerSector.fleetList(i).Position.Y - Sector.centerFleet.Position.Y
-                    craftPositions(i) = New GraphicPosition(centerSector.fleetList(i).MyAllegence, False, False, x, y, centerSector.fleetList(i).Direction)
+                    Dim x As Integer = centerSector.fleetList(i).Position.X - Sector.centerFleet.Position.X 'The X coordinate relative to the
+                    'center Fleet
+                    Dim y As Integer = centerSector.fleetList(i).Position.Y - Sector.centerFleet.Position.Y 'The Y coordinate relative to the
+                    'center Fleet
+                    craftPositions(i) = New GraphicPosition(centerSector.fleetList(i).MyAllegence, False, False, x, y,
+                                                            centerSector.fleetList(i).Direction) 'Create a new GraphicPosition object
                 Next
                 '---------------------------
+                MessageMutex.WaitOne() 'Wait till the Mutex is free
                 MessageToSend = New ServerMessage(-1, Nothing, craftPositions, Warping, State,
-                                                  Sector.centerFleet.Speed, Sector.centerFleet.Direction)
+                                                  Sector.centerFleet.Speed, Sector.centerFleet.Direction) 'Update the ServerMessage object
+                MessageMutex.ReleaseMutex() 'Release the Mutex
             Case Scenario.Battle
-                CombatSpace.UpdateCombatSenario()
-                '-----Set Warp-----
+                CombatSpace.UpdateCombatSenario() 'Update the Combat object
+                '-----Set Warp----- 'See what 'warp' actions are necessary
                 Select Case Warping
-                    Case Warp.Entering
-                        Warping = Warp.Warping
+                    Case Warp.Entering 'The Player wants to enter 'warp'
+                        Warping = Warp.Warping 'Set the warp
                         For Each i As Ship In CombatSpace.shipList
-                            i.InCombat = False
+                            i.InCombat = False 'Take all ships out of combat
                         Next
-                        WarpCounter = 50
-                    Case Warp.Warping
-                        If WarpCounter = 0 Then
-                            Warping = Warp.None
-                            WarpDriveCheck = False
-                            State = Scenario.Transit
-                            Sector.centerFleet.Position = New Point(Sector.centerFleet.Position.X + (Math.Cos(Sector.centerFleet.Direction) * 2 * Fleet.DetectRange),
-                                                                    Sector.centerFleet.Position.Y + (Math.Sin(Sector.centerFleet.Direction) * 2 * Fleet.DetectRange))
-                            Fleet.SetStats_Call()
-                        Else
+                        WarpCounter = 50 'Set the count down to 50 10ths of a second
+                    Case Warp.Warping 'The Player is 'warping'
+                        If WarpCounter = 0 Then 'Exit 'warp'
+                            Warping = Warp.None 'Reset the 'warp' state
+                            WarpDriveCheck = False 'Force the release of the warp key
+                            State = Scenario.Transit 'Resest the Galaxy's state
+                            Sector.centerFleet.Position = New Point(Sector.centerFleet.Position.X +
+                                                                    (Math.Cos(Sector.centerFleet.Direction) * 1.5 * Fleet.DetectRange), Sector.centerFleet.Position.Y +
+                                                                    (Math.Sin(Sector.centerFleet.Direction) * 1.5 * Fleet.DetectRange))
+                            'Move the Players fleet out of detection range in case they're running
+                            Fleet.SetStats_Call() 'Update the Stats of all Fleets
+                        Else 'Count down
                             WarpCounter = WarpCounter - 1
                         End If
                 End Select
-                ReDim craftPositions(CombatSpace.shipList.Count - 1)
+                ReDim craftPositions(CombatSpace.shipList.Count - 1) 'Clear and resize the Array of GraphicPosition objects apropriately
                 '------------------
-                '-----Set new positions-----
+
+                '-----Set new positions----- 'Create new GraphicPosition objects
                 For i As Integer = 0 To ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList.Count - 1
                     Dim x As Integer = ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i).Position.X -
-                        ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Position.X
+                        ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Position.X 'The X coordinate of the Ship relative to the
+                    'Players Ship
                     Dim y As Integer = ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i).Position.Y -
-                        ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Position.Y
+                        ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Position.Y 'The Y coordinate of the Ship relative to the
+                    'Players Ship
                     craftPositions(i) = New GraphicPosition(ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i).MyAllegence,
                                                             ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i).Hit,
                                                             ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i).Firing,
                                                             x, y, ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i).Direction)
+                    'Create a new GraphicPosition object
                 Next
                 '---------------------------
                 Dim targetIndex As Integer = If(CombatSpace.centerShip.Helm.Target IsNot Nothing, CombatSpace.centerShip.Helm.Target.Index, -1)
+                'Get the index of the Player's targeted Ship if there is one
+                MessageMutex.WaitOne() 'Wait for the Mutex to be free
                 MessageToSend = New ServerMessage(targetIndex, CombatSpace.centerShip, craftPositions, Warping, State,
-                                                  CombatSpace.centerShip.Speed, CombatSpace.centerShip.Direction)
+                                                  CombatSpace.centerShip.Speed, CombatSpace.centerShip.Direction) 'Update the ServerMessage object
+                MessageMutex.ReleaseMutex() 'Release the Mutex
         End Select
     End Sub
 

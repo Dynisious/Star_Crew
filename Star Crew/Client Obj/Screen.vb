@@ -1,9 +1,9 @@
 ﻿Public Class Screen
-    Private WithEvents Tick As New Timer With {.Interval = 10, .Enabled = False}
-    Public MyClient As Client
-    Public Shared ReadOnly ImageSize As New Point(600, 600)
+    Private WithEvents Tick As New Timer With {.Interval = 100 / 6, .Enabled = False} 'A Timer object that 'ticks' 60 times a second
+    Public MyClient As Client 'A Client object
+    Public Shared ReadOnly ImageSize As New Point(600, 600) 'The Size of the Bitmap Image displayed on screen
 
-    Public Class MenuScreenLayout
+    Public Class MenuScreenLayout 'The GUI layout of the Main Menu
         Public Shared WithEvents btnStartServer As System.Windows.Forms.Button
         Public Shared WithEvents btnStartClient As System.Windows.Forms.Button
         Public Shared WithEvents btnExit As System.Windows.Forms.Button
@@ -50,22 +50,21 @@
             ConsoleWindow.OutputScreen.Controls.Add(btnStartServer)
         End Sub
 
-        Private Shared Sub btnStartServer_Click() Handles btnStartServer.Click
-            ConsoleWindow.GameServer.StartServer()
+        Private Shared Sub btnStartServer_Click() Handles btnStartServer.Click 'Starts the Server
+            ConsoleWindow.GameServer.StartServer() 'Starts the Server
         End Sub
 
-        Private Shared Sub btnStartClient_Click() Handles btnStartClient.Click
-            Dim temp As New ClientSetupLayout()
+        Private Shared Sub btnStartClient_Click() Handles btnStartClient.Click 'Opens the Client Setup Screen 
+            Dim temp As New ClientSetupLayout() 'Sets the Screen's GUI to the ClientSetupLayout layout
         End Sub
 
-        Private Shared Sub btnExit_Click() Handles btnExit.Click
-            ConsoleWindow.ServerThread.Abort()
+        Private Shared Sub btnExit_Click() Handles btnExit.Click 'Closes the program
             End
         End Sub
 
     End Class
 
-    Public Class ClientSetupLayout
+    Public Class ClientSetupLayout 'The GUI layout that lets users set up a Client
         Public Shared WithEvents txtIP As System.Windows.Forms.TextBox
         Public Shared WithEvents lblIP As System.Windows.Forms.Label
         Public Shared WithEvents btnEnter As System.Windows.Forms.Button
@@ -124,6 +123,7 @@
             DomainUpDown1.Items.Add("Batteries")
             DomainUpDown1.Items.Add("Shielding")
             DomainUpDown1.Items.Add("Engineering")
+            DomainUpDown1.SelectedIndex = 0
             DomainUpDown1.Location = New System.Drawing.Point(500, 150)
             DomainUpDown1.Name = "DomainUpDown1"
             DomainUpDown1.Size = New System.Drawing.Size(200, 23)
@@ -136,33 +136,33 @@
             ConsoleWindow.OutputScreen.Controls.Add(txtIP)
         End Sub
 
-        Private Shared Sub btnMenu_Click() Handles btnMenu.Click
-            Dim temp As New MenuScreenLayout
+        Private Shared Sub btnMenu_Click() Handles btnMenu.Click 'Returns to the Main Menu
+            Dim temp As New MenuScreenLayout 'Sets the screen's GUI to the MenuScreenLayout Layout
         End Sub
 
-        Private Shared Sub btnEnter_Click() Handles btnEnter.Click
-            Dim count As Integer
-            Dim lastIndex As Integer
+        Private Shared Sub btnEnter_Click() Handles btnEnter.Click 'Attempts to Create a Client object and connect to a specified Server
+            Dim count As Integer 'An Integer representing how many '.'s are in the given IP
+            Dim lastIndex As Integer 'An Integer representing the last index in the string where a '.' was found
             If txtIP.Text <> "" Then
                 While True
-                    Dim e As Integer = txtIP.Text.IndexOf(".", lastIndex + 1)
-                    If e <> -1 And e < txtIP.TextLength Then
+                    Dim e As Integer = txtIP.Text.IndexOf(".", lastIndex + 1) 'Get the next index of the '.' in the string
+                    If e <> -1 And e < txtIP.TextLength Then 'a '.' was found and it was not at the end of the string
                         lastIndex = e
                         count = count + 1
-                    Else
+                    Else 'either a '.' was not found or it was at the end of the IP
                         Exit While
                     End If
                 End While
 
-                If count = 3 And DomainUpDown1.SelectedIndex <> -1 Then
-                    ConsoleWindow.OutputScreen.MyClient = New Client(txtIP.Text, DomainUpDown1.SelectedIndex)
-                    If ConsoleWindow.OutputScreen.MyClient.Connected = True Then
-                        Dim temp As New GamePlayLayout
+                If count = 3 Then 'A full IP address was given
+                    ConsoleWindow.OutputScreen.MyClient = New Client(txtIP.Text, DomainUpDown1.SelectedIndex) 'Create a new Client object
+                    If ConsoleWindow.OutputScreen.MyClient.Connected = True Then 'Check if the connection to the Server was successful
+                        Dim temp As New GamePlayLayout 'Set the screen's GUI to the GamePlayLayout layout
                     End If
-                Else
+                Else 'A full IP was not given
                     Console.Beep()
                 End If
-            Else
+            Else 'No IP was given
                 Console.Beep()
             End If
         End Sub
@@ -454,21 +454,24 @@
             End If
         End Sub
 
-        Public Shared Sub btnMainMenu_Click() Handles btnMainMenu.Click
-            ConsoleWindow.OutputScreen.MyClient.MyConnector.Close()
-            Dim temp As New MenuScreenLayout
+        Public Shared Sub btnMainMenu_Click() Handles btnMainMenu.Click 'Returns to the Main Menu
+            ConsoleWindow.OutputScreen.MyClient.MyConnector.Close() 'Closes the Client's socket connection to the Server
+            ConsoleWindow.OutputScreen.MyClient.Tick.Enabled = False
+            Dim temp As New MenuScreenLayout 'Sets the screen's GUI to the MenuScreenLayout layout
         End Sub
 
-        Private Shared Sub btnEndGame_Click() Handles btnEndGame.Click
+        Private Shared Sub btnEndGame_Click() Handles btnEndGame.Click 'Closes the program
             End
         End Sub
 
         Private Shared Sub UserKeyInterfacer_PreviewKeyDown(ByVal sender As Object, ByVal e As PreviewKeyDownEventArgs) Handles UserKeyInterfacer.PreviewKeyDown
-            Select Case ConsoleWindow.OutputScreen.MyClient.myMessage.Station
+            'Captures PreviewKeyDown events when the User presses a key
+            ConsoleWindow.OutputScreen.MyClient.MyMessageMutex.WaitOne() 'Wait till the Mutex is free
+            Select Case ConsoleWindow.OutputScreen.MyClient.myMessage.Station 'Selects the Station that the User is in control of
                 Case Station.StationTypes.Helm
-                    If e.KeyCode = Keys.Up Then 'parent.speed Up
+                    If e.KeyCode = Keys.Up Then 'Speed Up
                         ConsoleWindow.OutputScreen.MyClient.SendCommand(Helm.Commands.ThrottleUp, 1)
-                    ElseIf e.KeyCode = Keys.Down Then 'parent.speed Down
+                    ElseIf e.KeyCode = Keys.Down Then 'Speed Down
                         ConsoleWindow.OutputScreen.MyClient.SendCommand(Helm.Commands.ThrottleDown, 1)
                     ElseIf e.KeyCode = Keys.Right Then 'Turn Right
                         ConsoleWindow.OutputScreen.MyClient.SendCommand(Helm.Commands.TurnRight, 1)
@@ -510,13 +513,16 @@
                         ConsoleWindow.OutputScreen.MyClient.SendCommand(Engineering.Commands.Cool, 1)
                     End If
             End Select
+            ConsoleWindow.OutputScreen.MyClient.MyMessageMutex.ReleaseMutex() 'Release the Mutex
         End Sub
         Private Shared Sub UserKeyInterfacer_KeyUp(ByVal sender As Object, ByVal e As KeyEventArgs) Handles UserKeyInterfacer.KeyUp
+            'Captures KeyUp events when the User releases a Key
+            ConsoleWindow.OutputScreen.MyClient.MyMessageMutex.WaitOne() 'Wait for the Mutex to be free
             Select Case ConsoleWindow.OutputScreen.MyClient.myMessage.Station
                 Case Station.StationTypes.Helm
-                    If e.KeyCode = Keys.Up Then 'parent.speed Up
+                    If e.KeyCode = Keys.Up Then 'Speed Up
                         ConsoleWindow.OutputScreen.MyClient.SendCommand(Helm.Commands.ThrottleUp, 0)
-                    ElseIf e.KeyCode = Keys.Down Then 'parent.speed Down
+                    ElseIf e.KeyCode = Keys.Down Then 'Speed Down
                         ConsoleWindow.OutputScreen.MyClient.SendCommand(Helm.Commands.ThrottleDown, 0)
                     ElseIf e.KeyCode = Keys.Right Then 'Turn Right
                         ConsoleWindow.OutputScreen.MyClient.SendCommand(Helm.Commands.TurnRight, 0)
@@ -558,15 +564,16 @@
                         ConsoleWindow.OutputScreen.MyClient.SendCommand(Engineering.Commands.Cool, 0)
                     End If
             End Select
+            ConsoleWindow.OutputScreen.MyClient.MyMessageMutex.ReleaseMutex() 'Release the Mutex
         End Sub
 
     End Class
 
-    Public Sub Open()
+    Public Sub Open() 'Creates a application loop on the current thread for the screen
         Windows.Forms.Application.Run(Me)
     End Sub
 
-    Public Sub New()
+    Public Sub New() 'Creates the MenuScreenLayout layout
         InitializeComponent()
         MenuScreenLayout.btnStartServer = New System.Windows.Forms.Button()
         MenuScreenLayout.btnStartClient = New System.Windows.Forms.Button()
@@ -609,53 +616,54 @@
         Focus()
     End Sub
 
-    Private Sub UpdateScreen_Handle() Handles Tick.Tick
+    Private Sub UpdateScreen_Handle() Handles Tick.Tick 'Updates the 'stats' displayed on the screen
         If ConsoleWindow.OutputScreen.MyClient.Connected = True And ConsoleWindow.OutputScreen.MyClient.IncomingMessage IsNot Nothing Then
+            'There is information to display
             Screen.GamePlayLayout.lblThrottle.Text = "Speed: " +
                 CStr(CInt(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.Speed.current)) +
-                "/" + CStr(CInt(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.Speed.max))
-            If ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip IsNot Nothing Then
+                "/" + CStr(CInt(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.Speed.max)) 'Displays the current Speed and max Speed
+            If ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip IsNot Nothing Then 'Their is system information to display
                 Screen.GamePlayLayout.lblHull.Text = "Hull: " +
                     CStr(Math.Round(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Hull.current, 2)) +
-                    "/" + CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Hull.max)
+                    "/" + CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Hull.max) 'Displays the current Hull and max Hull
 
                 Screen.GamePlayLayout.lblForward.Text = "Fore: " +
                     CStr(CInt(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Shielding.ShipShields(
                                 Shields.Sides.FrontShield).current)) +
                     "/" + CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Shielding.ShipShields(
-                            Shields.Sides.FrontShield).max)
+                            Shields.Sides.FrontShield).max) 'Displays the current Fore Shield and max Fore Shield
                 Screen.GamePlayLayout.lblRight.Text = "Starboard: " +
                     CStr(CInt(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Shielding.ShipShields(
                                 Shields.Sides.RightShield).current)) +
                     "/" + CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Shielding.ShipShields(
-                            Shields.Sides.RightShield).max)
+                            Shields.Sides.RightShield).max) 'Displays the current Starboard Shield and max Starboard Shield
                 Screen.GamePlayLayout.lblRear.Text = "Aft: " +
                     CStr(CInt(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Shielding.ShipShields(
                                 Shields.Sides.BackShield).current)) +
                     "/" + CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Shielding.ShipShields(
-                            Shields.Sides.BackShield).max)
+                            Shields.Sides.BackShield).max) 'Displays the current Aft Shield and max Aft Shield
                 Screen.GamePlayLayout.lblLeft.Text = "Port: " +
                     CStr(CInt(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Shielding.ShipShields(
                                 Shields.Sides.LeftShield).current)) +
                     "/" + CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Shielding.ShipShields(
-                            Shields.Sides.LeftShield).max)
-                Select Case ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Shielding.LastHit
-                    Case Shields.Sides.FrontShield
+                            Shields.Sides.LeftShield).max) 'Displays the current Port Shield and max Port Shield
+                Select Case ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Shielding.LastHit 'Select which Shield was last hit
+                    Case Shields.Sides.FrontShield 'Fore
                         Screen.GamePlayLayout.lblForward.BackColor = Color.LightBlue
                         Screen.GamePlayLayout.lblRight.BackColor = Color.Transparent
                         Screen.GamePlayLayout.lblRear.BackColor = Color.Transparent
                         Screen.GamePlayLayout.lblLeft.BackColor = Color.Transparent
-                    Case Shields.Sides.RightShield
+                    Case Shields.Sides.RightShield 'Starboard
                         Screen.GamePlayLayout.lblForward.BackColor = Color.Transparent
                         Screen.GamePlayLayout.lblRight.BackColor = Color.LightBlue
                         Screen.GamePlayLayout.lblRear.BackColor = Color.Transparent
                         Screen.GamePlayLayout.lblLeft.BackColor = Color.Transparent
-                    Case Shields.Sides.BackShield
+                    Case Shields.Sides.BackShield 'Aft
                         Screen.GamePlayLayout.lblForward.BackColor = Color.Transparent
                         Screen.GamePlayLayout.lblRight.BackColor = Color.Transparent
                         Screen.GamePlayLayout.lblRear.BackColor = Color.LightBlue
                         Screen.GamePlayLayout.lblLeft.BackColor = Color.Transparent
-                    Case Shields.Sides.LeftShield
+                    Case Shields.Sides.LeftShield 'Port
                         Screen.GamePlayLayout.lblForward.BackColor = Color.Transparent
                         Screen.GamePlayLayout.lblRight.BackColor = Color.Transparent
                         Screen.GamePlayLayout.lblRear.BackColor = Color.Transparent
@@ -664,23 +672,29 @@
                 Screen.GamePlayLayout.lblPrimary.Text = "Primary: " +
                     CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.Primary.Integrety.current) +
                     "/" + CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.Primary.Integrety.max)
+                'Displays the integrety of the Primary Weapon
                 Screen.GamePlayLayout.lblSecondary.Text = "Secondary: " +
                     CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.Secondary.Integrety.current) +
                     "/" + CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.Secondary.Integrety.max)
+                'Displays the integrety of the Secondary Weapon
                 Screen.GamePlayLayout.lblPowerCore.Text = "Power Core: " +
                     CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Engineering.PowerCore.current) +
                     "/" + CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Engineering.PowerCore.max)
+                'Displays the integrety of the Power Core
                 Screen.GamePlayLayout.lblEngines.Text = "Engines: " +
                     CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Engineering.Engines.current) +
                     "/" + CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Engineering.Engines.max)
+                'Displays the integrety of the Engines
                 Screen.GamePlayLayout.lblCoreTemp.Text = "Core Temp: " +
                     CStr(Math.Round(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Engineering.Heat, 2)) + "*e5/100*e5"
+                'Displays the temperature of the Power Core
                 Screen.GamePlayLayout.lblTempRate.Text = "Temp Rate: " +
                     CStr(Math.Round(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Engineering.Rate, 2)) + "*e5"
+                'Displays the rate of increase in the Power Cores Temperature
             End If
-        ElseIf MyClient.Connected = False Then
-            Dim temp As New MenuScreenLayout
-            Tick.Enabled = False
+        ElseIf MyClient.Connected = False Then 'Return to the Main Menu
+            Dim temp As New MenuScreenLayout 'Set the screens GUI to the MenuScreenLayout layout
+            Tick.Enabled = False 'Stop the Timer to update the Stats
         End If
     End Sub
 
