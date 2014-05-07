@@ -5,8 +5,7 @@ Public Class Engineering
     Public batteriesDraw As Integer
     <NonSerialized()>
     Public shieldingDraw As Integer
-    Public Engines As StatDbl
-    Public PowerCore As StatDbl
+    Public SubSystem As EngineSystem
     <NonSerialized()>
     Private Heating As Boolean = True
     Public Heat As Double = 50
@@ -18,8 +17,9 @@ Public Class Engineering
         Cool
     End Enum
 
-    Public Sub New(ByRef nParent As Ship)
+    Public Sub New(ByRef nParent As Ship, ByVal nSystem As EngineSystem)
         MyBase.New(nParent)
+        SubSystem = nSystem
     End Sub
 
     Public Overrides Sub Update()
@@ -28,8 +28,8 @@ Public Class Engineering
                  Parent.Batteries.Primary.Integrety.current)
             Dim secondaryDraw As Integer = (Parent.Batteries.Secondary.Integrety.max -
                  Parent.Batteries.Secondary.Integrety.current)
-            Dim enginesDraw As Integer = (Engines.max - Engines.current)
-            Dim powerCoreDraw As Integer = (PowerCore.max - PowerCore.current)
+            Dim enginesDraw As Integer = (SubSystem.Engines.max - SubSystem.Engines.current)
+            Dim powerCoreDraw As Integer = (SubSystem.PowerCore.max - SubSystem.PowerCore.current)
             Dim totalPowerDraw As Integer = batteriesDraw + shieldingDraw + enginesDraw + powerCoreDraw + primaryDraw + secondaryDraw
             Dim CoreStability As Double = 1
             If PlayerControled = True Then
@@ -62,7 +62,7 @@ Public Class Engineering
                 End If
                 CoreStability = 1 / ((Math.Sqrt((Int(Heat - 50) / 100) ^ 2)) + 1)
             End If
-            Power = Power + (PowerCore.current * CoreStability)
+            Power = Power + (SubSystem.PowerCore.current * CoreStability)
 
             If totalPowerDraw <> 0 And PlayerControled = False Then
                 Dim usablePower As Integer = Power
@@ -72,10 +72,10 @@ Public Class Engineering
                 If powerCoreCost > (powerCoreDraw) Then
                     powerCoreCost = (powerCoreDraw)
                 End If
-                PowerCore.current = PowerCore.current + powerCoreCost
+                SubSystem.PowerCore.current = SubSystem.PowerCore.current + powerCoreCost
                 '--------------------
 
-                If PowerCore.current > (PowerCore.max / 2) Then
+                If SubSystem.PowerCore.current > (SubSystem.PowerCore.max / 2) Then
                     '-----Batteries-----
                     Dim batteriesCost As Integer = usablePower * (batteriesDraw / totalPowerDraw)
                     If batteriesCost > batteriesDraw Then
@@ -117,7 +117,7 @@ Public Class Engineering
                     If enginesCost > (enginesDraw) Then
                         enginesCost = (enginesDraw)
                     End If
-                    Engines.current = Engines.current + enginesCost
+                    SubSystem.Engines.current = SubSystem.Engines.current + enginesCost
                     '-----------------
 
                     Power = usablePower - batteriesCost - shieldingCost - primaryCost - secondaryCost - enginesCost - powerCoreCost

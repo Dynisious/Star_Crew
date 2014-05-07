@@ -115,6 +115,15 @@
     <Compile Include="Game Objects\Combat.vb" />
     <Compile Include="Game Objects\Galaxy.vb" />
     <Compile Include="Game Objects\Space Craft\Fleet\NeutralFleet.vb" />
+    <Compile Include="Game Objects\Space Craft\Ship\Ship Layouts\Screamer.vb" />
+    <Compile Include="Game Objects\Space Craft\Ship\Ship Layouts\ShipLayout.vb" />
+    <Compile Include="Game Objects\Space Craft\Ship\Ship Layouts\Sub Systems\Engine Sub Systems\CorrierEngine.vb" />
+    <Compile Include="Game Objects\Space Craft\Ship\Ship Layouts\Sub Systems\Engine Sub Systems\EngineSystem.vb" />
+    <Compile Include="Game Objects\Space Craft\Ship\Ship Layouts\Sub Systems\Engine Sub Systems\KnifeEdge.vb" />
+    <Compile Include="Game Objects\Space Craft\Ship\Ship Layouts\Sub Systems\Shield Sub Systems\HeriaShields.vb" />
+    <Compile Include="Game Objects\Space Craft\Ship\Ship Layouts\Sub Systems\Shield Sub Systems\ShieldSystem.vb" />
+    <Compile Include="Game Objects\Space Craft\Ship\Ship Layouts\Thunder.vb" />
+    <Compile Include="Game Objects\Space Craft\Ship\Weapons\Weapon Layouts\Thumper.vb" />
     <Compile Include="Graphics\GraphicPosition.vb" />
     <Compile Include="Game Objects\Sector.vb" />
     <Compile Include="Server Obj\ConsoleWindow.vb" />
@@ -147,11 +156,6 @@
     <Compile Include="Game Objects\Space Craft\Fleet\PirateFleet.vb" />
     <Compile Include="Game Objects\Space Craft\Ship\StatInt.vb" />
     <Compile Include="Game Objects\Space Craft\Ship\StatDbl.vb" />
-    <Compile Include="Game Objects\Space Craft\Ship\FriendlyShip.vb" />
-    <Compile Include="Game Objects\Space Craft\Ship\PirateShip.vb" />
-    <Compile Include="Game Objects\Space Craft\Ship\Ship Layouts\Layout.vb" />
-    <Compile Include="Game Objects\Space Craft\Ship\Ship Layouts\Clunker.vb" />
-    <Compile Include="Game Objects\Space Craft\Ship\Ship Layouts\Scrap.vb" />
     <Compile Include="Game Objects\Space Craft\Ship\Ship.vb" />
     <Compile Include="Game Objects\Space Craft\Ship\Stations\Battery.vb" />
     <Compile Include="Game Objects\Space Craft\Ship\Stations\Engineering.vb" />
@@ -220,13 +224,31 @@
     <None Include="Graphics\NormalSpace.bmp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Graphics\Friendly.bmp" />
+    <None Include="Graphics\FriendlyScreamer.bmp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Graphics\Pirate.bmp" />
+    <None Include="Graphics\FriendlyStation.bmp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Graphics\Station.bmp" />
+    <None Include="Graphics\FriendlyThunder.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Graphics\NeutralStation.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Graphics\PirateScreamer.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Graphics\PirateStation.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Graphics\PirateThunder.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Graphics\FriendlyFleet.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Graphics\PirateFleet.bmp" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

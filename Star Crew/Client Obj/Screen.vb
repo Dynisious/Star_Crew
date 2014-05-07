@@ -51,6 +51,10 @@
         End Sub
 
         Private Shared Sub btnStartServer_Click() Handles btnStartServer.Click 'Starts the Server
+            If ConsoleWindow.GameServer.GameWorld IsNot Nothing Then
+                ConsoleWindow.GameServer.GameWorld.GalaxyTimer.Enabled = False
+                ConsoleWindow.ServerThread.Abort()
+            End If
             ConsoleWindow.GameServer.StartServer() 'Starts the Server
         End Sub
 
@@ -623,31 +627,36 @@
                 CStr(CInt(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.Speed.current)) +
                 "/" + CStr(CInt(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.Speed.max)) 'Displays the current Speed and max Speed
             If ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip IsNot Nothing Then 'Their is system information to display
+                If MyClient.IncomingMessage.Positions(0).Hit = True Then 'Make the Hull label flash orange
+                    Screen.GamePlayLayout.lblHull.BackColor = Color.Orange
+                Else 'Make the Hull label Transparent
+                    Screen.GamePlayLayout.lblHull.BackColor = Color.Transparent
+                End If
                 Screen.GamePlayLayout.lblHull.Text = "Hull: " +
                     CStr(Math.Round(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Hull.current, 2)) +
                     "/" + CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Hull.max) 'Displays the current Hull and max Hull
 
                 Screen.GamePlayLayout.lblForward.Text = "Fore: " +
-                    CStr(CInt(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Shielding.ShipShields(
+                    CStr(CInt(MyClient.IncomingMessage.CenterShip.Shielding.SubSystem.Defences(
                                 Shields.Sides.FrontShield).current)) +
-                    "/" + CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Shielding.ShipShields(
+                    "/" + CStr(MyClient.IncomingMessage.CenterShip.Shielding.SubSystem.Defences(
                             Shields.Sides.FrontShield).max) 'Displays the current Fore Shield and max Fore Shield
                 Screen.GamePlayLayout.lblRight.Text = "Starboard: " +
-                    CStr(CInt(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Shielding.ShipShields(
+                    CStr(CInt(MyClient.IncomingMessage.CenterShip.Shielding.SubSystem.Defences(
                                 Shields.Sides.RightShield).current)) +
-                    "/" + CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Shielding.ShipShields(
+                    "/" + CStr(MyClient.IncomingMessage.CenterShip.Shielding.SubSystem.Defences(
                             Shields.Sides.RightShield).max) 'Displays the current Starboard Shield and max Starboard Shield
                 Screen.GamePlayLayout.lblRear.Text = "Aft: " +
-                    CStr(CInt(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Shielding.ShipShields(
+                    CStr(CInt(MyClient.IncomingMessage.CenterShip.Shielding.SubSystem.Defences(
                                 Shields.Sides.BackShield).current)) +
-                    "/" + CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Shielding.ShipShields(
+                    "/" + CStr(MyClient.IncomingMessage.CenterShip.Shielding.SubSystem.Defences(
                             Shields.Sides.BackShield).max) 'Displays the current Aft Shield and max Aft Shield
                 Screen.GamePlayLayout.lblLeft.Text = "Port: " +
-                    CStr(CInt(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Shielding.ShipShields(
+                    CStr(CInt(MyClient.IncomingMessage.CenterShip.Shielding.SubSystem.Defences(
                                 Shields.Sides.LeftShield).current)) +
-                    "/" + CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Shielding.ShipShields(
+                    "/" + CStr(MyClient.IncomingMessage.CenterShip.Shielding.SubSystem.Defences(
                             Shields.Sides.LeftShield).max) 'Displays the current Port Shield and max Port Shield
-                Select Case ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Shielding.LastHit 'Select which Shield was last hit
+                Select Case MyClient.IncomingMessage.CenterShip.Shielding.LastHit 'Select which Shield was last hit
                     Case Shields.Sides.FrontShield 'Fore
                         Screen.GamePlayLayout.lblForward.BackColor = Color.LightBlue
                         Screen.GamePlayLayout.lblRight.BackColor = Color.Transparent
@@ -669,21 +678,30 @@
                         Screen.GamePlayLayout.lblRear.BackColor = Color.Transparent
                         Screen.GamePlayLayout.lblLeft.BackColor = Color.LightBlue
                 End Select
+
+                If MyClient.IncomingMessage.Positions(0).Firing = True Then 'Set both Weapons to Flash Light Blue
+                    Screen.GamePlayLayout.lblPrimary.BackColor = Color.LightBlue
+                    Screen.GamePlayLayout.lblSecondary.BackColor = Color.LightBlue
+                Else 'Set both Weapons to be Transparent
+                    Screen.GamePlayLayout.lblPrimary.BackColor = Color.Transparent
+                    Screen.GamePlayLayout.lblSecondary.BackColor = Color.Transparent
+                End If
                 Screen.GamePlayLayout.lblPrimary.Text = "Primary: " +
-                    CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.Primary.Integrety.current) +
-                    "/" + CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.Primary.Integrety.max)
+                    CStr(MyClient.IncomingMessage.Primary.Integrety.current) +
+                    "/" + CStr(MyClient.IncomingMessage.Primary.Integrety.max)
                 'Displays the integrety of the Primary Weapon
                 Screen.GamePlayLayout.lblSecondary.Text = "Secondary: " +
-                    CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.Secondary.Integrety.current) +
-                    "/" + CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.Secondary.Integrety.max)
+                    CStr(MyClient.IncomingMessage.Secondary.Integrety.current) +
+                    "/" + CStr(MyClient.IncomingMessage.Secondary.Integrety.max)
                 'Displays the integrety of the Secondary Weapon
+
                 Screen.GamePlayLayout.lblPowerCore.Text = "Power Core: " +
-                    CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Engineering.PowerCore.current) +
-                    "/" + CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Engineering.PowerCore.max)
+                    CStr(MyClient.IncomingMessage.CenterShip.Engineering.SubSystem.PowerCore.current) +
+                    "/" + CStr(MyClient.IncomingMessage.CenterShip.Engineering.SubSystem.PowerCore.max)
                 'Displays the integrety of the Power Core
                 Screen.GamePlayLayout.lblEngines.Text = "Engines: " +
-                    CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Engineering.Engines.current) +
-                    "/" + CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Engineering.Engines.max)
+                    CStr(MyClient.IncomingMessage.CenterShip.Engineering.SubSystem.Engines.current) +
+                    "/" + CStr(MyClient.IncomingMessage.CenterShip.Engineering.SubSystem.Engines.max)
                 'Displays the integrety of the Engines
                 Screen.GamePlayLayout.lblCoreTemp.Text = "Core Temp: " +
                     CStr(Math.Round(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Engineering.Heat, 2)) + "*e5/100*e5"

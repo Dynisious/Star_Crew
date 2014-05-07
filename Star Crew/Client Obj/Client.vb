@@ -20,6 +20,7 @@ Public Class Client
     Public MyMessageMutex As Threading.Mutex 'A Mutex object to preven cross threading errors concerning keystrokes
     'Client's threads around IncommingMessage
     Private MutexCreated As Boolean 'A Boolean value indecating whether a Mutex object was created succesfully
+    Private ModelDirectory(Galaxy.Allegence.max - 1)() As Bitmap
 
     Public Class Star
         Public Position As Point 'A Point object indecating the Star's position on the Bitmap that gets displayed
@@ -85,6 +86,40 @@ Public Class Client
     End Class
 
     Public Sub New(ByVal nIP As String, ByVal nStation As Integer)
+        ReDim ModelDirectory(Galaxy.Allegence.Neutral)(ShipLayout.Formats.OmniMax - 1)
+        ReDim ModelDirectory(Galaxy.Allegence.Friendly)(ShipLayout.Formats.ShipsMax - 1)
+        ReDim ModelDirectory(Galaxy.Allegence.Pirate)(ShipLayout.Formats.ShipsMax - 1)
+        For i As Integer = 0 To ShipLayout.Formats.OmniMax - 1
+            Select Case i
+                Case ShipLayout.Formats.Station
+                    ModelDirectory(Galaxy.Allegence.Neutral)(i) = My.Resources.NeutralStation
+            End Select
+        Next
+        For i As Integer = 0 To ShipLayout.Formats.ShipsMax - 1
+            Select Case i
+                Case ShipLayout.Formats.Station
+                    ModelDirectory(Galaxy.Allegence.Friendly)(i) = My.Resources.FriendlyStation
+                Case ShipLayout.Formats.Fleet
+                    ModelDirectory(Galaxy.Allegence.Friendly)(i) = My.Resources.FriendlyFleet
+                Case ShipLayout.Formats.Screamer
+                    ModelDirectory(Galaxy.Allegence.Friendly)(i) = My.Resources.FriendlyScreamer
+                Case ShipLayout.Formats.Thunder
+                    ModelDirectory(Galaxy.Allegence.Friendly)(i) = My.Resources.FriendlyThunder
+            End Select
+        Next
+        For i As Integer = 0 To ShipLayout.Formats.ShipsMax - 1
+            Select Case i
+                Case ShipLayout.Formats.Station
+                    ModelDirectory(Galaxy.Allegence.Pirate)(i) = My.Resources.PirateStation
+                Case ShipLayout.Formats.Fleet
+                    ModelDirectory(Galaxy.Allegence.Pirate)(i) = My.Resources.PirateFleet
+                Case ShipLayout.Formats.Screamer
+                    ModelDirectory(Galaxy.Allegence.Pirate)(i) = My.Resources.PirateScreamer
+                Case ShipLayout.Formats.Thunder
+                    ModelDirectory(Galaxy.Allegence.Pirate)(i) = My.Resources.PirateThunder
+            End Select
+        Next
+
         myMessage.Station = nStation 'Set the Station value of myStation to the selected Station.StationTypes enumerator
         Try
             MyConnector = New Net.Sockets.TcpClient(nIP, 1225) 'Create a new TcpClient object
@@ -175,9 +210,9 @@ Public Class Client
         End Try
         '-------------------------
 
-        '-----Send Message-----
-        MyMessageMutex.WaitOne() 'Wait for the Mutex to be free
+        '-----Send Message----- 'Wait for the Mutex to be free
         Try
+            MyMessageMutex.WaitOne()
             Dim byteStream As New IO.MemoryStream() 'A MemoryStream object to use with the BinarySerialiser object
             BinarySerializer.Serialize(byteStream, myMessage) 'Serialise the myMessage object into byteStream
             SendBuff = byteStream.ToArray 'Create an array of Bytes from byteStream
@@ -186,6 +221,9 @@ Public Class Client
             MyConnector.Client.Blocking = True 'Set the MyConnector object to block until all Bytes are sent
             MyConnector.Client.Send(SendBuff) 'Send the message to the Server
             byteStream.Close() 'Close the MemoryStream object
+            myMessage.Command = -1 'Set the myMessage.Command value to -1 meaning their is nothing to send
+            myMessage.Value = -1 'Set the myMessage.Value value to -1 meaning their is nothing to send
+            MyMessageMutex.ReleaseMutex() 'Release the Mutex
         Catch ex As System.NullReferenceException
             MyConnector.Close()
             Connected = False
@@ -206,9 +244,6 @@ Public Class Client
             Connected = False
             Comms.Abort()
         End Try
-        myMessage.Command = -1 'Set the myMessage.Command value to -1 meaning their is nothing to send
-        myMessage.Value = -1 'Set the myMessage.Value value to -1 meaning their is nothing to send
-        MyMessageMutex.ReleaseMutex() 'Release the Mutex
         '----------------------
     End Sub
 
@@ -282,11 +317,13 @@ Public Class Client
             If MessageData.Warping <> Galaxy.Warp.Warping And MessageData.State = Galaxy.Scenario.Battle And
                 MessageData.CenterShip IsNot Nothing Then 'The Player is in comabat so draw the Weapon arcs
                 '-----Batteries Arc-----
-                gDisplay.DrawPie(Pens.Yellow, primaryRec, CSng(180 * (primaryDirection - (Battery.PlayerArc / 2)) / Math.PI),
+                gDisplay.DrawPie(Pens.Yellow, primaryRec, CSng(180 * (
+                                 primaryDirection + MessageData.PrimaryMount - (Battery.PlayerArc / 2)) / Math.PI),
                                  CSng(180 * Battery.PlayerArc / Math.PI)) 'Draw the yellow outline of a section of a circle
                 'that has the diameter of the Weapons Range value and the sweep of the Players 'hit arc'
 
-                gDisplay.DrawPie(Pens.Yellow, secondaryRec, CSng(180 * (secondaryDirection - (Battery.PlayerArc / 2)) / Math.PI),
+                gDisplay.DrawPie(Pens.Yellow, secondaryRec, CSng(180 * (
+                                 secondaryDirection + MessageData.SecondaryMount - (Battery.PlayerArc / 2)) / Math.PI),
                                  CSng(180 * Battery.PlayerArc / Math.PI)) 'Draw the yellow outline of a section of a circle
                 'that has the diameter of the Weapons Range value and the sweep of the Players 'hit arc'
                 '-----------------------
@@ -296,15 +333,7 @@ Public Class Client
             For i As Integer = 0 To UBound(MessageData.Positions)
                 If (MessageData.Warping = Galaxy.Warp.None) Or (MessageData.Warping = Galaxy.Warp.Warping And i = 0) Then 'The Player is not in 'warp'
                     'or it is the Player's Ship
-                    Dim model As Bitmap 'A Bitmap of a ship
-                    Select Case MessageData.Positions(i).Allegience 'Select the Image to draw
-                        Case Galaxy.Allegence.Player
-                            model = My.Resources.Friendly
-                        Case Galaxy.Allegence.Pirate
-                            model = My.Resources.Pirate
-                        Case Galaxy.Allegence.Neutral
-                            model = My.Resources.Station
-                    End Select
+                    Dim model As Bitmap = ModelDirectory(MessageData.Positions(i).Allegience)(MessageData.Positions(i).Format) 'A Bitmap of a ship
                     model.MakeTransparent() 'Make the white space of the model Bitmap object transparent
                     Dim g As Graphics = Graphics.FromImage(BlankShipSpace) 'Create a Graphics object of BlankShipSpace
                     g.Clear(Color.Transparent) 'Clear BlankShipSpace

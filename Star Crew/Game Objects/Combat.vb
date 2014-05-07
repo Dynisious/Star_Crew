@@ -1,5 +1,5 @@
 ﻿Public Class Combat 'Encloses the Ships that are fighting
-    Public centerShip As Ship = New FriendlyShip(New Clunker, -1) 'The Ship that the Players control
+    Public centerShip As Ship = New Ship(New Screamer, -1,Galaxy.Allegence.Friendly ) 'The Ship that the Players control
     Public shipList As New List(Of Ship) 'A List object of Ship objects that are in combat
     Public EnemyFleet As Fleet 'The Fleet fighting the Players Ships
 
@@ -20,7 +20,7 @@
     End Sub
 
     Public Sub Recenter() 'Sets the Ship that the Players control
-        If shipList(0).MyAllegence = Galaxy.Allegence.Player Then
+        If shipList(0).MyAllegence = Galaxy.Allegence.Friendly Then
             centerShip = shipList(0) 'Set the Ship
             For Each e As ServerSideClient In GameServer.Clients 'Set the Stations with Clients connected to be controled by Players
                 Select Case e.MyStation
@@ -46,7 +46,7 @@
             shipList(i).Index = i
         Next
         shipList.TrimExcess() 'Remove the Blank Space
-        If nShip.MyAllegence = Galaxy.Allegence.Player Then 'Remove the Ship from it's Fleet
+        If nShip.MyAllegence = Galaxy.Allegence.Friendly Then 'Remove the Ship from it's Fleet
             Sector.centerFleet.RemoveShip(nShip)
         Else
             EnemyFleet.RemoveShip(nShip)
@@ -65,7 +65,7 @@
         For Each i As Ship In fleet1.ShipList 'Set the values of Fleet1
             damage1 = damage1 + i.Batteries.Primary.Damage.current + i.Batteries.Secondary.Damage.current
             health1 = health1 + i.Hull.current
-            shield1 = shield1 + i.Shielding.ShipShields(Shields.Sides.FrontShield).current
+            shield1 = shield1 + i.Shielding.SubSystem.Defences(Shields.Sides.FrontShield).current
         Next
         damage1 = damage1 / 3
 
@@ -75,7 +75,7 @@
         For Each i As Ship In fleet2.ShipList 'Set the values of Fleet2
             damage2 = damage1 + i.Batteries.Primary.Damage.current + i.Batteries.Secondary.Damage.current
             health2 = health1 + i.Hull.current
-            shield2 = shield1 + i.Shielding.ShipShields(Shields.Sides.FrontShield).current
+            shield2 = shield1 + i.Shielding.SubSystem.Defences(Shields.Sides.FrontShield).current
         Next
         damage2 = damage2 / 3
 
@@ -95,9 +95,9 @@
                 If i.Hull.current > i.Hull.max Then
                     i.Hull.current = i.Hull.max
                 End If
-                i.Shielding.ShipShields(Shields.Sides.FrontShield).current = shield2 / fleet2.ShipList.Count
-                If i.Shielding.ShipShields(Shields.Sides.FrontShield).current > i.Shielding.ShipShields(Shields.Sides.FrontShield).max Then
-                    i.Shielding.ShipShields(Shields.Sides.FrontShield).current = i.Shielding.ShipShields(Shields.Sides.FrontShield).max
+                i.Shielding.SubSystem.Defences(Shields.Sides.FrontShield).current = shield2 / fleet2.ShipList.Count
+                If i.Shielding.SubSystem.Defences(Shields.Sides.FrontShield).current > i.Shielding.SubSystem.Defences(Shields.Sides.FrontShield).max Then
+                    i.Shielding.SubSystem.Defences(Shields.Sides.FrontShield).current = i.Shielding.SubSystem.Defences(Shields.Sides.FrontShield).max
                 End If
             Next
         End If
@@ -118,9 +118,9 @@
                 If i.Hull.current > i.Hull.max Then
                     i.Hull.current = i.Hull.max
                 End If
-                i.Shielding.ShipShields(Shields.Sides.FrontShield).current = shield1 / fleet1.ShipList.Count
-                If i.Shielding.ShipShields(Shields.Sides.FrontShield).current > i.Shielding.ShipShields(Shields.Sides.FrontShield).max Then
-                    i.Shielding.ShipShields(Shields.Sides.FrontShield).current = i.Shielding.ShipShields(Shields.Sides.FrontShield).max
+                i.Shielding.SubSystem.Defences(Shields.Sides.FrontShield).current = shield1 / fleet1.ShipList.Count
+                If i.Shielding.SubSystem.Defences(Shields.Sides.FrontShield).current > i.Shielding.SubSystem.Defences(Shields.Sides.FrontShield).max Then
+                    i.Shielding.SubSystem.Defences(Shields.Sides.FrontShield).current = i.Shielding.SubSystem.Defences(Shields.Sides.FrontShield).max
                 End If
             Next
         End If

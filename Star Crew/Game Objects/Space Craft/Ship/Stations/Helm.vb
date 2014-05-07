@@ -4,8 +4,7 @@
     Private evadeRight As Boolean = False
     Private brakes As Boolean = False
     Public Shared ReadOnly MinimumSpeed As Integer = 5
-    Public Shared ReadOnly StandardDistance As Integer = 140
-    Public Shared ReadOnly MinimumDistance As Integer = 60
+    Public Shared ReadOnly StandardDistance As Integer = 100
     Public Target As Ship
     Public evadeList(-1) As Double
     Public MatchSpeed As Boolean = False
@@ -56,7 +55,7 @@
                     distance < 200 Then 'The enemy is behind you
                     '-----Steering-----
                     Randomize()
-                    If 0 = Int(20 * Rnd()) Then
+                    If 0 = Int(30 * Rnd()) Then
                         If evadeRight = True Then
                             evadeRight = False
                         Else
@@ -74,7 +73,8 @@
 
                     finalSpeed = Parent.Speed.max
                 ElseIf Parent.Speed.current <> Target.Helm.Parent.Speed.current And
-                    distance < MinimumDistance + (((Parent.Speed.current - Target.Helm.Parent.Speed.current) / Parent.Acceleration.current) * Parent.Speed.current) And
+                    distance < Parent.Batteries.Primary.Range.current + (((Parent.Speed.current - Target.Helm.Parent.Speed.current) /
+                                                                          Parent.Acceleration.current) * Parent.Speed.current) And
                     targetDirection - Parent.Direction < Math.PI / 2 And
                     targetDirection - Parent.Direction > -Math.PI / 2 Then 'Match the enemies speed
                     finalSpeed = Target.Helm.Parent.Speed.current
@@ -82,7 +82,7 @@
                     targetDirection - Parent.Direction > -Math.PI / 2 Then 'Charge the enemy
                     finalSpeed = Parent.Speed.max
                 End If
-                If distance < MinimumDistance Then
+                If distance < Parent.Batteries.Primary.Range.current Then
                     If targetDirection < Math.PI Then
                         targetDirection = (3 * Math.PI) / 2
                     Else
@@ -128,7 +128,7 @@
                 If Parent.Speed.current > Target.Speed.current Then
                     Parent.Speed.current = Parent.Speed.current - Parent.Acceleration.current
                     If Parent.Speed.current < Target.Speed.current Then
-                        Parent.Speed.current = Target.Helm.Parent.Speed.current
+                        Parent.Speed.current = Target.Speed.current
                     End If
                 ElseIf Parent.Speed.current < Target.Speed.current Then
                     Parent.Speed.current = Parent.Speed.current + Parent.Acceleration.current

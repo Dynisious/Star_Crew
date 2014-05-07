@@ -11,7 +11,8 @@ Public MustInherit Class Station
         Engineering
         Max
     End Enum
-    Public Power As Integer
+    <NonSerialized()>
+    Public Power As Double
     <NonSerialized()>
     Public Influx As Integer
 

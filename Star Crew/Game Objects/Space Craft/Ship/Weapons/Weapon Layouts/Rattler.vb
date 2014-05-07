@@ -4,7 +4,7 @@
     Public Sub New()
         Damage = New StatDbl(8, 8)
         DamageType = Weapon.DamageTypes.Laser
-        Ammo = New StatInt(5000, 5000)
+        Ammo = New StatInt(2000, 2000)
         Integrety = New StatInt(100, 100)
         Range = New StatInt(70, 70)
         Ready = New StatDbl(3, 3)

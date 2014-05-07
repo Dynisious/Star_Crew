@@ -3,7 +3,7 @@ Public Class NeutralFleet 'A Fleet with no alignment
     Inherits Fleet 'The base Class for all Fleets
 
     Public Sub New(ByVal nIndex As Integer)
-        MyBase.New(nIndex, Galaxy.Allegence.Neutral)
+        MyBase.New(nIndex, Galaxy.Allegence.Neutral, ShipLayout.Formats.Station)
     End Sub
 
     Public Shared Sub Heal(ByRef nFleet As Fleet)

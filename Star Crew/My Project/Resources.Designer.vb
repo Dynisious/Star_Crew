@@ -63,9 +63,49 @@ Namespace My.Resources
         '''<summary>
         '''  Looks up a localized resource of type System.Drawing.Bitmap.
         '''</summary>
-        Friend ReadOnly Property Friendly() As System.Drawing.Bitmap
+        Friend ReadOnly Property FriendlyFleet() As System.Drawing.Bitmap
             Get
-                Dim obj As Object = ResourceManager.GetObject("Friendly", resourceCulture)
+                Dim obj As Object = ResourceManager.GetObject("FriendlyFleet", resourceCulture)
+                Return CType(obj,System.Drawing.Bitmap)
+            End Get
+        End Property
+        
+        '''<summary>
+        '''  Looks up a localized resource of type System.Drawing.Bitmap.
+        '''</summary>
+        Friend ReadOnly Property FriendlyScreamer() As System.Drawing.Bitmap
+            Get
+                Dim obj As Object = ResourceManager.GetObject("FriendlyScreamer", resourceCulture)
+                Return CType(obj,System.Drawing.Bitmap)
+            End Get
+        End Property
+        
+        '''<summary>
+        '''  Looks up a localized resource of type System.Drawing.Bitmap.
+        '''</summary>
+        Friend ReadOnly Property FriendlyStation() As System.Drawing.Bitmap
+            Get
+                Dim obj As Object = ResourceManager.GetObject("FriendlyStation", resourceCulture)
+                Return CType(obj,System.Drawing.Bitmap)
+            End Get
+        End Property
+        
+        '''<summary>
+        '''  Looks up a localized resource of type System.Drawing.Bitmap.
+        '''</summary>
+        Friend ReadOnly Property FriendlyThunder() As System.Drawing.Bitmap
+            Get
+                Dim obj As Object = ResourceManager.GetObject("FriendlyThunder", resourceCulture)
+                Return CType(obj,System.Drawing.Bitmap)
+            End Get
+        End Property
+        
+        '''<summary>
+        '''  Looks up a localized resource of type System.Drawing.Bitmap.
+        '''</summary>
+        Friend ReadOnly Property NeutralStation() As System.Drawing.Bitmap
+            Get
+                Dim obj As Object = ResourceManager.GetObject("NeutralStation", resourceCulture)
                 Return CType(obj,System.Drawing.Bitmap)
             End Get
         End Property
@@ -83,9 +123,9 @@ Namespace My.Resources
         '''<summary>
         '''  Looks up a localized resource of type System.Drawing.Bitmap.
         '''</summary>
-        Friend ReadOnly Property Pirate() As System.Drawing.Bitmap
+        Friend ReadOnly Property PirateFleet() As System.Drawing.Bitmap
             Get
-                Dim obj As Object = ResourceManager.GetObject("Pirate", resourceCulture)
+                Dim obj As Object = ResourceManager.GetObject("PirateFleet", resourceCulture)
                 Return CType(obj,System.Drawing.Bitmap)
             End Get
         End Property
@@ -93,9 +133,29 @@ Namespace My.Resources
         '''<summary>
         '''  Looks up a localized resource of type System.Drawing.Bitmap.
         '''</summary>
-        Friend ReadOnly Property Station() As System.Drawing.Bitmap
+        Friend ReadOnly Property PirateScreamer() As System.Drawing.Bitmap
             Get
-                Dim obj As Object = ResourceManager.GetObject("Station", resourceCulture)
+                Dim obj As Object = ResourceManager.GetObject("PirateScreamer", resourceCulture)
+                Return CType(obj,System.Drawing.Bitmap)
+            End Get
+        End Property
+        
+        '''<summary>
+        '''  Looks up a localized resource of type System.Drawing.Bitmap.
+        '''</summary>
+        Friend ReadOnly Property PirateStation() As System.Drawing.Bitmap
+            Get
+                Dim obj As Object = ResourceManager.GetObject("PirateStation", resourceCulture)
+                Return CType(obj,System.Drawing.Bitmap)
+            End Get
+        End Property
+        
+        '''<summary>
+        '''  Looks up a localized resource of type System.Drawing.Bitmap.
+        '''</summary>
+        Friend ReadOnly Property PirateThunder() As System.Drawing.Bitmap
+            Get
+                Dim obj As Object = ResourceManager.GetObject("PirateThunder", resourceCulture)
                 Return CType(obj,System.Drawing.Bitmap)
             End Get
         End Property

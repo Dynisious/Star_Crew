@@ -1,5 +1,5 @@
 ﻿<Serializable()>
-Public MustInherit Class Ship 'A Ship that flies in combat and fights other Ships
+Public Class Ship 'A Ship that flies in combat and fights other Ships
     Inherits SpaceCraft 'The base Class for all Ships and Fleets
     <NonSerialized()>
     Public InCombat As Boolean = False 'A Boolean value indecating whether the Ship is in combat
@@ -19,18 +19,16 @@ Public MustInherit Class Ship 'A Ship that flies in combat and fights other Ship
     Public Batteries As New Battery(Me) 'A Battery object responsible for aiming Weapons and Targeting Ships using AI
     '-------------------
     '-----Shielding-----
-    Public Shielding As New Shields(Me) 'A Shields object responsible for distributing power between the 4 shields using AI
+    Public Shielding As Shields 'A Shields object responsible for distributing power between the 4 shields using AI
     '-------------------
     '-----Engineering-----
-    Public Engineering As New Engineering(Me) 'A Engineering object responsible for distributing power between the other 3 stations and
+    Public Engineering As Engineering 'A Engineering object responsible for distributing power between the other 3 stations and
     'repairing Ship systems
     '---------------------
 
-    Public Sub New(ByVal nShipStats As Layout, ByVal nIndex As Integer, ByVal nAllegence As Galaxy.Allegence)
-        MyAllegence = nAllegence 'Sets the allegence of the Ship
-        nShipStats.SetLayout(Me) 'Sets the Stats of the Ship
-        Index = nIndex 'Sets the index of the Ship
-        Position = New Point(Int(SpawnBox * Rnd()), Int(SpawnBox * Rnd())) 'Sets the position of the Ship
+    Public Sub New(ByVal nShipStats As ShipLayout, ByVal nIndex As Integer, ByVal nAllegence As Galaxy.Allegence)
+        MyBase.New(nAllegence, nShipStats.Format, nIndex, New Point(Int(SpawnBox * Rnd()), Int(SpawnBox * Rnd())))
+        nShipStats.Initialise(Me) 'Sets the Stats of the Ship
     End Sub
 
     Public Sub TakeDamage(ByRef nWeapon As Weapon, ByRef shooter As Ship, ByVal direction As Double) 'Calculates how much damage is done to the
@@ -78,7 +76,7 @@ Public MustInherit Class Ship 'A Ship that flies in combat and fights other Ship
                     Batteries.Secondary.Integrety.current = 0
                 End If
                 Batteries.Secondary.ChangeStats()
-            Case Shields.Sides.RightShield Or Shields.Sides.LeftShield 'Some damage is done to both the Weapons, the Engines and the Power Core
+            Case Shields.Sides.RightShield Or Shields.Sides.LeftShield 'Some damage is done to both the Weapons, the SubSystem.Engines and the Power Core
                 If Int(2 * Rnd()) = 0 Then
                     Batteries.Primary.Integrety.current = Int(Batteries.Primary.Integrety.current - (incomingDamage / 10))
                     If Batteries.Primary.Integrety.current < 0 Then
@@ -92,23 +90,23 @@ Public MustInherit Class Ship 'A Ship that flies in combat and fights other Ship
                     Batteries.Secondary.ChangeStats()
                 End If
                 If Int(2 * Rnd()) = 0 Then
-                    Engineering.Engines.current = Int(Engineering.Engines.current - (incomingDamage * 0.05))
-                    If Engineering.Engines.current < 0 Then
-                        Engineering.Engines.current = 0
+                    Engineering.SubSystem.Engines.current = Int(Engineering.SubSystem.Engines.current - (incomingDamage * 0.05))
+                    If Engineering.SubSystem.Engines.current < 0 Then
+                        Engineering.SubSystem.Engines.current = 0
                     End If
-                    Engineering.PowerCore.current = Int(Engineering.PowerCore.current - (incomingDamage * 0.05))
-                    If Engineering.PowerCore.current < 1 Then
-                        Engineering.PowerCore.current = 1
+                    Engineering.SubSystem.PowerCore.current = Int(Engineering.SubSystem.PowerCore.current - (incomingDamage * 0.05))
+                    If Engineering.SubSystem.PowerCore.current < 1 Then
+                        Engineering.SubSystem.PowerCore.current = 1
                     End If
                 End If
-            Case Shields.Sides.BackShield 'Some damage is done to the Engines and Power Core
-                Engineering.Engines.current = Int(Engineering.Engines.current - (incomingDamage * 0.05))
-                If Engineering.Engines.current < 0 Then
-                    Engineering.Engines.current = 0
+            Case Shields.Sides.BackShield 'Some damage is done to the SubSystem.Engines and Power Core
+                Engineering.SubSystem.Engines.current = Int(Engineering.SubSystem.Engines.current - (incomingDamage * 0.05))
+                If Engineering.SubSystem.Engines.current < 0 Then
+                    Engineering.SubSystem.Engines.current = 0
                 End If
-                Engineering.PowerCore.current = Int(Engineering.PowerCore.current - (incomingDamage * 0.05))
-                If Engineering.PowerCore.current < 1 Then
-                    Engineering.PowerCore.current = 1
+                Engineering.SubSystem.PowerCore.current = Int(Engineering.SubSystem.PowerCore.current - (incomingDamage * 0.05))
+                If Engineering.SubSystem.PowerCore.current < 1 Then
+                    Engineering.SubSystem.PowerCore.current = 1
                 End If
         End Select
         Hit = True 'The Ship has just been hit
@@ -148,9 +146,9 @@ Public MustInherit Class Ship 'A Ship that flies in combat and fights other Ship
             Engineering.Update() 'Distributes power to all Stations and repairs damaged systems
             Shielding.Update() 'Distribute power among the 4 shields
             Helm.Update() 'Pilots the Ship towards the selected target
-            Position.X = Position.X + (Math.Cos(Direction) * (Speed.current * (Engineering.Engines.current / Engineering.Engines.max)))
+            Position.X = Position.X + (Math.Cos(Direction) * (Speed.current * (Engineering.SubSystem.Engines.current / Engineering.SubSystem.Engines.max)))
             'Sets the new X coordinate
-            Position.Y = Position.Y + (Math.Sin(Direction) * (Speed.current * (Engineering.Engines.current / Engineering.Engines.max)))
+            Position.Y = Position.Y + (Math.Sin(Direction) * (Speed.current * (Engineering.SubSystem.Engines.current / Engineering.SubSystem.Engines.max)))
             'Sets the new Y coordinate
         End If
     End Sub

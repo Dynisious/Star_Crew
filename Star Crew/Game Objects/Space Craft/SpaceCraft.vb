@@ -1,6 +1,8 @@
 ﻿<Serializable()>
 Public MustInherit Class SpaceCraft 'Holds the values within all SpaceCraft and represents an object that can fly in combat or in a Sector
     <NonSerialized()>
+    Public Format As Integer
+    <NonSerialized()>
     Public Index As Integer 'An Integer representing the SpaceCrafts index in either it's Sector or Combat
     <NonSerialized()>
     Public Position As Point 'A Point object representing the SpaceCrafts position in (X,Y) space
@@ -13,8 +15,15 @@ Public MustInherit Class SpaceCraft 'Holds the values within all SpaceCraft and 
     <NonSerialized()>
     Public Speed As New StatDbl(0, 0) 'A StatDbl object repesenting the SpaceCraft's current and max speeds
     <NonSerialized()>
-    Public Acceleration As New StatDbl(0, 0) 'A StatDbl object representing the SpaceCraft's current and max acceleration
+    Public Acceleration As New StatDbl(0, 0) 'The rate at which the SpaceCraft changes it's Speed
     <NonSerialized()>
     Public Dead As Boolean = False 'A Boolean Value indecating whether or not the SpaceCraft is Active or waiting to be garbage collected
+
+    Public Sub New(ByVal nAllegence As Galaxy.Allegence, ByVal nFormat As Integer, ByVal nIndex As Integer, ByVal nPosition As Point)
+        MyAllegence = nAllegence 'Set the Allegence of the SpaceCraft
+        Format = nFormat 'Set the layout of the SpaceCraft for graphics
+        Index = nIndex 'Set the index of the SpaceCraft
+        Position = nPosition 'Set the position of the SpaceCraft
+    End Sub
 
 End Class

@@ -1,8 +1,8 @@
 ﻿<Serializable()>
 Public Class Shields
     Inherits Station
-    <NonSerialized()>
-    Public DefenceBonuses(Weapon.DamageTypes.Max - 1) As Double
+    Public SubSystem As ShieldSystem 'A ShieldSystem object that contains the values for the Ships shields and the damage modifiers for the type of
+    'shield it is
     Public Enum Sides
         FrontShield
         RightShield
@@ -10,16 +10,9 @@ Public Class Shields
         LeftShield
         Max
     End Enum
-    Public Enum ShieldingCommands
-        ChangeForward
-        ChangeRight
-        ChangeRear
-        ChangeLeft
-        Tune
-    End Enum
-    Public ShipShields(Sides.Max - 1) As StatDbl
     <NonSerialized()>
-    Public DamagePerSide(Sides.Max - 1) As Integer
+    Public DamagePerSide(Sides.Max - 1) As Integer 'The amount of damage done to each side of the ship to allow the AI to decide which shields to
+    'prioritise
     Public LastHit As Sides 'The side that was last hit
     Public Enum Commands
         BoostForward
@@ -28,8 +21,9 @@ Public Class Shields
         BoostLeft
     End Enum
 
-    Public Sub New(ByRef nParent As Ship)
+    Public Sub New(ByRef nParent As Ship, ByVal nSystem As ShieldSystem)
         MyBase.New(nParent)
+        SubSystem = nSystem
     End Sub
 
     Public Function DeflectHit(ByVal side As Sides, ByVal nWeapon As Weapon) As Integer
@@ -39,13 +33,13 @@ Public Class Shields
         DamagePerSide(side) = DamagePerSide(side) + nWeapon.Damage.current
 
         Dim recivedDamage As Integer = nWeapon.Damage.current
-        recivedDamage = recivedDamage * DefenceBonuses(nWeapon.DamageType)
-        If ShipShields(side).current > recivedDamage Then
-            ShipShields(side).current = ShipShields(side).current - recivedDamage
+        recivedDamage = recivedDamage * SubSystem.DefenceModifiers(nWeapon.DamageType)
+        If SubSystem.Defences(side).current > recivedDamage Then
+            SubSystem.Defences(side).current = SubSystem.Defences(side).current - recivedDamage
             recivedDamage = 0
         Else
-            recivedDamage = recivedDamage - ShipShields(side).current
-            ShipShields(side).current = 0
+            recivedDamage = recivedDamage - SubSystem.Defences(side).current
+            SubSystem.Defences(side).current = 0
         End If
         Return recivedDamage
     End Function
@@ -57,49 +51,49 @@ Public Class Shields
                 DamagePerSide(Sides.RightShield) 'The total damage that has been taken by all sides
 
             '-----Send off the costs-----
-            Parent.Engineering.shieldingDraw = (ShipShields(Sides.FrontShield).max - ShipShields(Sides.FrontShield).current) +
-                (ShipShields(Sides.RightShield).max - ShipShields(Sides.RightShield).current) +
-                (ShipShields(Sides.BackShield).max - ShipShields(Sides.BackShield).current) +
-                (ShipShields(Sides.LeftShield).max - ShipShields(Sides.LeftShield).current)
+            Parent.Engineering.shieldingDraw = (SubSystem.Defences(Sides.FrontShield).max - SubSystem.Defences(Sides.FrontShield).current) +
+                (SubSystem.Defences(Sides.RightShield).max - SubSystem.Defences(Sides.RightShield).current) +
+                (SubSystem.Defences(Sides.BackShield).max - SubSystem.Defences(Sides.BackShield).current) +
+                (SubSystem.Defences(Sides.LeftShield).max - SubSystem.Defences(Sides.LeftShield).current)
             '----------------------------
 
             '-----Distribute the power-----
             If totalDamage <> 0 Then
                 '-----Add up the power-----
-                Dim usablePower As Integer = Power + Influx + (ShipShields(Sides.FrontShield).current +
-                    ShipShields(Sides.LeftShield).current +
-                    ShipShields(Sides.BackShield).current + ShipShields(Sides.RightShield).current)
+                Dim usablePower As Integer = Power + Influx + (SubSystem.Defences(Sides.FrontShield).current +
+                    SubSystem.Defences(Sides.LeftShield).current +
+                    SubSystem.Defences(Sides.BackShield).current + SubSystem.Defences(Sides.RightShield).current)
                 '--------------------------
 
                 For i As Integer = 0 To 3
-                    ShipShields(i).current = usablePower * (DamagePerSide(i) / totalDamage)
-                    If ShipShields(i).current > ShipShields(i).max Then
-                        ShipShields(i).current = ShipShields(i).max
+                    SubSystem.Defences(i).current = usablePower * (DamagePerSide(i) / totalDamage)
+                    If SubSystem.Defences(i).current > SubSystem.Defences(i).max Then
+                        SubSystem.Defences(i).current = SubSystem.Defences(i).max
                     End If
                 Next
                 '------------------------------
 
                 '-----See if theres remaining usablePower-----
-                usablePower = usablePower - ShipShields(Sides.FrontShield).current -
-                    ShipShields(Sides.LeftShield).current - ShipShields(Sides.BackShield).current -
-                    ShipShields(Sides.RightShield).current
+                usablePower = usablePower - SubSystem.Defences(Sides.FrontShield).current -
+                    SubSystem.Defences(Sides.LeftShield).current - SubSystem.Defences(Sides.BackShield).current -
+                    SubSystem.Defences(Sides.RightShield).current
                 '---------------------------------------
 
                 '-----Remaining usablePower-----
                 If usablePower > 0 Then 'Theres spare usablePower
-                    Dim nCost As Integer = ShipShields(LastHit).max - ShipShields(LastHit).current
+                    Dim nCost As Integer = SubSystem.Defences(LastHit).max - SubSystem.Defences(LastHit).current
                     If nCost > usablePower Then
                         nCost = usablePower
                     End If
-                    ShipShields(LastHit).current = ShipShields(LastHit).current + nCost
+                    SubSystem.Defences(LastHit).current = SubSystem.Defences(LastHit).current + nCost
                     usablePower = usablePower - nCost
-                    If ShipShields(LastHit).current > ShipShields(LastHit).max Then
-                        ShipShields(LastHit).current = ShipShields(LastHit).max
+                    If SubSystem.Defences(LastHit).current > SubSystem.Defences(LastHit).max Then
+                        SubSystem.Defences(LastHit).current = SubSystem.Defences(LastHit).max
                     End If
                     While usablePower <> 0 'Distribute remaining power
                         Dim maxed As Integer
                         For i As Integer = 0 To Sides.Max - 1
-                            If ShipShields(i).current = ShipShields(i).max Then
+                            If SubSystem.Defences(i).current = SubSystem.Defences(i).max Then
                                 maxed = maxed + 1
                             End If
                         Next
@@ -108,15 +102,15 @@ Public Class Shields
                         Else
                             Dim factor As Integer = 4 - maxed
                             For i As Integer = 0 To Sides.Max - 1
-                                If ShipShields(i).current <> ShipShields(i).max Then
-                                    ShipShields(i).current = ShipShields(i).current + (usablePower / factor)
+                                If SubSystem.Defences(i).current <> SubSystem.Defences(i).max Then
+                                    SubSystem.Defences(i).current = SubSystem.Defences(i).current + (usablePower / factor)
                                 End If
                             Next
                             usablePower = 0
                             For i As Integer = 0 To Sides.Max - 1
-                                If ShipShields(i).current > ShipShields(i).max Then
-                                    usablePower = usablePower + (ShipShields(i).current - ShipShields(i).max)
-                                    ShipShields(i).current = ShipShields(i).max
+                                If SubSystem.Defences(i).current > SubSystem.Defences(i).max Then
+                                    usablePower = usablePower + (SubSystem.Defences(i).current - SubSystem.Defences(i).max)
+                                    SubSystem.Defences(i).current = SubSystem.Defences(i).max
                                 End If
                             Next
                         End If

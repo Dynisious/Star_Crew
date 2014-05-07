@@ -1,9 +1,11 @@
 ﻿Public Class Battery
     Inherits Station
-    Public Primary As Weapon
-    Public Secondary As Weapon
-    Public Shared ReadOnly HitArc As Double = Math.PI / 5
-    Public Shared ReadOnly PlayerArc As Double = HitArc * 1.5
+    Public PrimaryMount As Double 'A Double value representing the primary Weapon's offset from forward facing
+    Public SecondaryMount As Double 'A Double value representing the secondary Weapon's offset from forward facing
+    Public Primary As Weapon 'A Weapon object that will fire at enemies
+    Public Secondary As Weapon 'A Weapon object that will fire at enemies
+    Public Shared ReadOnly HitArc As Double = Math.PI / 5 'The arc that the AI must get the enemy inside to hit it
+    Public Shared ReadOnly PlayerArc As Double = HitArc * 1.5 'The arc that the player must get the enemy inside to hit it
     Public Enum Commands
         TurnRight
         TurnLeft
@@ -52,7 +54,8 @@
                     End If
                     shipDistances(i) = Math.Sqrt((Adjacent ^ 2) + (Opposite ^ 2))
 
-                    If ReferenceEquals(Parent, ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i)) = False And shipDistances(i) < Helm.MinimumDistance And
+                    If ReferenceEquals(Parent, ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i)) = False And
+                        shipDistances(i) < Primary.Range.current And
                         shipDirections(i) - Parent.Direction < (3 * Math.PI) / 4 And
                         shipDirections(i) - Parent.Direction > -(3 * Math.PI) / 4 Then
                         ReDim Preserve Parent.Helm.evadeList(Parent.Helm.evadeList.Length)
@@ -85,18 +88,18 @@
                 If target IsNot Nothing Then
                     '-----Aim at Target-----
                     '-----Primary-----
-                    If Primary.TurnDistance.current > (targetDirection - Parent.Direction) Then
+                    If Primary.TurnDistance.current + PrimaryMount > (targetDirection - Parent.Direction) Then
                         Primary.TurnDistance.current = Primary.TurnDistance.current - Primary.TurnSpeed.current
-                        If Primary.TurnDistance.current < (targetDirection - Parent.Direction) Then
-                            Primary.TurnDistance.current = (targetDirection - Parent.Direction)
+                        If Primary.TurnDistance.current + PrimaryMount < (targetDirection - Parent.Direction) Then
+                            Primary.TurnDistance.current = (targetDirection - Parent.Direction) - PrimaryMount
                         End If
                         If Primary.TurnDistance.current < -(Primary.TurnDistance.max / 2) Then
                             Primary.TurnDistance.current = -(Primary.TurnDistance.max / 2)
                         End If
-                    ElseIf Primary.TurnDistance.current < (targetDirection - Parent.Direction) Then
+                    ElseIf Primary.TurnDistance.current + PrimaryMount < (targetDirection - Parent.Direction) Then
                         Primary.TurnDistance.current = Primary.TurnDistance.current + Primary.TurnSpeed.current
-                        If Primary.TurnDistance.current > (targetDirection - Parent.Direction) Then
-                            Primary.TurnDistance.current = (targetDirection - Parent.Direction)
+                        If Primary.TurnDistance.current + PrimaryMount > (targetDirection - Parent.Direction) Then
+                            Primary.TurnDistance.current = (targetDirection - Parent.Direction) - PrimaryMount
                         End If
                         If Primary.TurnDistance.current > (Primary.TurnDistance.max / 2) Then
                             Primary.TurnDistance.current = (Primary.TurnDistance.max / 2)
@@ -105,18 +108,18 @@
                     '-----------------
 
                     '-----Secondary-----
-                    If Secondary.TurnDistance.current > (targetDirection - Parent.Direction) Then
+                    If Secondary.TurnDistance.current + SecondaryMount > (targetDirection - Parent.Direction) Then
                         Secondary.TurnDistance.current = Secondary.TurnDistance.current - Secondary.TurnSpeed.current
-                        If Secondary.TurnDistance.current < (targetDirection - Parent.Direction) Then
-                            Secondary.TurnDistance.current = (targetDirection - Parent.Direction)
+                        If Secondary.TurnDistance.current + SecondaryMount < (targetDirection - Parent.Direction) Then
+                            Secondary.TurnDistance.current = (targetDirection - Parent.Direction) - SecondaryMount
                         End If
                         If Secondary.TurnDistance.current < -(Secondary.TurnDistance.max / 2) Then
                             Secondary.TurnDistance.current = -(Secondary.TurnDistance.max / 2)
                         End If
-                    ElseIf Secondary.TurnDistance.current < (targetDirection - Parent.Direction) Then
+                    ElseIf Secondary.TurnDistance.current + SecondaryMount < (targetDirection - Parent.Direction) Then
                         Secondary.TurnDistance.current = Secondary.TurnDistance.current + Secondary.TurnSpeed.current
-                        If Secondary.TurnDistance.current > (targetDirection - Parent.Direction) Then
-                            Secondary.TurnDistance.current = (targetDirection - Parent.Direction)
+                        If Secondary.TurnDistance.current + SecondaryMount > (targetDirection - Parent.Direction) Then
+                            Secondary.TurnDistance.current = (targetDirection - Parent.Direction) - SecondaryMount
                         End If
                         If Secondary.TurnDistance.current > (Secondary.TurnDistance.max / 2) Then
                             Secondary.TurnDistance.current = (Secondary.TurnDistance.max / 2)
@@ -127,15 +130,15 @@
 
                     '-----Fire at Target-----
                     '-----Primary-----
-                    If targetDirection - Parent.Direction - Primary.TurnDistance.current > -(HitArc / 2) And
-                        targetDirection - Parent.Direction - Primary.TurnDistance.current < (HitArc / 2) Then
+                    If targetDirection - Parent.Direction - Primary.TurnDistance.current - PrimaryMount > -(HitArc / 2) And
+                        targetDirection - Parent.Direction - Primary.TurnDistance.current - PrimaryMount < (HitArc / 2) Then
                         Primary.FireWeapon(targetDistance, target, targetDirection)
                     End If
                     '-----------------
 
                     '-----Secondary-----
-                    If targetDirection - Parent.Direction - Secondary.TurnDistance.current > -(HitArc / 2) And
-                        targetDirection - Parent.Direction - Secondary.TurnDistance.current < (HitArc / 2) Then
+                    If targetDirection - Parent.Direction - Secondary.TurnDistance.current - SecondaryMount > -(HitArc / 2) And
+                        targetDirection - Parent.Direction - Secondary.TurnDistance.current - SecondaryMount < (HitArc / 2) Then
                         Secondary.FireWeapon(targetDistance, target, targetDirection)
                     End If
                     '-------------------

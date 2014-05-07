@@ -7,19 +7,21 @@ Public MustInherit Class Fleet 'A group of Ship objects that flies around a sect
     Public Shared ReadOnly DetectRange As Integer = 200 'The range at which the AI detects other Fleets
     Public Shared ReadOnly InteractRange As Integer = 20 'The range at which Fleets interact with each other 
 
-    Public Sub New(ByVal nIndex As Integer, ByVal nAllegence As Galaxy.Allegence)
+    Public Sub New(ByVal nIndex As Integer, ByVal nAllegence As Galaxy.Allegence, ByVal nFormat As ShipLayout.Formats)
+        MyBase.New(nAllegence, nFormat, nIndex, New Point(Int(Rnd() * SpawnBox), Int(Rnd() * SpawnBox)))
         Randomize()
         MyAllegence = nAllegence 'Sets the Fleets MyAllegence value to the specified Allegience
         Index = nIndex 'Sets the Fleets Index value to the specified index
         For i As Integer = 0 To Int(Rnd() * 11) + 9 'Creates between 10 and 20 Ships alligned to the Fleet
-            Select Case nAllegence
-                Case Galaxy.Allegence.Player
-                    ShipList.Add(New FriendlyShip(New Clunker, i))
-                Case Galaxy.Allegence.Pirate
-                    ShipList.Add(New PirateShip(New Clunker, i))
+            Dim Format As ShipLayout
+            Select Case Int(Rnd() * (ShipLayout.Formats.ShipsMax - ShipLayout.Formats.ShipsMin)) + ShipLayout.Formats.ShipsMin
+                Case ShipLayout.Formats.Screamer
+                    Format = New Screamer
+                Case ShipLayout.Formats.Thunder
+                    Format = New Thunder
             End Select
+            ShipList.Add(New Ship(Format, -1, MyAllegence))
         Next
-        Position = New Point(Int(Rnd() * SpawnBox), Int(Rnd() * SpawnBox)) 'Sets the Fleets position
     End Sub
 
     Public Sub RemoveShip(ByRef nShip As Ship) 'Removes the ship object from the Fleet
@@ -44,7 +46,7 @@ Public MustInherit Class Fleet 'A group of Ship objects that flies around a sect
             For Each i As Ship In ShipList
                 If i.Dead = False Then 'The ship is alive
                     If i.Helm.Parent.Speed.max < lowestSpeed Or lowestSpeed = 0 Then
-                        lowestSpeed = i.Helm.Parent.Speed.max 'Set the lowest speed
+                        lowestSpeed = i.Speed.max 'Set the lowest speed
                     End If
                     If i.Acceleration.max < lowestAcceleration Or lowestAcceleration = 0 Then
                         lowestAcceleration = i.Acceleration.max 'Set the lowest acceleration
@@ -54,7 +56,7 @@ Public MustInherit Class Fleet 'A group of Ship objects that flies around a sect
                     End If
                 End If
             Next
-            Speed = New StatDbl(0, lowestSpeed * 0.6) 'Sets the Fleet's max speed to be 60% of the slowest Ship in the fleet
+            Speed = New StatDbl(0, lowestSpeed) 'Sets the Fleet's max speed to be 60% of the slowest Ship in the fleet
             Acceleration = New StatDbl(lowestAcceleration * 1.5, 0) 'Sets the Fleet's Acceleration to be 150% of the slowest
             'accelerating Ship in the Fleet
             TurnSpeed = lowestTurnSpeed 'Sets the turn speed of the Fleet to be the same as the slowest turning Ship in the Fleet
@@ -68,7 +70,7 @@ Public MustInherit Class Fleet 'A group of Ship objects that flies around a sect
         RaiseEvent FleetUpdate()
     End Sub
     Public Overridable Sub UpdateFleet_Handle() Handles MyClass.FleetUpdate 'Updates the Fleet
-        If ReferenceEquals(Me, Sector.centerFleet) = False And Dead = False Then 'This Fleet is an active AI Fleet
+        If ReferenceEquals(Me, Sector.centerFleet) = False And Dead = False And Format <> ShipLayout.Formats.Station Then 'This Fleet is an active AI Fleet
             Dim targetDistance As Integer = DetectRange 'Sets the targets distance to be the maximum range
             Dim targetDirection As Double 'A Double representing the Target's Direction
             Dim targetSpeed As Integer = 3 'Default speed for a fleet to wander at
@@ -155,29 +157,28 @@ Public MustInherit Class Fleet 'A group of Ship objects that flies around a sect
                     Speed.current = targetSpeed
                 End If
             End If
-        ElseIf Dead = False Then 'It's the Players Fleet
+        ElseIf Dead = False And Format <> ShipLayout.Formats.Station Then 'It's the Players Fleet
             For Each i As Fleet In currentSector.fleetList 'Check for interactions
                 Dim distance As Integer = Math.Sqrt(((i.Position.X - Position.X) ^ 2) + ((i.Position.Y - Position.Y) ^ 2))
                 If distance <= InteractRange And ReferenceEquals(i, Me) = False Then
-                    Select Case i.MyAllegence
-                        Case Galaxy.Allegence.Pirate 'Enter a combat cenario
-                            ConsoleWindow.GameServer.GameWorld.CombatSpace.Generate(i)
-                        Case Galaxy.Allegence.Neutral 'Heal damaged ships in the fleet
-                            NeutralFleet.Heal(Me)
-                        Case Galaxy.Allegence.Player And ShipList.Count < 50 'Add the ships to this Fleet
-                            Dim temp As Integer = ShipList.Count
-                            For e As Integer = 0 To 49 - temp
-                                If i.ShipList.Count > 0 Then
-                                    ShipList.Add(i.ShipList(0))
-                                    Dim nShip As Ship = i.ShipList(0)
-                                    i.RemoveShip(nShip)
-                                Else
-                                    currentSector.RemoveFleet(i, True, False)
-                                    Exit For
-                                End If
-                            Next
-                            Exit Sub
-                    End Select
+                    If i.MyAllegence = Galaxy.Allegence.Pirate Then 'Enter a combat cenario
+                        ConsoleWindow.GameServer.GameWorld.CombatSpace.Generate(i)
+                    ElseIf i.MyAllegence = Galaxy.Allegence.Neutral Then 'Heal damaged ships in the fleet
+                        NeutralFleet.Heal(Me)
+                    ElseIf Galaxy.Allegence.Friendly And ShipList.Count < 50 Then 'Add the ships to this Fleet
+                        Dim temp As Integer = ShipList.Count
+                        For e As Integer = 0 To 49 - temp
+                            If i.ShipList.Count > 0 Then
+                                ShipList.Add(i.ShipList(0))
+                                Dim nShip As Ship = i.ShipList(0)
+                                i.RemoveShip(nShip)
+                            Else
+                                currentSector.RemoveFleet(i, True, False)
+                                Exit For
+                            End If
+                        Next
+                        Exit Sub
+                    End If
                 End If
             Next
         End If

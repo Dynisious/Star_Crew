@@ -15,9 +15,10 @@
     End Enum
     Public State As Scenario = Scenario.Transit 'The current state of the Galaxy
     Public Enum Allegence 'An Enumorator of the different allegencies in the game
-        Player 'Alligned with the Players
+        Friendly 'Alligned with the Players
         Pirate 'Against the Player
         Neutral 'Acts as a Station
+        max 'The maximum bounds of this enumerator
     End Enum
     Public CombatSpace As New Combat 'A Combat object that handles the 'Battle' state
     Public MessageToSend As ServerMessage 'A ServerMessage object to be serialised and sent to the Clients
@@ -276,48 +277,44 @@
     Public SelectTargetCheck As Boolean = False 'True: Select the closest Target
     Private Sub RotateRight()
         If RotateRightCheck = True Then
-            Dim centerShip As Ship = ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip
             '-----Primary-----
-            centerShip.Batteries.Primary.TurnDistance.current =
-                centerShip.Batteries.Primary.TurnDistance.current +
-                centerShip.Batteries.Primary.TurnSpeed.current
-            If centerShip.Batteries.Primary.TurnDistance.current > centerShip.Batteries.Primary.TurnDistance.max / 2 Then
-                centerShip.Batteries.Primary.TurnDistance.current = centerShip.Batteries.Primary.TurnDistance.max / 2
+            CombatSpace.centerShip.Batteries.Primary.TurnDistance.current =
+                CombatSpace.centerShip.Batteries.Primary.TurnDistance.current +
+                CombatSpace.centerShip.Batteries.Primary.TurnSpeed.current
+            If CombatSpace.centerShip.Batteries.Primary.TurnDistance.current > CombatSpace.centerShip.Batteries.Primary.TurnDistance.max / 2 Then
+                CombatSpace.centerShip.Batteries.Primary.TurnDistance.current = CombatSpace.centerShip.Batteries.Primary.TurnDistance.max / 2
             End If
             '-----------------
-            If centerShip.Batteries.Primary.TurnDistance.current > centerShip.Batteries.Secondary.TurnDistance.current Then
-                '-----Secondary-----
-                centerShip.Batteries.Secondary.TurnDistance.current =
-                    centerShip.Batteries.Secondary.TurnDistance.current +
-                    centerShip.Batteries.Secondary.TurnSpeed.current
-                If centerShip.Batteries.Secondary.TurnDistance.current > centerShip.Batteries.Secondary.TurnDistance.max / 2 Then
-                    centerShip.Batteries.Secondary.TurnDistance.current = centerShip.Batteries.Secondary.TurnDistance.max / 2
-                End If
-                '-------------------
+
+            '-----Secondary-----
+            CombatSpace.centerShip.Batteries.Secondary.TurnDistance.current =
+                CombatSpace.centerShip.Batteries.Secondary.TurnDistance.current +
+                CombatSpace.centerShip.Batteries.Secondary.TurnSpeed.current
+            If CombatSpace.centerShip.Batteries.Secondary.TurnDistance.current > CombatSpace.centerShip.Batteries.Secondary.TurnDistance.max / 2 Then
+                CombatSpace.centerShip.Batteries.Secondary.TurnDistance.current = CombatSpace.centerShip.Batteries.Secondary.TurnDistance.max / 2
             End If
+            '-------------------
         End If
     End Sub
     Private Sub RotateLeft()
         If RotateLeftCheck = True Then
-            Dim centerShip As Ship = ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip
             '-----Primary-----
-            centerShip.Batteries.Primary.TurnDistance.current =
-                centerShip.Batteries.Primary.TurnDistance.current -
-                centerShip.Batteries.Primary.TurnSpeed.current
-            If centerShip.Batteries.Primary.TurnDistance.current < -centerShip.Batteries.Primary.TurnDistance.max / 2 Then
-                centerShip.Batteries.Primary.TurnDistance.current = -centerShip.Batteries.Primary.TurnDistance.max / 2
+            CombatSpace.centerShip.Batteries.Primary.TurnDistance.current =
+                CombatSpace.centerShip.Batteries.Primary.TurnDistance.current -
+                CombatSpace.centerShip.Batteries.Primary.TurnSpeed.current
+            If CombatSpace.centerShip.Batteries.Primary.TurnDistance.current < -CombatSpace.centerShip.Batteries.Primary.TurnDistance.max / 2 Then
+                CombatSpace.centerShip.Batteries.Primary.TurnDistance.current = -CombatSpace.centerShip.Batteries.Primary.TurnDistance.max / 2
             End If
             '-----------------
-            If centerShip.Batteries.Primary.TurnDistance.current < centerShip.Batteries.Secondary.TurnDistance.current Then
-                '-----Secondary-----
-                centerShip.Batteries.Secondary.TurnDistance.current =
-                    centerShip.Batteries.Secondary.TurnDistance.current -
-                    centerShip.Batteries.Secondary.TurnSpeed.current
-                If centerShip.Batteries.Secondary.TurnDistance.current < -centerShip.Batteries.Secondary.TurnDistance.max / 2 Then
-                    centerShip.Batteries.Secondary.TurnDistance.current = -centerShip.Batteries.Secondary.TurnDistance.max / 2
-                End If
-                '-------------------
+
+            '-----Secondary-----
+            CombatSpace.centerShip.Batteries.Secondary.TurnDistance.current =
+                CombatSpace.centerShip.Batteries.Secondary.TurnDistance.current -
+                CombatSpace.centerShip.Batteries.Secondary.TurnSpeed.current
+            If CombatSpace.centerShip.Batteries.Secondary.TurnDistance.current < -CombatSpace.centerShip.Batteries.Secondary.TurnDistance.max / 2 Then
+                CombatSpace.centerShip.Batteries.Secondary.TurnDistance.current = -CombatSpace.centerShip.Batteries.Secondary.TurnDistance.max / 2
             End If
+            '-------------------
         End If
     End Sub
     Private Sub FirePrimary()
@@ -353,7 +350,7 @@
     Private Sub FireSecondary()
         If FireSecondaryCheck = True Then
             For i As Integer = 0 To ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList.Count - 1
-                If ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i).MyAllegence <> Galaxy.Allegence.Player Then
+                If ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i).MyAllegence <> Galaxy.Allegence.Friendly Then
                     Dim adjacent As Integer = ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i).Position.X - ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Position.X
                     Dim opposite As Integer = ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i).Position.Y - ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Position.Y
                     Dim distance = Math.Sqrt((opposite ^ 2) + (adjacent ^ 2))
@@ -386,7 +383,7 @@
         If SelectTargetCheck = True Then
             Dim lastDistance As Integer
             For i As Integer = 0 To ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList.Count - 1
-                If ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i).MyAllegence <> Galaxy.Allegence.Player Then
+                If ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i).MyAllegence <> Galaxy.Allegence.Friendly Then
                     Dim distance As Integer = Math.Sqrt(((ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i).Position.X - ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Position.X) ^ 2) + ((ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i).Position.Y - ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Position.Y) ^ 2))
                     If (distance < lastDistance And distance <> 0) Or lastDistance = 0 Then
                         lastDistance = distance
@@ -498,14 +495,17 @@
                     'center Fleet
                     Dim y As Integer = centerSector.fleetList(i).Position.Y - Sector.centerFleet.Position.Y 'The Y coordinate relative to the
                     'center Fleet
-                    craftPositions(i) = New GraphicPosition(centerSector.fleetList(i).MyAllegence, False, False, x, y,
-                                                            centerSector.fleetList(i).Direction) 'Create a new GraphicPosition object
+                    craftPositions(i) = New GraphicPosition(centerSector.fleetList(i).MyAllegence, centerSector.fleetList(i).Format,
+                                                            False, False, x, y, centerSector.fleetList(i).Direction) 'Create a new GraphicPosition object
                 Next
                 '---------------------------
-                MessageMutex.WaitOne() 'Wait till the Mutex is free
-                MessageToSend = New ServerMessage(-1, Nothing, craftPositions, Warping, State,
-                                                  Sector.centerFleet.Speed, Sector.centerFleet.Direction) 'Update the ServerMessage object
-                MessageMutex.ReleaseMutex() 'Release the Mutex
+                Try
+                    MessageMutex.WaitOne() 'Wait till the Mutex is free
+                    MessageToSend = New ServerMessage(-1, Nothing, craftPositions, Warping, State,
+                                                      Sector.centerFleet.Speed, Sector.centerFleet.Direction) 'Update the ServerMessage object
+                    MessageMutex.ReleaseMutex() 'Release the Mutex
+                Catch ex As Exception
+                End Try
             Case Scenario.Battle
                 CombatSpace.UpdateCombatSenario() 'Update the Combat object
                 '-----Set Warp----- 'See what 'warp' actions are necessary
@@ -541,19 +541,22 @@
                     Dim y As Integer = ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i).Position.Y -
                         ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Position.Y 'The Y coordinate of the Ship relative to the
                     'Players Ship
-                    craftPositions(i) = New GraphicPosition(ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i).MyAllegence,
-                                                            ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i).Hit,
-                                                            ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i).Firing,
-                                                            x, y, ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i).Direction)
+                    craftPositions(i) = New GraphicPosition(CombatSpace.shipList(i).MyAllegence, CombatSpace.shipList(i).Format,
+                                                            CombatSpace.shipList(i).Hit, CombatSpace.shipList(i).Firing,
+                                                            x, y, CombatSpace.shipList(i).Direction) 'A GraphicPosition object to send to the
+                    'Client's representing the Ship
                     'Create a new GraphicPosition object
                 Next
                 '---------------------------
                 Dim targetIndex As Integer = If(CombatSpace.centerShip.Helm.Target IsNot Nothing, CombatSpace.centerShip.Helm.Target.Index, -1)
                 'Get the index of the Player's targeted Ship if there is one
-                MessageMutex.WaitOne() 'Wait for the Mutex to be free
-                MessageToSend = New ServerMessage(targetIndex, CombatSpace.centerShip, craftPositions, Warping, State,
-                                                  CombatSpace.centerShip.Speed, CombatSpace.centerShip.Direction) 'Update the ServerMessage object
-                MessageMutex.ReleaseMutex() 'Release the Mutex
+                Try
+                    MessageMutex.WaitOne() 'Wait for the Mutex to be free
+                    MessageToSend = New ServerMessage(targetIndex, CombatSpace.centerShip, craftPositions, Warping, State,
+                                                      CombatSpace.centerShip.Speed, CombatSpace.centerShip.Direction) 'Update the ServerMessage object
+                    MessageMutex.ReleaseMutex() 'Release the Mutex
+                Catch ex As Exception
+                End Try
         End Select
     End Sub
 

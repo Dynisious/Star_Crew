@@ -9,13 +9,15 @@ Public Class Server 'Encapslates the Galaxy object of the Server
     Private sendBuff() As Byte 'An Array of Bytes to send to Clients
 
     Public Sub StartServer() 'Begins the Server object
+        ConsoleWindow.ServerThread = New Threading.Thread(AddressOf StartCommunications) 'Create a new Thread for the Server
+        If Clients.Count > 0 Then
+            For i As Integer = 0 To Clients.Count  'Remove any Clients left behind from the last session
+                RemoveClient(Clients(i), True)
+            Next
+        End If
         GameWorld = New Galaxy
         GameWorld.StartGame() 'Begin to run the game
         Console.WriteLine("Game is now running") 'Write message to console
-        If ConsoleWindow.ServerThread.IsAlive = True Then 'Restart the Server
-            ConsoleWindow.ServerThread.Abort()
-            ConsoleWindow.ServerThread = New Threading.Thread(AddressOf StartCommunications)
-        End If
         ConsoleWindow.ServerThread.Start()
     End Sub
 

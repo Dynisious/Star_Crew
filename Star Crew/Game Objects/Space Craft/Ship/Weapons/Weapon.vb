@@ -4,6 +4,7 @@ Public Class Weapon
     Public Parent As Battery
     Public Enum DamageTypes
         Laser
+        Slug
         Max
     End Enum
     <NonSerialized()>
