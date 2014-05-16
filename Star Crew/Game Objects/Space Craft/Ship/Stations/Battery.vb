@@ -1,4 +1,5 @@
-﻿Public Class Battery
+﻿
+Public Class Battery
     Inherits Station
     Public PrimaryMount As Double 'A Double value representing the primary Weapon's offset from forward facing
     Public SecondaryMount As Double 'A Double value representing the secondary Weapon's offset from forward facing
@@ -25,80 +26,76 @@
             Primary.UpdateWeapon()
             Secondary.UpdateWeapon()
 
-            If PlayerControled = False And ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList.Count <> 1 Then
-                Dim shipDirections(ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList.Count - 1) As Double
-                Dim shipDistances(ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList.Count - 1) As Integer
-                Parent.Helm.Target = Nothing
-                Dim Opposite As Integer
-                Dim Adjacent As Integer
-                Dim target As Ship = Nothing
-                Dim targetDistance As Integer
-                Dim targetDirection As Double
-                ReDim shipDirections(ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList.Count - 1)
-                ReDim shipDistances(ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList.Count - 1)
+            If PlayerControled = False And ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList.Count > 0 Then
+                If Parent.TargetLock = False Then
+                    Parent.Helm.Target = Nothing
+                End If
+                Dim target As Ship
+                Dim targetDistance As Integer = -1
+                Dim targetDirection As Double = -1
                 ReDim Parent.Helm.evadeList(-1)
-                '-----Set Target Distances and Directions-----
-                For i As Integer = 0 To shipDistances.Length - 1
-                    Opposite = ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i).Position.Y - Parent.Position.Y
-                    Adjacent = ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i).Position.X - Parent.Position.X
-                    If Adjacent <> 0 Then
-                        shipDirections(i) = Math.Tanh(Opposite / Adjacent)
-                        If Adjacent < 0 Then
-                            shipDirections(i) = shipDirections(i) + Math.PI
+                '-----Targeting-----
+                For Each i As Ship In ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList
+                    If i.Index <> Parent.Index Then
+                        Dim X As Integer = i.Position.X - Parent.Position.X
+                        Dim Y As Integer = i.Position.Y - Parent.Position.Y
+                        Dim distance As Integer = Math.Sqrt((X ^ 2) + (Y ^ 2))
+                        Dim direction As Double
+                        '-----Set the Direction-----
+                        If X <> 0 Then
+                            direction = Math.Tanh(Y / X)
+                            If X < 0 Then
+                                direction = direction + Math.PI
+                            End If
+                            direction = Helm.NormalizeDirection(direction)
+                        ElseIf Y > 0 Then
+                            direction = Math.PI / 2
+                        Else
+                            direction = (3 * Math.PI) / 2
                         End If
-                        shipDirections(i) = Helm.NormalizeDirection(shipDirections(i))
-                    ElseIf Opposite > 0 Then
-                        shipDirections(i) = Math.PI / 2
-                    Else
-                        shipDirections(i) = (3 * Math.PI) / 2
-                    End If
-                    shipDistances(i) = Math.Sqrt((Adjacent ^ 2) + (Opposite ^ 2))
-
-                    If ReferenceEquals(Parent, ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i)) = False And
-                        shipDistances(i) < Primary.Range.current And
-                        shipDirections(i) - Parent.Direction < (3 * Math.PI) / 4 And
-                        shipDirections(i) - Parent.Direction > -(3 * Math.PI) / 4 Then
-                        ReDim Preserve Parent.Helm.evadeList(Parent.Helm.evadeList.Length)
-                        Parent.Helm.evadeList(UBound(Parent.Helm.evadeList)) = shipDirections(i)
+                        '---------------------------
+                        If (distance < targetDistance Or targetDistance = -1) And i.MyAllegence <> Parent.MyAllegence Then
+                            If Parent.TargetLock = False Then 'Make this Ship the new target
+                                Parent.Helm.Target = i
+                            End If
+                            Dim relativeDirection As Double = direction - Parent.Direction
+                            If relativeDirection > -Math.PI And relativeDirection < Math.PI Then 'It's a valid Target for the Batteries
+                                target = i
+                                targetDistance = distance
+                                targetDirection = direction
+                            End If
+                        End If
+                        If distance < (((Parent.Speed.current - i.Speed.current) ^ 2) / Parent.Acceleration.current) Or
+                            distance < Helm.MinimumDistance Then
+                            'The target is too close and must be evaded
+                            ReDim Preserve Parent.Helm.evadeList(Parent.Helm.evadeList.Length)
+                            Parent.Helm.evadeList(UBound(Parent.Helm.evadeList)) = Helm.NormalizeDirection(direction - Parent.Direction)
+                            'Add the direction to the evasion list
+                            If Parent.Helm.evadeList(UBound(Parent.Helm.evadeList)) > Math.PI / 2 And
+                               Parent.Helm.evadeList(UBound(Parent.Helm.evadeList)) < 3 * Math.PI / 2 Then 'The direction needs to be changed to
+                                'simulate being in front of the Ship for the evasion code to interpret it correctly
+                                Parent.Helm.evadeList(UBound(Parent.Helm.evadeList)) =
+                                    Helm.NormalizeDirection(Parent.Helm.evadeList(UBound(Parent.Helm.evadeList)) - Math.PI)
+                            End If
+                        End If
                     End If
                 Next
-                '---------------------------------------------
-
-                '-----Target Selection-----
-                Dim lastDistance As Integer
-                For i As Integer = 0 To shipDistances.Length - 1
-                    '-----Select Target to Shoot-----
-                    If (shipDistances(i) <= lastDistance Or lastDistance = 0) And
-                            ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i).MyAllegence <> Parent.MyAllegence Then
-                        If Parent.TargetLock = False Then
-                            Parent.Helm.Target = ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i)
-                        End If
-                        If (shipDirections(i) - Parent.Direction) < (Math.PI / 2) And
-                            (shipDirections(i) - Parent.Direction) > -(Math.PI / 2) Then
-                            lastDistance = shipDistances(i)
-                            target = ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i)
-                            targetDirection = shipDirections(i)
-                            targetDistance = shipDistances(i)
-                        End If
-                    End If
-                    '--------------------------------
-                Next
-                '--------------------------
+                '-------------------
 
                 If target IsNot Nothing Then
                     '-----Aim at Target-----
                     '-----Primary-----
-                    If Primary.TurnDistance.current + PrimaryMount > (targetDirection - Parent.Direction) Then
+                    If targetDirection - Parent.Direction - Primary.TurnDistance.current - PrimaryMount < 0 Then
                         Primary.TurnDistance.current = Primary.TurnDistance.current - Primary.TurnSpeed.current
-                        If Primary.TurnDistance.current + PrimaryMount < (targetDirection - Parent.Direction) Then
+                        If targetDirection - Parent.Direction - Primary.TurnDistance.current - PrimaryMount > 0 Then
                             Primary.TurnDistance.current = (targetDirection - Parent.Direction) - PrimaryMount
                         End If
                         If Primary.TurnDistance.current < -(Primary.TurnDistance.max / 2) Then
                             Primary.TurnDistance.current = -(Primary.TurnDistance.max / 2)
                         End If
-                    ElseIf Primary.TurnDistance.current + PrimaryMount < (targetDirection - Parent.Direction) Then
+                    ElseIf targetDirection - Parent.Direction - Primary.TurnDistance.current - PrimaryMount > 0 Then
                         Primary.TurnDistance.current = Primary.TurnDistance.current + Primary.TurnSpeed.current
-                        If Primary.TurnDistance.current + PrimaryMount > (targetDirection - Parent.Direction) Then
+                        If targetDirection - Parent.Direction - Primary.TurnDistance.current - PrimaryMount < 0 Then
                             Primary.TurnDistance.current = (targetDirection - Parent.Direction) - PrimaryMount
                         End If
                         If Primary.TurnDistance.current > (Primary.TurnDistance.max / 2) Then
@@ -108,17 +105,17 @@
                     '-----------------
 
                     '-----Secondary-----
-                    If Secondary.TurnDistance.current + SecondaryMount > (targetDirection - Parent.Direction) Then
+                    If targetDirection - Parent.Direction - Secondary.TurnDistance.current - SecondaryMount < 0 Then
                         Secondary.TurnDistance.current = Secondary.TurnDistance.current - Secondary.TurnSpeed.current
-                        If Secondary.TurnDistance.current + SecondaryMount < (targetDirection - Parent.Direction) Then
+                        If targetDirection - Parent.Direction - Secondary.TurnDistance.current - SecondaryMount > 0 Then
                             Secondary.TurnDistance.current = (targetDirection - Parent.Direction) - SecondaryMount
                         End If
                         If Secondary.TurnDistance.current < -(Secondary.TurnDistance.max / 2) Then
                             Secondary.TurnDistance.current = -(Secondary.TurnDistance.max / 2)
                         End If
-                    ElseIf Secondary.TurnDistance.current + SecondaryMount < (targetDirection - Parent.Direction) Then
+                    ElseIf targetDirection - Parent.Direction - Secondary.TurnDistance.current - SecondaryMount > 0 Then
                         Secondary.TurnDistance.current = Secondary.TurnDistance.current + Secondary.TurnSpeed.current
-                        If Secondary.TurnDistance.current + SecondaryMount > (targetDirection - Parent.Direction) Then
+                        If targetDirection - Parent.Direction - Secondary.TurnDistance.current - SecondaryMount < 0 Then
                             Secondary.TurnDistance.current = (targetDirection - Parent.Direction) - SecondaryMount
                         End If
                         If Secondary.TurnDistance.current > (Secondary.TurnDistance.max / 2) Then
@@ -130,22 +127,21 @@
 
                     '-----Fire at Target-----
                     '-----Primary-----
-                    If targetDirection - Parent.Direction - Primary.TurnDistance.current - PrimaryMount > -(HitArc / 2) And
-                        targetDirection - Parent.Direction - Primary.TurnDistance.current - PrimaryMount < (HitArc / 2) Then
+                    Dim primaryAim As Double = targetDirection - Parent.Direction - Primary.TurnDistance.current - PrimaryMount
+                    If (HitArc / 2) > primaryAim And primaryAim > -(HitArc / 2) Then
                         Primary.FireWeapon(targetDistance, target, targetDirection)
                     End If
                     '-----------------
 
                     '-----Secondary-----
-                    If targetDirection - Parent.Direction - Secondary.TurnDistance.current - SecondaryMount > -(HitArc / 2) And
-                        targetDirection - Parent.Direction - Secondary.TurnDistance.current - SecondaryMount < (HitArc / 2) Then
+                    Dim secondaryAim As Double = targetDirection - Parent.Direction - Secondary.TurnDistance.current - SecondaryMount
+                    If (HitArc / 2) > secondaryAim And secondaryAim > -(HitArc / 2) Then
                         Secondary.FireWeapon(targetDistance, target, targetDirection)
                     End If
                     '-------------------
                     '------------------------
                 End If
             Else
-                ReDim Parent.Helm.evadeList(-1)
                 If Parent.Helm.Target IsNot Nothing Then
                     If Parent.Helm.Target.Dead = True Then
                         Parent.Helm.Target = Nothing

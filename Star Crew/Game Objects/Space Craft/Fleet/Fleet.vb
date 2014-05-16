@@ -1,11 +1,15 @@
-﻿<Serializable()>
-Public MustInherit Class Fleet 'A group of Ship objects that flies around a sector
+﻿Public MustInherit Class Fleet 'A group of Ship objects that flies around a sector
     Inherits SpaceCraft 'The base Class of Ships and Fleets
     Public currentSector As Sector 'The Sector object the Fleet is currently inside
     Public ShipList As New List(Of Ship) 'A List of Ship objects
     Public TurnSpeed As Double 'The Speed at which the Fleet turns
     Public Shared ReadOnly DetectRange As Integer = 200 'The range at which the AI detects other Fleets
-    Public Shared ReadOnly InteractRange As Integer = 20 'The range at which Fleets interact with each other 
+    Public Shared ReadOnly InteractRange As Integer = 30 'The range at which Fleets interact with each other
+    Public Enum FleetState
+        Target 'The Fleet must go for an actual Fleet
+        Wander 'The Fleet can just wander
+    End Enum
+    Public MovementState As FleetState = FleetState.Wander
 
     Public Sub New(ByVal nIndex As Integer, ByVal nAllegence As Galaxy.Allegence, ByVal nFormat As ShipLayout.Formats)
         MyBase.New(nAllegence, nFormat, nIndex, New Point(Int(Rnd() * SpawnBox), Int(Rnd() * SpawnBox)))
@@ -22,6 +26,7 @@ Public MustInherit Class Fleet 'A group of Ship objects that flies around a sect
             End Select
             ShipList.Add(New Ship(Format, -1, MyAllegence))
         Next
+        SetStats_Handle()
     End Sub
 
     Public Sub RemoveShip(ByRef nShip As Ship) 'Removes the ship object from the Fleet
@@ -65,32 +70,25 @@ Public MustInherit Class Fleet 'A group of Ship objects that flies around a sect
         End If
     End Sub
 
-    Private Shared Event FleetUpdate() 'Updates every Fleet
-    Public Shared Sub UpdateFleet_Call() 'Raises the FleetUpdate Event
-        RaiseEvent FleetUpdate()
-    End Sub
-    Public Overridable Sub UpdateFleet_Handle() Handles MyClass.FleetUpdate 'Updates the Fleet
-        If ReferenceEquals(Me, Sector.centerFleet) = False And Dead = False And Format <> ShipLayout.Formats.Station Then 'This Fleet is an active AI Fleet
+    Public Overridable Sub UpdateFleet() 'Updates the Fleet
+        If Index <> Sector.centerFleet.Index Then 'This Fleet is an active AI Fleet
             Dim targetDistance As Integer = DetectRange 'Sets the targets distance to be the maximum range
-            Dim targetDirection As Double 'A Double representing the Target's Direction
+            Dim targetDirection As Double = -1 'A Double representing the Target's Direction
             Dim targetSpeed As Integer = 3 'Default speed for a fleet to wander at
-            If MyAllegence = Galaxy.Allegence.Neutral Then 'Neutral Fleets don't move
-                targetSpeed = 0
-            End If
 
             For Each i As Fleet In currentSector.fleetList
                 Dim x As Integer = i.Position.X - Position.X 'The Target's X position relative to mine
                 Dim y As Integer = i.Position.Y - Position.Y 'The Target's Y position relative to mine
                 Dim distance As Integer = Math.Sqrt((x ^ 2) + (y ^ 2)) 'The Target's distance from me
-                If ((distance <= targetDistance And (i.MyAllegence <> MyAllegence Or (ShipList.Count < 50 And i.ShipList.Count < 50))) Or
-                    (i.MyAllegence = Galaxy.Allegence.Neutral And targetDistance = DetectRange)) And
-                     ReferenceEquals(Me, i) = False Then 'The Target's distance is less than the previous distance or it's
-                    'neutral and I have no closer target or it's friendly and we can combine fleets and the Fleet is not itself
+
+                If (distance < targetDistance Or (i.MovementState = FleetState.Target And targetDistance = DetectRange)) And
+                    (i.MyAllegence <> MyAllegence Or (i.ShipList.Count < 50 And ShipList.Count < 50)) And
+                    i.Index <> Index Then 'The target is within detection range and/or it is the closest Fleet and we must Target and it
+                    'is an enemy or it is an ally and we can combine Fleets and it is not targeting itself.
                     If distance <= InteractRange Then 'Interact with the fleet
-                        If i.MyAllegence = Galaxy.Allegence.Neutral Then 'Repair damaged ships
-                            NeutralFleet.Heal(Me)
-                        ElseIf ReferenceEquals(i, Sector.centerFleet) = False And i.MyAllegence <> MyAllegence Then 'Run an automated fight
-                            'cenario
+                        MovementState = FleetState.Wander 'The Fleet can do as it wishes
+                        If ReferenceEquals(i, Sector.centerFleet) = False And i.MyAllegence <> MyAllegence Then
+                            'Run an automated fight cenario
                             ConsoleWindow.GameServer.GameWorld.CombatSpace.AutoFight(Me, i)
                             Exit Sub
                         ElseIf i.MyAllegence = MyAllegence And ReferenceEquals(i, Sector.centerFleet) = False And
@@ -127,20 +125,44 @@ Public MustInherit Class Fleet 'A group of Ship objects that flies around a sect
                 End If
             Next
 
+            If targetDistance = DetectRange Then 'No valid target was found so we go for a station
+                For Each i As SpaceStation In currentSector.spaceStations
+                    Dim x As Integer = i.Position.X - Position.X 'The Target's X position relative to mine
+                    Dim y As Integer = i.Position.Y - Position.Y 'The Target's Y position relative to mine
+                    Dim distance As Integer = Math.Sqrt((x ^ 2) + (y ^ 2)) 'The Target's distance from me
+                    If (distance < targetDistance Or targetDistance = DetectRange) Then 'The station is the closest.
+                        targetDistance = distance
+                        '-----Target Direction----- 'Get the Target's direction relative to me
+                        If x <> 0 Then
+                            targetDirection = Math.Tanh(y / x)
+                            If x < 0 Then
+                                targetDirection = targetDirection + Math.PI
+                            End If
+                            targetDirection = Helm.NormalizeDirection(targetDirection)
+                        ElseIf y > 0 Then
+                            targetDirection = Math.PI / 2
+                        Else
+                            targetDirection = (3 * Math.PI) / 2
+                        End If
+                        '--------------------------
+                    End If
+                Next
+            End If
 
-            If targetDirection - Direction + (Math.PI / 2) < Math.PI Then 'the Fleet is facing the enemy
+            If targetDirection - Direction < Math.PI / 2 And
+                targetDirection - Direction > -Math.PI / 2 Then 'the Fleet is facing the enemy
                 targetSpeed = Speed.max 'Accelerate to maximum speed
             End If
-            If targetDirection - Direction > 0 Then 'Turn right to face enemy
+            If Helm.NormalizeDirection(targetDirection - Direction + Math.PI) > Math.PI Then 'Turn right to face enemy
                 Direction = Direction + TurnSpeed
-                If targetDirection - Direction < 0 Then
+                If Helm.NormalizeDirection(targetDirection - Direction + Math.PI) < Math.PI Then
                     Direction = targetDirection
                 Else
                     Direction = Helm.NormalizeDirection(Direction)
                 End If
-            ElseIf targetDirection - Direction < 0 Then 'Turn left to face enemy
+            ElseIf Helm.NormalizeDirection(targetDirection - Direction + Math.PI) < Math.PI Then 'Turn left to face enemy
                 Direction = Direction - TurnSpeed
-                If targetDirection - Direction > 0 Then
+                If Helm.NormalizeDirection(targetDirection - Direction + Math.PI) > Math.PI Then
                     Direction = targetDirection
                 Else
                     Direction = Helm.NormalizeDirection(Direction)
@@ -157,30 +179,6 @@ Public MustInherit Class Fleet 'A group of Ship objects that flies around a sect
                     Speed.current = targetSpeed
                 End If
             End If
-        ElseIf Dead = False And Format <> ShipLayout.Formats.Station Then 'It's the Players Fleet
-            For Each i As Fleet In currentSector.fleetList 'Check for interactions
-                Dim distance As Integer = Math.Sqrt(((i.Position.X - Position.X) ^ 2) + ((i.Position.Y - Position.Y) ^ 2))
-                If distance <= InteractRange And ReferenceEquals(i, Me) = False Then
-                    If i.MyAllegence = Galaxy.Allegence.Pirate Then 'Enter a combat cenario
-                        ConsoleWindow.GameServer.GameWorld.CombatSpace.Generate(i)
-                    ElseIf i.MyAllegence = Galaxy.Allegence.Neutral Then 'Heal damaged ships in the fleet
-                        NeutralFleet.Heal(Me)
-                    ElseIf Galaxy.Allegence.Friendly And ShipList.Count < 50 Then 'Add the ships to this Fleet
-                        Dim temp As Integer = ShipList.Count
-                        For e As Integer = 0 To 49 - temp
-                            If i.ShipList.Count > 0 Then
-                                ShipList.Add(i.ShipList(0))
-                                Dim nShip As Ship = i.ShipList(0)
-                                i.RemoveShip(nShip)
-                            Else
-                                currentSector.RemoveFleet(i, True, False)
-                                Exit For
-                            End If
-                        Next
-                        Exit Sub
-                    End If
-                End If
-            Next
         End If
 
         Position = New Point(Position.X + (Math.Cos(Direction) * Speed.current),

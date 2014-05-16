@@ -55,7 +55,13 @@
 
     Public Sub UpdateCombatSenario() 'Updates the Ship
         ConsoleWindow.GameServer.GameWorld.RunPlayerControls() 'Run the Player controls
-        Ship.UpdateShip_Call() 'Update Ships
+        For i As Integer = 0 To shipList.Count - 1
+            If i < shipList.Count Then
+                shipList(i).UpdateShip() 'Update Ships
+            Else
+                Exit For
+            End If
+        Next
     End Sub
 
     Public Sub AutoFight(ByRef fleet1 As Fleet, ByRef fleet2 As Fleet) 'Battles 2 AI Fleets with the combined values of all their Ships
@@ -67,7 +73,7 @@
             health1 = health1 + i.Hull.current
             shield1 = shield1 + i.Shielding.SubSystem.Defences(Shields.Sides.FrontShield).current
         Next
-        damage1 = damage1 / 3
+        damage1 = damage1 / 4
 
         Dim damage2 As Double 'The collective damage of Fleet2
         Dim health2 As Double 'The collective hull of Fleet2
@@ -77,7 +83,7 @@
             health2 = health1 + i.Hull.current
             shield2 = shield1 + i.Shielding.SubSystem.Defences(Shields.Sides.FrontShield).current
         Next
-        damage2 = damage2 / 3
+        damage2 = damage2 / 4
 
         Dim overallDamage As Double = damage1 - shield2 'The damage that makes it through the shield
         If overallDamage < 0 Then 'There was more shield than damage

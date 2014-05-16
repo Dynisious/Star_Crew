@@ -148,6 +148,15 @@
   <data name="PirateThunder" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Graphics\PirateThunder.bmp;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="The_Adventure_Begins_Extended" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\The Adventure Begins Extended.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="The_Pounce_Extended" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\The Pounce Extended.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="Timeless_Voyage_Extended" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Timeless Voyage Extended.wav;System.IO.MemoryStream, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
   <data name="Warping" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Graphics\Warping.bmp;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>

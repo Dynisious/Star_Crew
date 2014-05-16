@@ -11,6 +11,8 @@ Public Class ServerSideClient 'An object that sends and receives messages too an
 
     Public Sub New(ByVal nSocketInformation As SocketInformation)
         MyBase.New(nSocketInformation)
+        SendTimeout = 100
+        ReceiveTimeout = 100
     End Sub
 
     Public Sub DecodeMessage() 'Receive a message from the Client

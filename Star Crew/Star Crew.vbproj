@@ -114,7 +114,7 @@
     <Compile Include="Client Obj\ClientMessage.vb" />
     <Compile Include="Game Objects\Combat.vb" />
     <Compile Include="Game Objects\Galaxy.vb" />
-    <Compile Include="Game Objects\Space Craft\Fleet\NeutralFleet.vb" />
+    <Compile Include="Game Objects\Space Craft\Fleet\SpaceStation.vb" />
     <Compile Include="Game Objects\Space Craft\Ship\Ship Layouts\Screamer.vb" />
     <Compile Include="Game Objects\Space Craft\Ship\Ship Layouts\ShipLayout.vb" />
     <Compile Include="Game Objects\Space Craft\Ship\Ship Layouts\Sub Systems\Engine Sub Systems\CorrierEngine.vb" />
@@ -249,6 +249,15 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Graphics\PirateFleet.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\The Adventure Begins Extended.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\The Pounce Extended.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Timeless Voyage Extended.wav" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

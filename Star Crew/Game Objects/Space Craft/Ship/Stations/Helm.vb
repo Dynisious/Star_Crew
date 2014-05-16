@@ -4,7 +4,7 @@
     Private evadeRight As Boolean = False
     Private brakes As Boolean = False
     Public Shared ReadOnly MinimumSpeed As Integer = 5
-    Public Shared ReadOnly StandardDistance As Integer = 100
+    Public Shared ReadOnly MinimumDistance As Integer = 40
     Public Target As Ship
     Public evadeList(-1) As Double
     Public MatchSpeed As Boolean = False
@@ -55,7 +55,7 @@
                     distance < 200 Then 'The enemy is behind you
                     '-----Steering-----
                     Randomize()
-                    If 0 = Int(30 * Rnd()) Then
+                    If 0 = Int(50 * Rnd()) Then
                         If evadeRight = True Then
                             evadeRight = False
                         Else
@@ -71,34 +71,49 @@
                     End If
                     '------------------
 
-                    finalSpeed = Parent.Speed.max
+                    '-----Speed-----
+                    If brakes = True And 0 = int(30 * rnd()) Then
+                        brakes = False
+                    ElseIf 0 = int(50 * rnd()) Then
+                        brakes = True
+                    End If
+                    If brakes = False Then
+                        finalSpeed = parent.speed.max
+                    End If
+                    '---------------
                 ElseIf Parent.Speed.current <> Target.Helm.Parent.Speed.current And
-                    distance < Parent.Batteries.Primary.Range.current + (((Parent.Speed.current - Target.Helm.Parent.Speed.current) /
-                                                                          Parent.Acceleration.current) * Parent.Speed.current) And
+                    distance < (((Parent.Speed.current - Target.Speed.current) ^ 2) / Parent.Acceleration.current) And
+                    distance > MinimumDistance And
                     targetDirection - Parent.Direction < Math.PI / 2 And
                     targetDirection - Parent.Direction > -Math.PI / 2 Then 'Match the enemies speed
                     finalSpeed = Target.Helm.Parent.Speed.current
-                ElseIf distance > StandardDistance And targetDirection - Parent.Direction < Math.PI / 2 And
+                ElseIf distance < MinimumDistance Then
+                    If targetDirection - Parent.Direction > 0 Then
+                        targetDirection = Helm.NormalizeDirection(Parent.Direction + (3 * Math.PI / 2))
+                    Else
+                        targetDirection = Helm.NormalizeDirection(Parent.Direction + Math.PI)
+                    End If
+                ElseIf distance > (((Parent.Speed.current - Target.Speed.current) ^ 2) / Parent.Acceleration.current) And
+                    targetDirection - Parent.Direction < Math.PI / 2 And
                     targetDirection - Parent.Direction > -Math.PI / 2 Then 'Charge the enemy
                     finalSpeed = Parent.Speed.max
-                End If
-                If distance < Parent.Batteries.Primary.Range.current Then
-                    If targetDirection < Math.PI Then
-                        targetDirection = (3 * Math.PI) / 2
-                    Else
-                        targetDirection = (Math.PI / 2)
-                    End If
                 End If
                 '---------------
             End If
 
             '-----Evade-----
-            Dim offset As Double
-            For Each i As Double In evadeList
-                offset = i - offset
-            Next
-            offset = NormalizeDirection(offset)
-            targetDirection = NormalizeDirection(targetDirection - offset)
+            If evadeList.Length > 0 Then
+                Dim offset As Double
+                For Each i As Double In evadeList
+                    offset = i - offset
+                Next
+                If offset > 0 Then
+                    offset = NormalizeDirection(offset + (Math.PI / 2))
+                Else
+                    offset = NormalizeDirection(offset - (Math.PI / 2))
+                End If
+                targetDirection = NormalizeDirection(targetDirection - offset)
+            End If
             '---------------
 
             '-----Steering and Speed-----

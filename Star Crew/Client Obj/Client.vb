@@ -7,7 +7,7 @@ Public Class Client
     'are being pressed/released
     Public IncomingMessage As ServerMessage 'A ServerMessage object that is sent to the Client from the Server
     Public Comms As Threading.Thread 'A Thread responsible for sending and receiving messages to and from the Server
-    Private stars(200) As Star 'An Array of Star objects that assist visualizing motion
+    Private stars(150) As Star 'An Array of Star objects that assist visualizing motion
     Private ReadOnly BlankShipSpace As New Bitmap(40, 40) 'A blank Bitmap object to draw Ship Models onto while rendering
     Private BytesToReceive As Integer 'An Integer representing how many bytes the Client should wait to receive from the Server
     Private BytesReceived As Integer 'An Integer representing how many bytes of data the Client has Received from the Server
@@ -21,6 +21,7 @@ Public Class Client
     'Client's threads around IncommingMessage
     Private MutexCreated As Boolean 'A Boolean value indecating whether a Mutex object was created succesfully
     Private ModelDirectory(Galaxy.Allegence.max - 1)() As Bitmap
+    Private LastState As Galaxy.Scenario = -1
 
     Public Class Star
         Public Position As Point 'A Point object indecating the Star's position on the Bitmap that gets displayed
@@ -46,7 +47,7 @@ Public Class Client
         End Sub
         Private Sub Update_Handle(ByRef nData As ServerMessage) Handles MyClass.Update 'Handles the Update Event
             If Flash = False Then 'Random chance to 'flash'
-                If Int(80 * Rnd()) = 0 Then 'Flash'
+                If Int(40 * Rnd()) = 0 Then 'Flash'
                     Flash = True
                     count = 10
                 End If
@@ -123,6 +124,8 @@ Public Class Client
         myMessage.Station = nStation 'Set the Station value of myStation to the selected Station.StationTypes enumerator
         Try
             MyConnector = New Net.Sockets.TcpClient(nIP, 1225) 'Create a new TcpClient object
+            MyConnector.Client.ReceiveTimeout = 3000 'Wait 3 Seconds for data to be received before timing out
+            MyConnector.Client.SendTimeout = 3000 'Wait 3 seconds for data to be sent before timing out
             Connected = True 'Set Connected to True
             For i As Integer = 0 To UBound(stars)
                 stars(i) = New Star(New Point(Int((594 * Rnd()) + 3), Int((594 * Rnd())) + 3)) 'Create the Star objects
@@ -153,18 +156,26 @@ Public Class Client
     End Sub
 
     Public Sub SendCommand(ByVal command As Integer, ByVal value As Integer) 'Send key strokes to the Server
-        MyMessageMutex.WaitOne() 'Wait till the Mutex is free
-        myMessage.Command = command 'The Action the Client is attempting
-        myMessage.Value = value '-1 if Nothing, 0 if the key is being released and 1 if the key is being pressed
-        MyMessageMutex.ReleaseMutex() 'Release the Mutex
+        If Connected = True Then 'The Client is connected to a Server
+            MyMessageMutex.WaitOne() 'Wait till the Mutex is free
+            myMessage.Command = command 'The Action the Client is attempting
+            myMessage.Value = value '-1 if Nothing, 0 if the key is being released and 1 if the key is being pressed
+            MyMessageMutex.ReleaseMutex() 'Release the Mutex
+        End If
     End Sub
 
     Private Sub StartComms()
+        MyConnector.Client.Blocking = True 'Wait till the Message is sent
         MyConnector.Client.Send(BitConverter.GetBytes(myMessage.Station)) 'Send 4 bytes specifying which Station the Client wants to control
 
-        While True
+        While Connected = True
             RunComms() 'Sends and Receives messages to and from the Server
         End While
+        Tick.Enabled = False
+        IncommingMessageMutex.Close() 'Close the Mutex
+        MyMessageMutex.Close() 'Close the Mutex
+        MyConnector.Client.Disconnect(False) 'Disconnects the Socket from the Server
+        MyConnector.Close()
     End Sub
     Private Sub RunComms()
         '-----Recieve Message-----
@@ -187,15 +198,15 @@ Public Class Client
             MyConnector.Client.Receive(MessageBuff, BytesReceived, BytesToReceive - BytesReceived, Net.Sockets.SocketFlags.None)
                 'Receive the up to the number of Bytes needed for a full message
             End While
-            IncommingMessageMutex.WaitOne() 'Block until the Mutex is free
-            IncomingMessage = BinarySerializer.Deserialize(New IO.MemoryStream(MessageBuff, 0, BytesToReceive)) 'Deserialise the received Bytes
-            'into a ServerMessage object
-            IncommingMessageMutex.ReleaseMutex() 'Release the Mutex
             '-----------------------------
         Catch ex As Net.Sockets.SocketException 'The Client was disconnected from the Server
-            MyConnector.Close()
-            Connected = False
-            Comms.Abort()
+            Console.WriteLine()
+            Console.WriteLine("Error : Connection to the Server was lost.")
+            Console.WriteLine()
+            Console.WriteLine(ex.ToString)
+            Console.WriteLine()
+            Connected = False 'Let the Loop finish
+            Exit Sub 'Leave the Subroutine emmidiately
         Catch ex As Exception
             Console.WriteLine()
             Console.WriteLine("Error : There was an unexpected and unhandled exception.")
@@ -204,15 +215,18 @@ Public Class Client
             Console.WriteLine()
             Console.WriteLine(ex.ToString)
             Console.WriteLine()
-            MyConnector.Close()
-            Connected = False
-            Comms.Abort()
+            Connected = False 'Let the Loop finish
+            Exit Sub 'Leave the Subroutine emmidiately
         End Try
+        IncommingMessageMutex.WaitOne() 'Block until the Mutex is free
+        IncomingMessage = BinarySerializer.Deserialize(New IO.MemoryStream(MessageBuff, 0, BytesToReceive)) 'Deserialise the received Bytes
+        'into a ServerMessage object
+        IncommingMessageMutex.ReleaseMutex() 'Release the Mutex
         '-------------------------
 
-        '-----Send Message----- 'Wait for the Mutex to be free
+        '-----Send Message-----
+        MyMessageMutex.WaitOne() 'Wait for the Mutex to be free
         Try
-            MyMessageMutex.WaitOne()
             Dim byteStream As New IO.MemoryStream() 'A MemoryStream object to use with the BinarySerialiser object
             BinarySerializer.Serialize(byteStream, myMessage) 'Serialise the myMessage object into byteStream
             SendBuff = byteStream.ToArray 'Create an array of Bytes from byteStream
@@ -223,15 +237,13 @@ Public Class Client
             byteStream.Close() 'Close the MemoryStream object
             myMessage.Command = -1 'Set the myMessage.Command value to -1 meaning their is nothing to send
             myMessage.Value = -1 'Set the myMessage.Value value to -1 meaning their is nothing to send
-            MyMessageMutex.ReleaseMutex() 'Release the Mutex
-        Catch ex As System.NullReferenceException
-            MyConnector.Close()
-            Connected = False
-            Comms.Abort()
-        Catch ex As Net.Sockets.SocketException 'The Client was disconnected from the Server
-            MyConnector.Close()
-            Connected = False
-            Comms.Abort()
+        Catch ex As Net.Sockets.SocketException
+            Console.WriteLine()
+            Console.WriteLine("Error : Connection to the Server was lost.")
+            Console.WriteLine()
+            Console.WriteLine(ex.ToString)
+            Console.WriteLine()
+            Connected = False 'Let the Loop finish
         Catch ex As Exception
             Console.WriteLine()
             Console.WriteLine("Error : There was an unexpected and unhandled exception.")
@@ -240,10 +252,9 @@ Public Class Client
             Console.WriteLine()
             Console.WriteLine(ex.ToString)
             Console.WriteLine()
-            MyConnector.Close()
-            Connected = False
-            Comms.Abort()
+            Connected = False 'Let the Loop finish
         End Try
+        MyMessageMutex.ReleaseMutex() 'Release the Mutex
         '----------------------
     End Sub
 
@@ -258,112 +269,123 @@ Public Class Client
             IncommingMessageMutex.WaitOne() 'Block until the Mutex is free
             Dim MessageData As ServerMessage = IncomingMessage 'Create a copy of the IncommingMessage object
             IncommingMessageMutex.ReleaseMutex() 'Release the Mutex
-            Star.Update_Call(MessageData) 'Update all of the Star objects
-            If MessageData.CenterShip IsNot Nothing Then 'Set the Weapon directions etc
-                primaryDirection = Helm.NormalizeDirection(MessageData.Direction + MessageData.Primary.TurnDistance.current)
-                'Set the direction of the Primary Weapon
-                Dim Width As Integer = MessageData.Primary.Range.current * 2 'Set the Width of primaryRec
-                Dim Height As Integer = MessageData.Primary.Range.current * 2 'Set the Height of primaryRec
-                Dim startX As Integer = (Screen.ImageSize.X / 2) - MessageData.Primary.Range.current 'Set the X coordinate of primaryRec
-                Dim startY As Integer = (Screen.ImageSize.Y / 2) - MessageData.Primary.Range.current 'Se the Y coordinate of the primaryRec
-                primaryRec = New Rectangle(startX, startY, Width, Height) 'Create the primaryRec Rectangle object
-
-                secondaryDirection = Helm.NormalizeDirection(MessageData.Direction + MessageData.Secondary.TurnDistance.current)
-                'Set the direction of the Secodary Weapon
-                Width = MessageData.Secondary.Range.current * 2 'Set the Width of the secondaryRec
-                Height = MessageData.Secondary.Range.current * 2 'Set the Height of the secondaryRec
-                startX = (Screen.ImageSize.X / 2) - (Width / 2) 'Set the X coordinate of secondaryRec
-                startY = (Screen.ImageSize.Y / 2) - (Height / 2) 'Set the Y coordinate of the secondaryRec
-                secondaryRec = New Rectangle(startX, startY, Width, Height) 'Create the secondaryRec Rectangle object
+            If LastState <> MessageData.State Then
+                LastState = MessageData.State
+                Select Case MessageData.State
+                    Case Galaxy.Scenario.Battle
+                        My.Computer.Audio.Play(My.Resources.The_Pounce_Extended, AudioPlayMode.BackgroundLoop)
+                    Case Galaxy.Scenario.Transit
+                        My.Computer.Audio.Play(My.Resources.Timeless_Voyage_Extended, AudioPlayMode.BackgroundLoop)
+                End Select
             End If
+            If MessageData.State <> -1 Then
+                Star.Update_Call(MessageData) 'Update all of the Star objects
+                If MessageData.State = Galaxy.Scenario.Battle Then 'Set the Weapon directions etc
+                    primaryDirection = Helm.NormalizeDirection(MessageData.Direction + MessageData.Primary.TurnDistance.current)
+                    'Set the direction of the Primary Weapon
+                    Dim Width As Integer = MessageData.Primary.Range.current * 2 'Set the Width of primaryRec
+                    Dim Height As Integer = MessageData.Primary.Range.current * 2 'Set the Height of primaryRec
+                    Dim startX As Integer = (Screen.ImageSize.X / 2) - MessageData.Primary.Range.current 'Set the X coordinate of primaryRec
+                    Dim startY As Integer = (Screen.ImageSize.Y / 2) - MessageData.Primary.Range.current 'Se the Y coordinate of the primaryRec
+                    primaryRec = New Rectangle(startX, startY, Width, Height) 'Create the primaryRec Rectangle object
 
-            '-----Set Background-----
-            Dim bmp As New Bitmap(Screen.ImageSize.X, Screen.ImageSize.Y) 'Create a new Bitmap object
-            Dim gDisplay As Graphics = Graphics.FromImage(bmp) 'Create a Graphics object for bmp
-            Select Case MessageData.Warping 'Select the initial background of bmp
-                Case Galaxy.Warp.None 'The Player Ship is not 'warping'
-                    gDisplay.DrawImage(My.Resources.NormalSpace, New Point(0, 0)) 'Draw the normal background
-                Case Galaxy.Warp.Warping 'The Player Ship is 'warping'
-                    gDisplay.DrawImage(My.Resources.Warping, New Point(0, 0)) 'Draw the warping background
-            End Select
-            '------------------------
-
-            '-----Put on Radar----- 'Scale the positions of the Ships back so that they appear on the edge of a circle if they are off screen
-            'The Player Ship is always at (0,0)
-            For i As Integer = 0 To UBound(MessageData.Positions)
-                Dim distance As Integer = Math.Sqrt((MessageData.Positions(i).X ^ 2) + (MessageData.Positions(i).Y ^ 2))
-                'The distance of the Ship from the Player Ship
-                If distance > 200 Then 'The (X,Y) coordinates need to be scaled back
-                    Dim scale As Double = distance / 200 'The scale of the distance relative to 200
-                    MessageData.Positions(i).X = (MessageData.Positions(i).X / scale) 'Scale X
-                    MessageData.Positions(i).Y = (MessageData.Positions(i).Y / scale) 'Scale Y
+                    secondaryDirection = Helm.NormalizeDirection(MessageData.Direction + MessageData.Secondary.TurnDistance.current)
+                    'Set the direction of the Secodary Weapon
+                    Width = MessageData.Secondary.Range.current * 2 'Set the Width of the secondaryRec
+                    Height = MessageData.Secondary.Range.current * 2 'Set the Height of the secondaryRec
+                    startX = (Screen.ImageSize.X / 2) - (Width / 2) 'Set the X coordinate of secondaryRec
+                    startY = (Screen.ImageSize.Y / 2) - (Height / 2) 'Set the Y coordinate of the secondaryRec
+                    secondaryRec = New Rectangle(startX, startY, Width, Height) 'Create the secondaryRec Rectangle object
                 End If
-                MessageData.Positions(i).X = MessageData.Positions(i).X + ((Screen.ImageSize.X / 2) - 1) 'Add the offset so that 0 on the X is
-                'in the center of the screen
-                MessageData.Positions(i).Y = MessageData.Positions(i).Y + ((Screen.ImageSize.Y / 2) - 1) 'Add the offset so that 0 on the Y is
-                'in the center of the screen
-            Next
-            '----------------------
 
-            '-----Render-----
-            For Each i As Star In stars
-                gDisplay.FillEllipse(Brushes.White,
-                                     CInt(i.Position.X - (i.Diameter / 2)),
-                                     CInt(i.Position.Y - (i.Diameter / 2)),
-                                     CInt(i.Diameter), CInt(i.Diameter))
-                'Draw a white circle on bmp as wide as the Star's Diameter value
-            Next
+                '-----Set Background-----
+                Dim bmp As New Bitmap(Screen.ImageSize.X, Screen.ImageSize.Y) 'Create a new Bitmap object
+                Dim gDisplay As Graphics = Graphics.FromImage(bmp) 'Create a Graphics object for bmp
+                Select Case MessageData.Warping 'Select the initial background of bmp
+                    Case Galaxy.Warp.None 'The Player Ship is not 'warping'
+                        gDisplay.DrawImage(My.Resources.NormalSpace, New Point(0, 0)) 'Draw the normal background
+                    Case Galaxy.Warp.Warping 'The Player Ship is 'warping'
+                        gDisplay.DrawImage(My.Resources.Warping, New Point(0, 0)) 'Draw the warping background
+                End Select
+                '------------------------
 
-            If MessageData.Warping <> Galaxy.Warp.Warping And MessageData.State = Galaxy.Scenario.Battle And
-                MessageData.CenterShip IsNot Nothing Then 'The Player is in comabat so draw the Weapon arcs
-                '-----Batteries Arc-----
-                gDisplay.DrawPie(Pens.Yellow, primaryRec, CSng(180 * (
-                                 primaryDirection + MessageData.PrimaryMount - (Battery.PlayerArc / 2)) / Math.PI),
-                                 CSng(180 * Battery.PlayerArc / Math.PI)) 'Draw the yellow outline of a section of a circle
-                'that has the diameter of the Weapons Range value and the sweep of the Players 'hit arc'
+                '-----Put on Radar----- 'Scale the positions of the Ships back so that they appear on the edge of a circle if they are off screen
+                'The Player Ship is always at (0,0)
+                For i As Integer = 0 To UBound(MessageData.Positions)
+                    Dim distance As Integer = Math.Sqrt((MessageData.Positions(i).X ^ 2) + (MessageData.Positions(i).Y ^ 2))
+                    'The distance of the Ship from the Player Ship
+                    If distance > 200 Then 'The (X,Y) coordinates need to be scaled back
+                        Dim scale As Double = distance / 200 'The scale of the distance relative to 200
+                        MessageData.Positions(i).X = (MessageData.Positions(i).X / scale) 'Scale X
+                        MessageData.Positions(i).Y = (MessageData.Positions(i).Y / scale) 'Scale Y
+                    End If
+                    MessageData.Positions(i).X = MessageData.Positions(i).X + ((Screen.ImageSize.X / 2) - 1) 'Add the offset so that 0 on the X is
+                    'in the center of the screen
+                    MessageData.Positions(i).Y = MessageData.Positions(i).Y + ((Screen.ImageSize.Y / 2) - 1) 'Add the offset so that 0 on the Y is
+                    'in the center of the screen
+                Next
+                '----------------------
 
-                gDisplay.DrawPie(Pens.Yellow, secondaryRec, CSng(180 * (
-                                 secondaryDirection + MessageData.SecondaryMount - (Battery.PlayerArc / 2)) / Math.PI),
-                                 CSng(180 * Battery.PlayerArc / Math.PI)) 'Draw the yellow outline of a section of a circle
-                'that has the diameter of the Weapons Range value and the sweep of the Players 'hit arc'
-                '-----------------------
+                '-----Render-----
+                For Each i As Star In stars
+                    gDisplay.FillEllipse(Brushes.White,
+                                         CInt(i.Position.X - (i.Diameter / 2)),
+                                         CInt(i.Position.Y - (i.Diameter / 2)),
+                                         CInt(i.Diameter), CInt(i.Diameter))
+                    'Draw a white circle on bmp as wide as the Star's Diameter value
+                Next
+
+                If MessageData.Warping <> Galaxy.Warp.Warping And MessageData.State = Galaxy.Scenario.Battle And
+                    MessageData.CenterCraft IsNot Nothing Then 'The Player is in comabat so draw the Weapon arcs
+                    '-----Batteries Arc-----
+                    gDisplay.DrawPie(Pens.Yellow, primaryRec, CSng(180 * (
+                                     primaryDirection + MessageData.PrimaryMount - (Battery.PlayerArc / 2)) / Math.PI),
+                                     CSng(180 * Battery.PlayerArc / Math.PI)) 'Draw the yellow outline of a section of a circle
+                    'that has the diameter of the Weapons Range value and the sweep of the Players 'hit arc'
+
+                    gDisplay.DrawPie(Pens.Yellow, secondaryRec, CSng(180 * (
+                                     secondaryDirection + MessageData.SecondaryMount - (Battery.PlayerArc / 2)) / Math.PI),
+                                     CSng(180 * Battery.PlayerArc / Math.PI)) 'Draw the yellow outline of a section of a circle
+                    'that has the diameter of the Weapons Range value and the sweep of the Players 'hit arc'
+                    '-----------------------
+                End If
+
+                '-----Draw Ships----- 'Draw the Ship models onto bmp
+                For i As Integer = 0 To UBound(MessageData.Positions)
+                    If (MessageData.Warping = Galaxy.Warp.None) Or (MessageData.Warping = Galaxy.Warp.Warping And i = 0) Then 'The Player is not in 'warp'
+                        'or it is the Player's Ship
+                        Dim model As Bitmap = ModelDirectory(MessageData.Positions(i).Allegience)(MessageData.Positions(i).Format) 'A Bitmap of a ship
+                        model.MakeTransparent() 'Make the white space of the model Bitmap object transparent
+                        Dim g As Graphics = Graphics.FromImage(BlankShipSpace) 'Create a Graphics object of BlankShipSpace
+                        g.Clear(Color.Transparent) 'Clear BlankShipSpace
+                        g.TranslateTransform(BlankShipSpace.Width / 2, BlankShipSpace.Height / 2) 'Move the turning point into the center of the Graphic
+                        g.RotateTransform(180 * MessageData.Positions(i).Direction / Math.PI) 'Rotate the Graphic by the direction of the Ship
+                        g.TranslateTransform(-(BlankShipSpace.Width / 2), -(BlankShipSpace.Height / 2)) 'Return the turning point to the edge of the Graphic
+                        g.DrawImage(model, New Point(3, 3)) 'Draw model onto BlankShipSpace
+                        gDisplay.DrawImage(BlankShipSpace, New Point(MessageData.Positions(i).X - (model.Width / 2),
+                                                                     MessageData.Positions(i).Y - (model.Height / 2)))
+                        'Draw BlankShipSpace onto bmp
+                    End If
+                Next
+                '--------------------
+
+                If MessageData.State = Galaxy.Scenario.Battle Then 'Check for a target to highlight
+                    '-----Batteries Target-----
+                    If MessageData.TargetIndex > -1 And MessageData.Warping <> Galaxy.Warp.Warping And
+                        MessageData.TargetIndex < MessageData.Positions.Length Then 'There is a target to highlight
+                        Dim g As Graphics = Graphics.FromImage(BlankShipSpace) 'Create a Graphics object from BlankShipSpace
+                        g.Clear(Color.Transparent) 'Clear BlankShipSpace
+                        gDisplay.DrawRectangle(Pens.Blue,
+                                          MessageData.Positions(MessageData.TargetIndex).X - CInt((BlankShipSpace.Width / 2)),
+                                          MessageData.Positions(MessageData.TargetIndex).Y - CInt((BlankShipSpace.Height / 2)),
+                                          BlankShipSpace.Width, BlankShipSpace.Height)
+                        'Draw a blue square around the targeted ship
+                    End If
+                    '--------------------------
+                End If
+                Screen.GamePlayLayout.picDisplayGraphics.Image = bmp 'Display the new Image
+                '-------------------
             End If
-
-            '-----Draw Ships----- 'Draw the Ship models onto bmp
-            For i As Integer = 0 To UBound(MessageData.Positions)
-                If (MessageData.Warping = Galaxy.Warp.None) Or (MessageData.Warping = Galaxy.Warp.Warping And i = 0) Then 'The Player is not in 'warp'
-                    'or it is the Player's Ship
-                    Dim model As Bitmap = ModelDirectory(MessageData.Positions(i).Allegience)(MessageData.Positions(i).Format) 'A Bitmap of a ship
-                    model.MakeTransparent() 'Make the white space of the model Bitmap object transparent
-                    Dim g As Graphics = Graphics.FromImage(BlankShipSpace) 'Create a Graphics object of BlankShipSpace
-                    g.Clear(Color.Transparent) 'Clear BlankShipSpace
-                    g.TranslateTransform(BlankShipSpace.Width / 2, BlankShipSpace.Height / 2) 'Move the turning point into the center of the Graphic
-                    g.RotateTransform(180 * MessageData.Positions(i).Direction / Math.PI) 'Rotate the Graphic by the direction of the Ship
-                    g.TranslateTransform(-(BlankShipSpace.Width / 2), -(BlankShipSpace.Height / 2)) 'Return the turning point to the edge of the Graphic
-                    g.DrawImage(model, New Point(3, 3)) 'Draw model onto BlankShipSpace
-                    gDisplay.DrawImage(BlankShipSpace, New Point(MessageData.Positions(i).X - (model.Width / 2),
-                                                                 MessageData.Positions(i).Y - (model.Height / 2)))
-                    'Draw BlankShipSpace onto bmp
-                End If
-            Next
-            '--------------------
-
-            If MessageData.CenterShip IsNot Nothing Then 'Check for a target to highlight
-                '-----Batteries Target-----
-                If MessageData.TargetIndex > -1 And MessageData.Warping <> Galaxy.Warp.Warping And
-                    MessageData.TargetIndex < MessageData.Positions.Length Then 'There is a target to highlight
-                    Dim g As Graphics = Graphics.FromImage(BlankShipSpace) 'Create a Graphics object from BlankShipSpace
-                    g.Clear(Color.Transparent) 'Clear BlankShipSpace
-                    gDisplay.DrawRectangle(Pens.Blue,
-                                      MessageData.Positions(MessageData.TargetIndex).X - CInt((BlankShipSpace.Width / 2)),
-                                      MessageData.Positions(MessageData.TargetIndex).Y - CInt((BlankShipSpace.Height / 2)),
-                                      BlankShipSpace.Width, BlankShipSpace.Height)
-                    'Draw a blue square around the targeted ship
-                End If
-                '--------------------------
-            End If
-            Screen.GamePlayLayout.picDisplayGraphics.Image = bmp 'Display the new Image
-            '-------------------
         End If
     End Sub
 

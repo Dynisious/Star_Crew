@@ -14,6 +14,7 @@
         Transit 'Moving the Fleet to the next battle
     End Enum
     Public State As Scenario = Scenario.Transit 'The current state of the Galaxy
+    Public Paused As Boolean = False
     Public Enum Allegence 'An Enumorator of the different allegencies in the game
         Friendly 'Alligned with the Players
         Pirate 'Against the Player
@@ -466,97 +467,113 @@
     End Sub
 
     Public Sub UpdateGalaxy() Handles GalaxyTimer.Tick 'Update the Galaxy object
+        Dim stateToSend As Integer = State
+        If Paused = True Then
+            stateToSend = -1
+        End If
         Select Case State
             Case Scenario.Transit 'Update Fleets
-                If ThrottleUpCheck = True Then 'Accelerate the Players Fleet
-                    Sector.centerFleet.Speed.current = Sector.centerFleet.Speed.current + Sector.centerFleet.Acceleration.current
-                    If Sector.centerFleet.Speed.current > Sector.centerFleet.Speed.max Then
-                        Sector.centerFleet.Speed.current = Sector.centerFleet.Speed.max
-                    End If
-                End If
-                If ThrottleDownCheck = True Then 'Decelerate the Players Fleet
-                    Sector.centerFleet.Speed.current = Sector.centerFleet.Speed.current - Sector.centerFleet.Acceleration.current
-                    If Sector.centerFleet.Speed.current < 0 Then
-                        Sector.centerFleet.Speed.current = 0
-                    End If
-                End If
-                If TurnRightCheck = True Then 'Turn the Players Fleet right
-                    Sector.centerFleet.Direction = Helm.NormalizeDirection(Sector.centerFleet.Direction + Sector.centerFleet.TurnSpeed)
-                End If
-                If TurnLeftCheck = True Then 'Turn the Players Fleet left
-                    Sector.centerFleet.Direction = Helm.NormalizeDirection(Sector.centerFleet.Direction - Sector.centerFleet.TurnSpeed)
-                End If
-                Fleet.UpdateFleet_Call() 'Update all Fleets
-
-                ReDim craftPositions(centerSector.fleetList.Count - 1) 'Clear and resize the Array of GraphicPosition objects apropriately
-                '-----Set new positions----- 'Create new GraphicPosition positions
-                For i As Integer = 0 To centerSector.fleetList.Count - 1
-                    Dim x As Integer = centerSector.fleetList(i).Position.X - Sector.centerFleet.Position.X 'The X coordinate relative to the
-                    'center Fleet
-                    Dim y As Integer = centerSector.fleetList(i).Position.Y - Sector.centerFleet.Position.Y 'The Y coordinate relative to the
-                    'center Fleet
-                    craftPositions(i) = New GraphicPosition(centerSector.fleetList(i).MyAllegence, centerSector.fleetList(i).Format,
-                                                            False, False, x, y, centerSector.fleetList(i).Direction) 'Create a new GraphicPosition object
-                Next
-                '---------------------------
-                Try
-                    MessageMutex.WaitOne() 'Wait till the Mutex is free
-                    MessageToSend = New ServerMessage(-1, Nothing, craftPositions, Warping, State,
-                                                      Sector.centerFleet.Speed, Sector.centerFleet.Direction) 'Update the ServerMessage object
-                    MessageMutex.ReleaseMutex() 'Release the Mutex
-                Catch ex As Exception
-                End Try
-            Case Scenario.Battle
-                CombatSpace.UpdateCombatSenario() 'Update the Combat object
-                '-----Set Warp----- 'See what 'warp' actions are necessary
-                Select Case Warping
-                    Case Warp.Entering 'The Player wants to enter 'warp'
-                        Warping = Warp.Warping 'Set the warp
-                        For Each i As Ship In CombatSpace.shipList
-                            i.InCombat = False 'Take all ships out of combat
-                        Next
-                        WarpCounter = 50 'Set the count down to 50 10ths of a second
-                    Case Warp.Warping 'The Player is 'warping'
-                        If WarpCounter = 0 Then 'Exit 'warp'
-                            Warping = Warp.None 'Reset the 'warp' state
-                            WarpDriveCheck = False 'Force the release of the warp key
-                            State = Scenario.Transit 'Resest the Galaxy's state
-                            Sector.centerFleet.Position = New Point(Sector.centerFleet.Position.X +
-                                                                    (Math.Cos(Sector.centerFleet.Direction) * 1.5 * Fleet.DetectRange), Sector.centerFleet.Position.Y +
-                                                                    (Math.Sin(Sector.centerFleet.Direction) * 1.5 * Fleet.DetectRange))
-                            'Move the Players fleet out of detection range in case they're running
-                            Fleet.SetStats_Call() 'Update the Stats of all Fleets
-                        Else 'Count down
-                            WarpCounter = WarpCounter - 1
+                If stateToSend <> -1 Then
+                    If ThrottleUpCheck = True Then 'Accelerate the Players Fleet
+                        Sector.centerFleet.Speed.current = Sector.centerFleet.Speed.current + Sector.centerFleet.Acceleration.current
+                        If Sector.centerFleet.Speed.current > Sector.centerFleet.Speed.max Then
+                            Sector.centerFleet.Speed.current = Sector.centerFleet.Speed.max
                         End If
-                End Select
-                ReDim craftPositions(CombatSpace.shipList.Count - 1) 'Clear and resize the Array of GraphicPosition objects apropriately
-                '------------------
+                    End If
+                    If ThrottleDownCheck = True Then 'Decelerate the Players Fleet
+                        Sector.centerFleet.Speed.current = Sector.centerFleet.Speed.current - Sector.centerFleet.Acceleration.current
+                        If Sector.centerFleet.Speed.current < 0 Then
+                            Sector.centerFleet.Speed.current = 0
+                        End If
+                    End If
+                    If TurnRightCheck = True Then 'Turn the Players Fleet right
+                        Sector.centerFleet.Direction = Helm.NormalizeDirection(Sector.centerFleet.Direction + Sector.centerFleet.TurnSpeed)
+                    End If
+                    If TurnLeftCheck = True Then 'Turn the Players Fleet left
+                        Sector.centerFleet.Direction = Helm.NormalizeDirection(Sector.centerFleet.Direction - Sector.centerFleet.TurnSpeed)
+                    End If
+                    centerSector.UpdateSector()
 
-                '-----Set new positions----- 'Create new GraphicPosition objects
-                For i As Integer = 0 To ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList.Count - 1
-                    Dim x As Integer = ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i).Position.X -
-                        ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Position.X 'The X coordinate of the Ship relative to the
-                    'Players Ship
-                    Dim y As Integer = ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i).Position.Y -
-                        ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Position.Y 'The Y coordinate of the Ship relative to the
-                    'Players Ship
-                    craftPositions(i) = New GraphicPosition(CombatSpace.shipList(i).MyAllegence, CombatSpace.shipList(i).Format,
-                                                            CombatSpace.shipList(i).Hit, CombatSpace.shipList(i).Firing,
-                                                            x, y, CombatSpace.shipList(i).Direction) 'A GraphicPosition object to send to the
-                    'Client's representing the Ship
-                    'Create a new GraphicPosition object
-                Next
-                '---------------------------
+                    ReDim craftPositions(centerSector.fleetList.Count + centerSector.spaceStations.Length - 1) 'Clear and resize the Array of GraphicPosition objects apropriately
+                    '-----Set new positions----- 'Create new GraphicPosition positions for the Fleets and SpaceStations
+                    For i As Integer = 0 To centerSector.fleetList.Count - 1
+                        Dim x As Integer = centerSector.fleetList(i).Position.X - Sector.centerFleet.Position.X 'The X coordinate relative to the
+                        'center Fleet
+                        Dim y As Integer = centerSector.fleetList(i).Position.Y - Sector.centerFleet.Position.Y 'The Y coordinate relative to the
+                        'center Fleet
+                        craftPositions(i) = New GraphicPosition(centerSector.fleetList(i).MyAllegence, centerSector.fleetList(i).Format,
+                                                                False, False, x, y, centerSector.fleetList(i).Direction) 'Create a new GraphicPosition object
+                    Next
+                    For i As Integer = 0 To centerSector.spaceStations.Length - 1
+                        Dim X As Integer = centerSector.spaceStations(i).Position.X - Sector.centerFleet.Position.X 'The X coordinate relative to the
+                        'center Fleet
+                        Dim Y As Integer = centerSector.spaceStations(i).Position.Y - Sector.centerFleet.Position.Y 'The Y coordinate relative to the
+                        'center Fleet
+                        craftPositions(centerSector.fleetList.Count + i) = New GraphicPosition(centerSector.spaceStations(i).MyAllegence,
+                                                                                                ShipLayout.Formats.Station, False, False,
+                                                                                                X, Y, 0)
+                    Next
+                    '---------------------------
+                End If
+                
+                MessageMutex.WaitOne() 'Wait till the Mutex is free
+                MessageToSend = New ServerMessage(-1, Sector.centerFleet.Speed, Sector.centerFleet.Direction,
+                                                       Sector.centerFleet.ShipList.Count, Nothing, craftPositions,
+                                                       Warping, stateToSend) 'Update the ServerMessage object
+                MessageMutex.ReleaseMutex() 'Release the Mutex
+            Case Scenario.Battle
+                If stateToSend <> -1 Then
+                    CombatSpace.UpdateCombatSenario() 'Update the Combat object
+                    '-----Set Warp----- 'See what 'warp' actions are necessary
+                    Select Case Warping
+                        Case Warp.Entering 'The Player wants to enter 'warp'
+                            Warping = Warp.Warping 'Set the warp
+                            For Each i As Ship In CombatSpace.shipList
+                                i.InCombat = False 'Take all ships out of combat
+                            Next
+                            WarpCounter = 50 'Set the count down to 50 10ths of a second
+                        Case Warp.Warping 'The Player is 'warping'
+                            If WarpCounter = 0 Then 'Exit 'warp'
+                                Warping = Warp.None 'Reset the 'warp' state
+                                WarpDriveCheck = False 'Force the release of the warp key
+                                State = Scenario.Transit 'Resest the Galaxy's state
+                                Sector.centerFleet.Position = New Point(Sector.centerFleet.Position.X +
+                                                                        (Math.Cos(Sector.centerFleet.Direction) * 200),
+                                                                        Sector.centerFleet.Position.Y +
+                                                                        (Math.Sin(Sector.centerFleet.Direction) * 200))
+                                'Move the Players fleet out of detection range in case they're running
+                                Fleet.SetStats_Call() 'Update the Stats of all Fleets
+                            Else 'Count down
+                                WarpCounter = WarpCounter - 1
+                            End If
+                    End Select
+                    ReDim craftPositions(CombatSpace.shipList.Count - 1) 'Clear and resize the Array of GraphicPosition objects apropriately
+                    '------------------
+
+                    '-----Set new positions----- 'Create new GraphicPosition objects
+                    For i As Integer = 0 To ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList.Count - 1
+                        Dim x As Integer = ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i).Position.X -
+                            ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Position.X 'The X coordinate of the Ship relative to the
+                        'Players Ship
+                        Dim y As Integer = ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i).Position.Y -
+                            ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Position.Y 'The Y coordinate of the Ship relative to the
+                        'Players Ship
+                        craftPositions(i) = New GraphicPosition(CombatSpace.shipList(i).MyAllegence, CombatSpace.shipList(i).Format,
+                                                                CombatSpace.shipList(i).Hit, CombatSpace.shipList(i).Firing,
+                                                                x, y, CombatSpace.shipList(i).Direction) 'A GraphicPosition object to send to the
+                        'Client's representing the Ship
+                        'Create a new GraphicPosition object
+                    Next
+                    '---------------------------
+                End If
                 Dim targetIndex As Integer = If(CombatSpace.centerShip.Helm.Target IsNot Nothing, CombatSpace.centerShip.Helm.Target.Index, -1)
                 'Get the index of the Player's targeted Ship if there is one
-                Try
-                    MessageMutex.WaitOne() 'Wait for the Mutex to be free
-                    MessageToSend = New ServerMessage(targetIndex, CombatSpace.centerShip, craftPositions, Warping, State,
-                                                      CombatSpace.centerShip.Speed, CombatSpace.centerShip.Direction) 'Update the ServerMessage object
-                    MessageMutex.ReleaseMutex() 'Release the Mutex
-                Catch ex As Exception
-                End Try
+
+                MessageMutex.WaitOne() 'Wait for the Mutex to be free
+                MessageToSend = New ServerMessage(targetIndex, CombatSpace.centerShip.Speed, CombatSpace.centerShip.Direction,
+                                                      -1, CombatSpace.centerShip, craftPositions, Warping, stateToSend) 'Update the
+                'ServerMessage object
+                MessageMutex.ReleaseMutex() 'Release the Mutex
         End Select
     End Sub
 

@@ -48,12 +48,12 @@
             ConsoleWindow.OutputScreen.Controls.Add(btnExit)
             ConsoleWindow.OutputScreen.Controls.Add(btnStartClient)
             ConsoleWindow.OutputScreen.Controls.Add(btnStartServer)
+            My.Computer.Audio.Play(My.Resources.The_Adventure_Begins_Extended, AudioPlayMode.BackgroundLoop)
         End Sub
 
         Private Shared Sub btnStartServer_Click() Handles btnStartServer.Click 'Starts the Server
-            If ConsoleWindow.GameServer.GameWorld IsNot Nothing Then
-                ConsoleWindow.GameServer.GameWorld.GalaxyTimer.Enabled = False
-                ConsoleWindow.ServerThread.Abort()
+            If ConsoleWindow.GameServer.GameWorld IsNot Nothing Then 'There is already a Server Currently Running
+                ConsoleWindow.GameServer.CloseServer() 'Closes the Server
             End If
             ConsoleWindow.GameServer.StartServer() 'Starts the Server
         End Sub
@@ -174,7 +174,6 @@
     End Class
 
     Public Class GamePlayLayout
-        Public Shared Displaying As Boolean = False
         Public Shared WithEvents picDisplayGraphics As System.Windows.Forms.PictureBox
         Public Shared WithEvents pnlDisplays As System.Windows.Forms.Panel
         Public Shared WithEvents lblHull As System.Windows.Forms.Label
@@ -193,12 +192,16 @@
         Public Shared WithEvents btnMainMenu As System.Windows.Forms.Button
         Public Shared WithEvents btnEndGame As System.Windows.Forms.Button
         Public Shared WithEvents UserKeyInterfacer As System.Windows.Forms.Button
+        Public Shared WithEvents btnPausePlay As System.Windows.Forms.Button
+        Public Shared Displaying As Boolean = False
 
         Public Sub New()
             ConsoleWindow.OutputScreen.Controls.Clear()
             '-----Initialize Controls-----
             picDisplayGraphics = New System.Windows.Forms.PictureBox()
             pnlDisplays = New System.Windows.Forms.Panel()
+            lblTempRate = New System.Windows.Forms.Label()
+            lblCoreTemp = New System.Windows.Forms.Label()
             lblThrottle = New System.Windows.Forms.Label()
             lblEngines = New System.Windows.Forms.Label()
             lblPowerCore = New System.Windows.Forms.Label()
@@ -209,12 +212,11 @@
             lblRight = New System.Windows.Forms.Label()
             lblLeft = New System.Windows.Forms.Label()
             lblHull = New System.Windows.Forms.Label()
-            lblCoreTemp = New System.Windows.Forms.Label()
-            lblTempRate = New System.Windows.Forms.Label()
             pnlMenuButtons = New System.Windows.Forms.Panel()
             btnEndGame = New System.Windows.Forms.Button()
             btnMainMenu = New System.Windows.Forms.Button()
             UserKeyInterfacer = New System.Windows.Forms.Button()
+            btnPausePlay = New System.Windows.Forms.Button()
             CType(picDisplayGraphics, System.ComponentModel.ISupportInitialize).BeginInit()
             pnlDisplays.SuspendLayout()
             pnlMenuButtons.SuspendLayout()
@@ -251,6 +253,18 @@
             pnlDisplays.Name = "pnlDisplays"
             pnlDisplays.Size = New System.Drawing.Size(560, 338)
             pnlDisplays.TabIndex = 1
+            '
+            'lblTempRate
+            '
+            lblTempRate.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
+            lblTempRate.Font = New System.Drawing.Font("Lucida Console", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+            lblTempRate.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft
+            lblTempRate.Location = New System.Drawing.Point(295, 295)
+            lblTempRate.Name = "lblTempRate"
+            lblTempRate.Size = New System.Drawing.Size(200, 30)
+            lblTempRate.TabIndex = 11
+            lblTempRate.Text = "Temp Rate: 0"
+            lblTempRate.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
             '
             'lblCoreTemp
             '
@@ -387,6 +401,7 @@
             'pnlMenuButtons
             '
             pnlMenuButtons.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
+            pnlMenuButtons.Controls.Add(btnPausePlay)
             pnlMenuButtons.Controls.Add(btnEndGame)
             pnlMenuButtons.Controls.Add(btnMainMenu)
             pnlMenuButtons.Location = New System.Drawing.Point(612, 350)
@@ -425,17 +440,16 @@
             UserKeyInterfacer.TabIndex = 0
             UserKeyInterfacer.UseVisualStyleBackColor = True
             '
-            'lblTempRate
+            'btnPausePlay
             '
-            lblTempRate.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
-            lblTempRate.Font = New System.Drawing.Font("Lucida Console", 12.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-            lblTempRate.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft
-            lblTempRate.Location = New System.Drawing.Point(295, 295)
-            lblTempRate.Name = "lblTempRate"
-            lblTempRate.Size = New System.Drawing.Size(200, 30)
-            lblTempRate.TabIndex = 11
-            lblTempRate.Text = "Temp Rate: 0"
-            lblTempRate.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
+            btnPausePlay.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+            btnPausePlay.Font = New System.Drawing.Font("Lucida Console", 14.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+            btnPausePlay.Location = New System.Drawing.Point(209, 107)
+            btnPausePlay.Name = "btnPausePlay"
+            btnPausePlay.Size = New System.Drawing.Size(140, 40)
+            btnPausePlay.TabIndex = 3
+            btnPausePlay.Text = "Pause"
+            btnPausePlay.UseVisualStyleBackColor = True
             '--------------------------
 
             '-----Add Controls-----
@@ -459,8 +473,8 @@
         End Sub
 
         Public Shared Sub btnMainMenu_Click() Handles btnMainMenu.Click 'Returns to the Main Menu
-            ConsoleWindow.OutputScreen.MyClient.MyConnector.Close() 'Closes the Client's socket connection to the Server
-            ConsoleWindow.OutputScreen.MyClient.Tick.Enabled = False
+            ConsoleWindow.OutputScreen.MyClient.Tick.Enabled = False 'Stop Updating the Screen's image
+            ConsoleWindow.OutputScreen.MyClient.Connected = False 'Lets the Loop finish
             Dim temp As New MenuScreenLayout 'Sets the screen's GUI to the MenuScreenLayout layout
         End Sub
 
@@ -468,9 +482,24 @@
             End
         End Sub
 
+        Private Shared Sub btnPausePlay_Click() Handles btnPausePlay.Click
+            If ConsoleWindow.GameServer IsNot Nothing Then
+                If ConsoleWindow.GameServer.GameWorld.Paused = False Then
+                    ConsoleWindow.GameServer.GameWorld.Paused = True
+                    btnPausePlay.Text = "Resume"
+                    Console.WriteLine("Game is Paused")
+                    UserKeyInterfacer.Focus()
+                Else
+                    ConsoleWindow.GameServer.GameWorld.Paused = False
+                    btnPausePlay.Text = "Pause"
+                    Console.WriteLine("Game has been Resumed")
+                    UserKeyInterfacer.Focus()
+                End If
+            End If
+        End Sub
+
         Private Shared Sub UserKeyInterfacer_PreviewKeyDown(ByVal sender As Object, ByVal e As PreviewKeyDownEventArgs) Handles UserKeyInterfacer.PreviewKeyDown
             'Captures PreviewKeyDown events when the User presses a key
-            ConsoleWindow.OutputScreen.MyClient.MyMessageMutex.WaitOne() 'Wait till the Mutex is free
             Select Case ConsoleWindow.OutputScreen.MyClient.myMessage.Station 'Selects the Station that the User is in control of
                 Case Station.StationTypes.Helm
                     If e.KeyCode = Keys.Up Then 'Speed Up
@@ -517,11 +546,9 @@
                         ConsoleWindow.OutputScreen.MyClient.SendCommand(Engineering.Commands.Cool, 1)
                     End If
             End Select
-            ConsoleWindow.OutputScreen.MyClient.MyMessageMutex.ReleaseMutex() 'Release the Mutex
         End Sub
         Private Shared Sub UserKeyInterfacer_KeyUp(ByVal sender As Object, ByVal e As KeyEventArgs) Handles UserKeyInterfacer.KeyUp
             'Captures KeyUp events when the User releases a Key
-            ConsoleWindow.OutputScreen.MyClient.MyMessageMutex.WaitOne() 'Wait for the Mutex to be free
             Select Case ConsoleWindow.OutputScreen.MyClient.myMessage.Station
                 Case Station.StationTypes.Helm
                     If e.KeyCode = Keys.Up Then 'Speed Up
@@ -568,7 +595,6 @@
                         ConsoleWindow.OutputScreen.MyClient.SendCommand(Engineering.Commands.Cool, 0)
                     End If
             End Select
-            ConsoleWindow.OutputScreen.MyClient.MyMessageMutex.ReleaseMutex() 'Release the Mutex
         End Sub
 
     End Class
@@ -626,37 +652,37 @@
             Screen.GamePlayLayout.lblThrottle.Text = "Speed: " +
                 CStr(CInt(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.Speed.current)) +
                 "/" + CStr(CInt(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.Speed.max)) 'Displays the current Speed and max Speed
-            If ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip IsNot Nothing Then 'Their is system information to display
+            If ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterCraft IsNot Nothing Then 'Their is system information to display
                 If MyClient.IncomingMessage.Positions(0).Hit = True Then 'Make the Hull label flash orange
                     Screen.GamePlayLayout.lblHull.BackColor = Color.Orange
                 Else 'Make the Hull label Transparent
                     Screen.GamePlayLayout.lblHull.BackColor = Color.Transparent
                 End If
                 Screen.GamePlayLayout.lblHull.Text = "Hull: " +
-                    CStr(Math.Round(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Hull.current, 2)) +
-                    "/" + CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Hull.max) 'Displays the current Hull and max Hull
+                    CStr(Math.Round(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterCraft.Hull.current, 2)) +
+                    "/" + CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterCraft.Hull.max) 'Displays the current Hull and max Hull
 
                 Screen.GamePlayLayout.lblForward.Text = "Fore: " +
-                    CStr(CInt(MyClient.IncomingMessage.CenterShip.Shielding.SubSystem.Defences(
+                    CStr(CInt(MyClient.IncomingMessage.CenterCraft.Shielding.SubSystem.Defences(
                                 Shields.Sides.FrontShield).current)) +
-                    "/" + CStr(MyClient.IncomingMessage.CenterShip.Shielding.SubSystem.Defences(
+                    "/" + CStr(MyClient.IncomingMessage.CenterCraft.Shielding.SubSystem.Defences(
                             Shields.Sides.FrontShield).max) 'Displays the current Fore Shield and max Fore Shield
                 Screen.GamePlayLayout.lblRight.Text = "Starboard: " +
-                    CStr(CInt(MyClient.IncomingMessage.CenterShip.Shielding.SubSystem.Defences(
+                    CStr(CInt(MyClient.IncomingMessage.CenterCraft.Shielding.SubSystem.Defences(
                                 Shields.Sides.RightShield).current)) +
-                    "/" + CStr(MyClient.IncomingMessage.CenterShip.Shielding.SubSystem.Defences(
+                    "/" + CStr(MyClient.IncomingMessage.CenterCraft.Shielding.SubSystem.Defences(
                             Shields.Sides.RightShield).max) 'Displays the current Starboard Shield and max Starboard Shield
                 Screen.GamePlayLayout.lblRear.Text = "Aft: " +
-                    CStr(CInt(MyClient.IncomingMessage.CenterShip.Shielding.SubSystem.Defences(
+                    CStr(CInt(MyClient.IncomingMessage.CenterCraft.Shielding.SubSystem.Defences(
                                 Shields.Sides.BackShield).current)) +
-                    "/" + CStr(MyClient.IncomingMessage.CenterShip.Shielding.SubSystem.Defences(
+                    "/" + CStr(MyClient.IncomingMessage.CenterCraft.Shielding.SubSystem.Defences(
                             Shields.Sides.BackShield).max) 'Displays the current Aft Shield and max Aft Shield
                 Screen.GamePlayLayout.lblLeft.Text = "Port: " +
-                    CStr(CInt(MyClient.IncomingMessage.CenterShip.Shielding.SubSystem.Defences(
+                    CStr(CInt(MyClient.IncomingMessage.CenterCraft.Shielding.SubSystem.Defences(
                                 Shields.Sides.LeftShield).current)) +
-                    "/" + CStr(MyClient.IncomingMessage.CenterShip.Shielding.SubSystem.Defences(
+                    "/" + CStr(MyClient.IncomingMessage.CenterCraft.Shielding.SubSystem.Defences(
                             Shields.Sides.LeftShield).max) 'Displays the current Port Shield and max Port Shield
-                Select Case MyClient.IncomingMessage.CenterShip.Shielding.LastHit 'Select which Shield was last hit
+                Select Case MyClient.IncomingMessage.CenterCraft.Shielding.LastHit 'Select which Shield was last hit
                     Case Shields.Sides.FrontShield 'Fore
                         Screen.GamePlayLayout.lblForward.BackColor = Color.LightBlue
                         Screen.GamePlayLayout.lblRight.BackColor = Color.Transparent
@@ -696,19 +722,22 @@
                 'Displays the integrety of the Secondary Weapon
 
                 Screen.GamePlayLayout.lblPowerCore.Text = "Power Core: " +
-                    CStr(MyClient.IncomingMessage.CenterShip.Engineering.SubSystem.PowerCore.current) +
-                    "/" + CStr(MyClient.IncomingMessage.CenterShip.Engineering.SubSystem.PowerCore.max)
+                    CStr(MyClient.IncomingMessage.CenterCraft.Engineering.SubSystem.PowerCore.current) +
+                    "/" + CStr(MyClient.IncomingMessage.CenterCraft.Engineering.SubSystem.PowerCore.max)
                 'Displays the integrety of the Power Core
                 Screen.GamePlayLayout.lblEngines.Text = "Engines: " +
-                    CStr(MyClient.IncomingMessage.CenterShip.Engineering.SubSystem.Engines.current) +
-                    "/" + CStr(MyClient.IncomingMessage.CenterShip.Engineering.SubSystem.Engines.max)
+                    CStr(MyClient.IncomingMessage.CenterCraft.Engineering.SubSystem.Engines.current) +
+                    "/" + CStr(MyClient.IncomingMessage.CenterCraft.Engineering.SubSystem.Engines.max)
                 'Displays the integrety of the Engines
                 Screen.GamePlayLayout.lblCoreTemp.Text = "Core Temp: " +
-                    CStr(Math.Round(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Engineering.Heat, 2)) + "*e5/100*e5"
+                    CStr(Math.Round(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterCraft.Engineering.Heat, 2)) + "*e5/100*e5"
                 'Displays the temperature of the Power Core
                 Screen.GamePlayLayout.lblTempRate.Text = "Temp Rate: " +
-                    CStr(Math.Round(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterShip.Engineering.Rate, 2)) + "*e5"
+                    CStr(Math.Round(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterCraft.Engineering.Rate, 2)) + "*e5"
                 'Displays the rate of increase in the Power Cores Temperature
+            Else 'Display Fleet Stats
+                Screen.GamePlayLayout.lblHull.Text = "Ship Count: " +
+                    CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.ShipCount) 'The number of Ships in the Fleet
             End If
         ElseIf MyClient.Connected = False Then 'Return to the Main Menu
             Dim temp As New MenuScreenLayout 'Set the screens GUI to the MenuScreenLayout layout
@@ -717,7 +746,11 @@
     End Sub
 
     Private Sub Screen_FormClosing(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.FormClosing
-        ConsoleWindow.ServerThread.Abort()
+        If ConsoleWindow.GameServer.GameWorld IsNot Nothing Then 'There's an open Server
+            ConsoleWindow.GameServer.CloseServer() 'Closes the Server
+            ConsoleWindow.ServerThread.Join() 'Waits for the Server Thread to finish
+        End If
+        ConsoleWindow.ServerThread.Join()
         End
     End Sub
 End Class

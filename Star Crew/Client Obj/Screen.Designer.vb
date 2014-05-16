@@ -22,7 +22,7 @@ Partial Class Screen
     'Do not modify it using the code editor.
     <System.Diagnostics.DebuggerStepThrough()> _
     Private Sub InitializeComponent()
-        '-----Initialize Controls-----
+        '-----Initialise Controls-----
         '-----------------------------
         Me.SuspendLayout()
         '-----Control Settings-----

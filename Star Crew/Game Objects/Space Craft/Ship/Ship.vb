@@ -2,7 +2,7 @@
 Public Class Ship 'A Ship that flies in combat and fights other Ships
     Inherits SpaceCraft 'The base Class for all Ships and Fleets
     <NonSerialized()>
-    Public InCombat As Boolean = False 'A Boolean value indecating whether the Ship is in combat
+    Public InCombat As Boolean = False
     <NonSerialized()>
     Public TargetLock As Boolean = False 'A Boolean value indecating whether the Ship is allowed to switch targets
     Public Hull As StatDbl 'A StatDbl object representing the current and max Hull values
@@ -134,23 +134,17 @@ Public Class Ship 'A Ship that flies in combat and fights other Ships
         End If
     End Sub
 
-    Private Shared Event ShipUpdate() 'An Event that updates all Ships
-    Public Shared Sub UpdateShip_Call() 'Raises the ShipUpdate Event
-        RaiseEvent ShipUpdate()
-    End Sub
-    Public Overridable Sub UpdateShip_Handle() Handles MyClass.ShipUpdate 'Updates the Ship
-        If InCombat = True Then 'The Ship Should be Updated
-            Hit = False 'Reset the Value
-            Firing = False 'Reset the Value
-            Batteries.Update() 'Selects the Best Target and turns the Weapons to face it
-            Engineering.Update() 'Distributes power to all Stations and repairs damaged systems
-            Shielding.Update() 'Distribute power among the 4 shields
-            Helm.Update() 'Pilots the Ship towards the selected target
-            Position.X = Position.X + (Math.Cos(Direction) * (Speed.current * (Engineering.SubSystem.Engines.current / Engineering.SubSystem.Engines.max)))
-            'Sets the new X coordinate
-            Position.Y = Position.Y + (Math.Sin(Direction) * (Speed.current * (Engineering.SubSystem.Engines.current / Engineering.SubSystem.Engines.max)))
-            'Sets the new Y coordinate
-        End If
+    Public Overridable Sub UpdateShip() 'Updates the Ship
+        Hit = False 'Reset the Value
+        Firing = False 'Reset the Value
+        Batteries.Update() 'Selects the Best Target and turns the Weapons to face it
+        Engineering.Update() 'Distributes power to all Stations and repairs damaged systems
+        Shielding.Update() 'Distribute power among the 4 shields
+        Helm.Update() 'Pilots the Ship towards the selected target
+        Position.X = Position.X + (Math.Cos(Direction) * (Speed.current * (Engineering.SubSystem.Engines.current / Engineering.SubSystem.Engines.max)))
+        'Sets the new X coordinate
+        Position.Y = Position.Y + (Math.Sin(Direction) * (Speed.current * (Engineering.SubSystem.Engines.current / Engineering.SubSystem.Engines.max)))
+        'Sets the new Y coordinate
     End Sub
 
 End Class

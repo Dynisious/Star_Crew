@@ -5,6 +5,7 @@
     Public ServerThread As Threading.Thread 'A Thread object for GameServer
 
     Public Sub Main() 'Starts the application
+        clientThread.Start() 'Opens the GUI
         Console.WriteLine("-----Star Crew-----")
         Console.WriteLine("for help with commands type '/help'" + Environment.NewLine +
                           Environment.NewLine +
@@ -35,12 +36,8 @@
                           "Yellow: Yellow indecates a station which will Repair all ships in a Fleet" + Environment.NewLine +
                           "up to 40% hull." + Environment.NewLine +
                           "Interaction: To interact with a Fleet collide your Fleet into it." + Environment.NewLine +
-                          "Objective: The Objective of this game is to eleminate all Enemy Fleets." + Environment.NewLine +
-                          Environment.NewLine)
-        clientThread.Start() 'Opens the GUI
-
-        While True 'Loop to keep the program running
-        End While
+                          "Objective: The Objective of this game is to eleminate all Enemy Fleets." + Environment.NewLine)
+        My.Computer.Audio.Play(My.Resources.The_Adventure_Begins_Extended, AudioPlayMode.BackgroundLoop)
     End Sub
 
 End Module
