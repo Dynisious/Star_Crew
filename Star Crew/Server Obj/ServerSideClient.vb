@@ -17,17 +17,21 @@ Public Class ServerSideClient 'An object that sends and receives messages too an
 
     Public Sub DecodeMessage() 'Receive a message from the Client
         If MyStation = Station.StationTypes.Max Then 'The Client is connecting
-            While BytesReceived < 4 'Receive 4 Bytes to convert into MyStation
-                BytesReceived = BytesReceived + Receive(ByteBuff, BytesReceived, 4 - BytesReceived, SocketFlags.None)
-            End While
-            MyStation = BitConverter.ToInt32(ByteBuff, 0) 'Convert the 4 Bytes into the MyStation Integer
-            For Each i As ServerSideClient In ConsoleWindow.GameServer.Clients 'Check that the Station is free
-                If ReferenceEquals(Me, i) = False And i.MyStation = MyStation Then 'A different Client already has this Station
-                    GameServer.RemoveClient(Me, False) 'Remove this ServerSideClient from the List but do not reset control of the Station
-                    Exit Sub 'Exit the Sub here
-                End If
-            Next
-            Console.WriteLine((MyStation.ToString() + ": Has been connected")) 'The connection was succesful
+            Try
+                While BytesReceived < 4 'Receive 4 Bytes to convert into MyStation
+                    BytesReceived = BytesReceived + Receive(ByteBuff, BytesReceived, 4 - BytesReceived, SocketFlags.None)
+                End While
+                MyStation = BitConverter.ToInt32(ByteBuff, 0) 'Convert the 4 Bytes into the MyStation Integer
+                For Each i As ServerSideClient In ConsoleWindow.GameServer.Clients 'Check that the Station is free
+                    If ReferenceEquals(Me, i) = False And i.MyStation = MyStation Then 'A different Client already has this Station
+                        GameServer.RemoveClient(Me, False) 'Remove this ServerSideClient from the List but do not reset control of the Station
+                        Exit Sub 'Exit the Sub here
+                    End If
+                Next
+                Console.WriteLine((MyStation.ToString() + ": Has been connected")) 'The connection was succesful
+            Catch ex As SocketException
+                GameServer.RemoveClient(Me, False)
+            End Try
             Select Case MyStation 'Set the selected Station to be Player controled
                 Case Station.StationTypes.Helm
                     ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Helm.PlayerControled = True
@@ -38,7 +42,7 @@ Public Class ServerSideClient 'An object that sends and receives messages too an
                 Case Station.StationTypes.Engineering
                     ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Engineering.PlayerControled = True
             End Select
-        Else 'Receive a ClientMessage object
+        ElseIf Available > 0 Then 'Receive a ClientMessage object
             BytesReceived = 0
             BytesToReceive = 0
             Try

@@ -188,6 +188,15 @@ Namespace My.Resources
         End Property
         
         '''<summary>
+        '''  Looks up a localized resource of type System.IO.UnmanagedMemoryStream similar to System.IO.MemoryStream.
+        '''</summary>
+        Friend ReadOnly Property Warp_Audio() As System.IO.UnmanagedMemoryStream
+            Get
+                Return ResourceManager.GetStream("Warp_Audio", resourceCulture)
+            End Get
+        End Property
+        
+        '''<summary>
         '''  Looks up a localized resource of type System.Drawing.Bitmap.
         '''</summary>
         Friend ReadOnly Property Warping() As System.Drawing.Bitmap

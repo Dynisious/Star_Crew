@@ -53,7 +53,7 @@
 
         Private Shared Sub btnStartServer_Click() Handles btnStartServer.Click 'Starts the Server
             If ConsoleWindow.GameServer.GameWorld IsNot Nothing Then 'There is already a Server Currently Running
-                ConsoleWindow.GameServer.CloseServer() 'Closes the Server
+                ConsoleWindow.GameServer.ServerLoop = False  'Closes the Server
             End If
             ConsoleWindow.GameServer.StartServer() 'Starts the Server
         End Sub
@@ -160,7 +160,7 @@
 
                 If count = 3 Then 'A full IP address was given
                     ConsoleWindow.OutputScreen.MyClient = New Client(txtIP.Text, DomainUpDown1.SelectedIndex) 'Create a new Client object
-                    If ConsoleWindow.OutputScreen.MyClient.Connected = True Then 'Check if the connection to the Server was successful
+                    If ConsoleWindow.OutputScreen.MyClient.ClientLoop = True Then 'Check if the connection to the Server was successful
                         Dim temp As New GamePlayLayout 'Set the screen's GUI to the GamePlayLayout layout
                     End If
                 Else 'A full IP was not given
@@ -465,7 +465,7 @@
             pnlMenuButtons.ResumeLayout(False)
             '--------------------------
             UserKeyInterfacer.Focus()
-            If ConsoleWindow.OutputScreen.MyClient.Connected = False Then
+            If ConsoleWindow.OutputScreen.MyClient.ClientLoop = False Then
                 Dim temp As New MenuScreenLayout
             Else
                 ConsoleWindow.OutputScreen.Tick.Enabled = True
@@ -474,7 +474,7 @@
 
         Public Shared Sub btnMainMenu_Click() Handles btnMainMenu.Click 'Returns to the Main Menu
             ConsoleWindow.OutputScreen.MyClient.Tick.Enabled = False 'Stop Updating the Screen's image
-            ConsoleWindow.OutputScreen.MyClient.Connected = False 'Lets the Loop finish
+            ConsoleWindow.OutputScreen.MyClient.ClientLoop = False 'Lets the Loop finish
             Dim temp As New MenuScreenLayout 'Sets the screen's GUI to the MenuScreenLayout layout
         End Sub
 
@@ -488,6 +488,7 @@
                     ConsoleWindow.GameServer.GameWorld.Paused = True
                     btnPausePlay.Text = "Resume"
                     Console.WriteLine("Game is Paused")
+                    My.Computer.Audio.Stop()
                     UserKeyInterfacer.Focus()
                 Else
                     ConsoleWindow.GameServer.GameWorld.Paused = False
@@ -546,6 +547,13 @@
                         ConsoleWindow.OutputScreen.MyClient.SendCommand(Engineering.Commands.Cool, 1)
                     End If
             End Select
+            If e.KeyCode = Keys.Z Then
+                If ConsoleWindow.OutputScreen.MyClient.Zoom = 100 Then
+                    ConsoleWindow.OutputScreen.MyClient.Zoom = 30
+                Else
+                    ConsoleWindow.OutputScreen.MyClient.Zoom = 100
+                End If
+            End If
         End Sub
         Private Shared Sub UserKeyInterfacer_KeyUp(ByVal sender As Object, ByVal e As KeyEventArgs) Handles UserKeyInterfacer.KeyUp
             'Captures KeyUp events when the User releases a Key
@@ -647,7 +655,7 @@
     End Sub
 
     Private Sub UpdateScreen_Handle() Handles Tick.Tick 'Updates the 'stats' displayed on the screen
-        If ConsoleWindow.OutputScreen.MyClient.Connected = True And ConsoleWindow.OutputScreen.MyClient.IncomingMessage IsNot Nothing Then
+        If ConsoleWindow.OutputScreen.MyClient.ClientLoop = True And ConsoleWindow.OutputScreen.MyClient.IncomingMessage IsNot Nothing Then
             'There is information to display
             Screen.GamePlayLayout.lblThrottle.Text = "Speed: " +
                 CStr(CInt(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.Speed.current)) +
@@ -739,7 +747,7 @@
                 Screen.GamePlayLayout.lblHull.Text = "Ship Count: " +
                     CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.ShipCount) 'The number of Ships in the Fleet
             End If
-        ElseIf MyClient.Connected = False Then 'Return to the Main Menu
+        ElseIf MyClient.ClientLoop = False Then 'Return to the Main Menu
             Dim temp As New MenuScreenLayout 'Set the screens GUI to the MenuScreenLayout layout
             Tick.Enabled = False 'Stop the Timer to update the Stats
         End If
@@ -747,10 +755,8 @@
 
     Private Sub Screen_FormClosing(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.FormClosing
         If ConsoleWindow.GameServer.GameWorld IsNot Nothing Then 'There's an open Server
-            ConsoleWindow.GameServer.CloseServer() 'Closes the Server
-            ConsoleWindow.ServerThread.Join() 'Waits for the Server Thread to finish
+            ConsoleWindow.GameServer.ServerLoop = False  'Closes the Server
         End If
-        ConsoleWindow.ServerThread.Join()
         End
     End Sub
 End Class

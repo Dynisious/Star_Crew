@@ -65,7 +65,7 @@ Public Class Battery
                                 targetDirection = direction
                             End If
                         End If
-                        If distance < (((Parent.Speed.current - i.Speed.current) ^ 2) / Parent.Acceleration.current) Or
+                        If distance - Helm.MinimumDistance < (((Parent.Speed.current - i.Speed.current) ^ 2) / Parent.Acceleration.current) Or
                             distance < Helm.MinimumDistance Then
                             'The target is too close and must be evaded
                             ReDim Preserve Parent.Helm.evadeList(Parent.Helm.evadeList.Length)

@@ -2,7 +2,7 @@
     Inherits WeaponLayout
 
     Public Sub New()
-        Damage = New StatDbl(8, 8)
+        Damage = New StatDbl(11, 11)
         DamageType = Weapon.DamageTypes.Laser
         Ammo = New StatInt(2000, 2000)
         Integrety = New StatInt(100, 100)

@@ -12,7 +12,7 @@
     Public MovementState As FleetState = FleetState.Wander
 
     Public Sub New(ByVal nIndex As Integer, ByVal nAllegence As Galaxy.Allegence, ByVal nFormat As ShipLayout.Formats)
-        MyBase.New(nAllegence, nFormat, nIndex, New Point(Int(Rnd() * SpawnBox), Int(Rnd() * SpawnBox)))
+        MyBase.New(nAllegence, nFormat, nIndex, New Point(Int(Rnd() * SpawnBox / 3), Int(Rnd() * SpawnBox / 3)))
         Randomize()
         MyAllegence = nAllegence 'Sets the Fleets MyAllegence value to the specified Allegience
         Index = nIndex 'Sets the Fleets Index value to the specified index

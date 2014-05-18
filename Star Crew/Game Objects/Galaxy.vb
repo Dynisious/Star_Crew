@@ -6,6 +6,7 @@
         None 'Normal Space
         Entering 'Enter 'Warp'
         Warping 'Actively 'Warping'
+        Exiting 'Exiting 'Warp'
     End Enum
     Public Warping As Warp = Warp.None 'The current state of 'warp' the Galaxy is in
     Public WarpCounter As Integer 'An Integer representing how many 10ths of a second the galaxy 'warps'
@@ -237,6 +238,7 @@
     End Sub
     Private Sub WarpDrive()
         If WarpDriveCheck = True Then
+            ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Helm.MatchSpeed = False
             If ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Helm.Parent.Speed.current > Helm.MinimumSpeed Then
                 ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Helm.Parent.Speed.current =
                     ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Helm.Parent.Speed.current -
@@ -531,19 +533,26 @@
                             For Each i As Ship In CombatSpace.shipList
                                 i.InCombat = False 'Take all ships out of combat
                             Next
-                            WarpCounter = 50 'Set the count down to 50 10ths of a second
+                            WarpCounter = 50 'Set the count down to 8 seconds
                         Case Warp.Warping 'The Player is 'warping'
                             If WarpCounter = 0 Then 'Exit 'warp'
-                                Warping = Warp.None 'Reset the 'warp' state
-                                WarpDriveCheck = False 'Force the release of the warp key
-                                State = Scenario.Transit 'Resest the Galaxy's state
-                                Sector.centerFleet.Position = New Point(Sector.centerFleet.Position.X +
-                                                                        (Math.Cos(Sector.centerFleet.Direction) * 200),
-                                                                        Sector.centerFleet.Position.Y +
-                                                                        (Math.Sin(Sector.centerFleet.Direction) * 200))
-                                'Move the Players fleet out of detection range in case they're running
-                                Fleet.SetStats_Call() 'Update the Stats of all Fleets
+                                Warping = Warp.Exiting 'Set the 'warp' state
+                                WarpCounter = 20 'Set the count down to 2 seconds
                             Else 'Count down
+                                WarpCounter = WarpCounter - 1
+                            End If
+                        Case Warp.Exiting 'The Player is exiting 'Warp'
+                            If WarpCounter = 0 Then
+                                Warping = Warp.None 'Set the Player to not be 'warping'
+                                WarpDriveCheck = False 'Force the release of the warp key
+                                State = Scenario.Transit  'Resest the Galaxy's state
+                                Sector.centerFleet.Position = New Point(Sector.centerFleet.Position.X +
+                                                                        (Math.Cos(Sector.centerFleet.Direction) * 150),
+                                                                        Sector.centerFleet.Position.Y +
+                                                                        (Math.Sin(Sector.centerFleet.Direction) * 150))
+                                'Move the Players Fleet 200 places away
+                                Fleet.SetStats_Call() 'Update the Stats of all Fleets
+                            Else
                                 WarpCounter = WarpCounter - 1
                             End If
                     End Select

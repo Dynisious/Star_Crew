@@ -126,6 +126,11 @@
     <Compile Include="Game Objects\Space Craft\Ship\Weapons\Weapon Layouts\Thumper.vb" />
     <Compile Include="Graphics\GraphicPosition.vb" />
     <Compile Include="Game Objects\Sector.vb" />
+    <Compile Include="My Project\Resources.Designer.vb">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="Server Obj\ConsoleWindow.vb" />
     <Compile Include="Client Obj\Screen.vb">
       <SubType>Form</SubType>
@@ -138,11 +143,6 @@
     <Compile Include="My Project\Application.Designer.vb">
       <AutoGen>True</AutoGen>
       <DependentUpon>Application.myapp</DependentUpon>
-    </Compile>
-    <Compile Include="My Project\Resources.Designer.vb">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="My Project\Settings.Designer.vb">
       <AutoGen>True</AutoGen>
@@ -171,9 +171,9 @@
   <ItemGroup>
     <EmbeddedResource Include="My Project\Resources.resx">
       <Generator>VbMyResourcesResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.vb</LastGenOutput>
       <CustomToolNamespace>My.Resources</CustomToolNamespace>
       <SubType>Designer</SubType>
+      <LastGenOutput>Resources.Designer.vb</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Include="Client Obj\Screen.resx">
       <DependentUpon>Screen.vb</DependentUpon>
@@ -258,6 +258,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Timeless Voyage Extended.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Warp Audio.wav" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

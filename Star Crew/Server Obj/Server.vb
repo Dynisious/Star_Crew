@@ -19,25 +19,12 @@ Public Class Server 'Encapslates the Galaxy object of the Server
         ConsoleWindow.ServerThread.Start()
     End Sub
 
-    Public Sub CloseServer()
-        ServerLoop = False 'Lets the Servers Loop finish
-        GameWorld.GalaxyTimer.Stop() 'Stops the Galaxy Object from Updating
-        If Clients.Count > 0 Then 'There's Clients to dispose of
-            For i As Integer = 0 To Clients.Count - 1  'Remove any Clients left behind from the last session
-                Dim temp As ServerSideClient = Clients(0)
-                RemoveClient(temp, True)
-            Next
-        End If
-        MyListener.Stop()
-        GameWorld.MessageMutex.Close() 'Closes the Mutex Object
-    End Sub
-
     Public Sub StartCommunications() 'Begins the Communucations
         MyListener.Start() 'Starts Listening for connection requests
         Console.WriteLine("Server is now listening on " + MyListener.Server.LocalEndPoint.ToString) 'Write message to Console
 
         While ServerLoop = True
-            If MyListener.Pending() = True Then 'There's a pending connection request
+            If MyListener.Pending = True Then 'There's a pending connection request and the Server is not closing
                 AddClient(MyListener.AcceptSocket()) 'Add the new Client
             End If
             If Clients.Count > 0 Then 'There's Clients to talk with
@@ -45,54 +32,64 @@ Public Class Server 'Encapslates the Galaxy object of the Server
                 Listen() 'Listen for messages
             End If
         End While
+
+        GameWorld.GalaxyTimer.Stop() 'Stops the Galaxy Object from Updating
+        If Clients.Count > 0 Then 'There's Clients to dispose of
+            For i As Integer = 0 To Clients.Count - 1  'Remove any Clients left behind from the last session
+                Dim temp As ServerSideClient = Clients(0)
+                RemoveClient(temp, True)
+            Next
+        End If
     End Sub
 
     Private Sub Listen() 'Receive messages and handle connection requests
-        '-----Recieve Messages-----
-        sendReceiveList.AddRange(Clients) 'Add the Clients to the List
-        Socket.Select(sendReceiveList, Nothing, Nothing, -1) 'Wait till there's data to read
-        For Each i As ServerSideClient In sendReceiveList
-            i.DecodeMessage() 'Receive the message
-        Next
-        sendReceiveList.Clear() 'Clear the List
-        sendReceiveList.TrimExcess() 'Remove all spare spots from the List
-        '--------------------------
+        If Clients.Count > 0 Then
+            '-----Recieve Messages-----
+            sendReceiveList.AddRange(Clients) 'Add the Clients to the List
+            Socket.Select(sendReceiveList, Nothing, Nothing, -1)
+            For i As Integer = 0 To sendReceiveList.Count - 1
+                If i < sendReceiveList.Count Then
+                    sendReceiveList(i).DecodeMessage() 'Receive the message
+                End If
+            Next
+            sendReceiveList.Clear() 'Clear the List
+            sendReceiveList.TrimExcess() 'Remove all spare spots from the List
+            '--------------------------
+        End If
     End Sub
 
     Private Sub Send() 'Send a message to all Clients
-        If Clients.Count > 0 Then
+        If Clients.Count > 0 And GameWorld.MessageToSend IsNot Nothing Then
             '-----Send Messages to Clients-----
             sendReceiveList.AddRange(Clients) 'Add the Clients to the List
-            Socket.Select(Nothing, sendReceiveList, Nothing, -1) 'Filter out all Sockets that can't be sent to right now
+            Socket.Select(Nothing, sendReceiveList, Nothing, 100) 'Filter out all Sockets that can't be sent to right now
             Dim byteStream As New IO.MemoryStream() 'A MemorStream object to serialise the message to Bytes in
-            '            Console.WriteLine("Server Wait")
             GameWorld.MessageMutex.WaitOne() 'Wait till the Mutex is free
             BinarySerializer.Serialize(byteStream, GameWorld.MessageToSend) 'Serialise the message into Bytes
             GameWorld.MessageMutex.ReleaseMutex() 'Release the Mutex
             sendBuff = byteStream.ToArray 'Create an Array of Bytes from the MemoryStream
             byteStream.Close() 'Close the MemoryStream
 
-            For Each i As ServerSideClient In sendReceiveList 'Send the message to all available ServerSideClient objects
-                Try
-                    i.Blocking = True 'Set the ServerSideClient to block
-                    i.Send(BitConverter.GetBytes(sendBuff.Length())) 'Send 4 Bytes representing how many bytes will be in the next message
-                    i.Blocking = True 'Set the ServerSideClient to block
-                    i.Send(sendBuff) 'Send the message
-                Catch ex As SocketException
-                    Console.WriteLine()
-                    Console.WriteLine("Error : There was an problem communicating with the Client.")
-                    Console.WriteLine()
-                    Console.WriteLine(ex.ToString())
-                    RemoveClient(i, True) 'The Client has disconnected, remove the ServerSideClient object
-                Catch ex As Exception
-                    Console.WriteLine()
-                    Console.WriteLine("Error : There was an unexpected and unhandled exception.")
-                    Console.WriteLine("please submit it as an issue at the URL bellow")
-                    Console.WriteLine("https://github.com/Dynisious/Star_Crew/issues")
-                    Console.WriteLine()
-                    Console.WriteLine(ex.ToString)
-                    Console.WriteLine()
-                End Try
+            For i As Integer = 0 To sendReceiveList.Count - 1 'Send the message to all available ServerSideClient objects
+                If i < sendReceiveList.Count Then
+                    Try
+                        sendReceiveList(i).Blocking = True 'Set the ServerSideClient to block
+                        sendReceiveList(i).Send(BitConverter.GetBytes(sendBuff.Length())) 'Send 4 Bytes representing how many bytes will be in the next message
+                        sendReceiveList(i).Blocking = True 'Set the ServerSideClient to block
+                        sendReceiveList(i).Send(sendBuff) 'Send the message
+                    Catch ex As SocketException
+                        Dim temp As ServerSideClient = sendReceiveList(i)
+                        RemoveClient(temp, True) 'The Client has disconnected, remove the ServerSideClient object
+                    Catch ex As Exception
+                        Console.WriteLine()
+                        Console.WriteLine("Error : There was an unexpected and unhandled exception.")
+                        Console.WriteLine("please submit it as an issue at the URL bellow")
+                        Console.WriteLine("https://github.com/Dynisious/Star_Crew/issues")
+                        Console.WriteLine()
+                        Console.WriteLine(ex.ToString)
+                        Console.WriteLine()
+                    End Try
+                End If
             Next
             sendReceiveList.Clear() 'Clear the List
             sendReceiveList.TrimExcess() 'Remove spare spots from the List
@@ -113,7 +110,6 @@ Public Class Server 'Encapslates the Galaxy object of the Server
     Public Sub RemoveClient(ByRef nSocket As ServerSideClient, ByVal resetControl As Boolean) 'Remove the specified ServerSideClient from the List
         For Each i As ServerSideClient In Clients 'Find the object
             If ReferenceEquals(i, nSocket) = True Then 'It is the same ServerSideClient object
-                Console.WriteLine(i.MyStation.ToString + ": Client was disconnected") 'Write message to the Console
                 If resetControl = True Then 'Reset the control of the Station to be AI
                     Select Case i.MyStation
                         Case Station.StationTypes.Helm 'Reset the Helm
@@ -131,7 +127,13 @@ Public Class Server 'Encapslates the Galaxy object of the Server
                 Exit For 'Exit the for loop
             End If
         Next
-        nSocket.Disconnect(False)
-        nSocket.Close() 'Close the connection
+        If nSocket.Connected = True Then
+            Try
+                nSocket.Disconnect(False) 'Disconnect from the Client
+            Catch ex As Exception
+            End Try
+        End If
+        nSocket.Close() 'Close the Socket
+        Console.WriteLine(nSocket.MyStation.ToString + ": Client was disconnected") 'Write message to the Console
     End Sub
 End Class
