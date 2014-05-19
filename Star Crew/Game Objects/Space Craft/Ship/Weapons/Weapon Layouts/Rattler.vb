@@ -1,4 +1,5 @@
-﻿Public Class Rattler
+﻿<Serializable()>
+Public Class Rattler
     Inherits WeaponLayout
 
     Public Sub New()

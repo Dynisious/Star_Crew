@@ -1,6 +1,5 @@
 ﻿<Serializable()>
 Public MustInherit Class ShieldSystem
-    <NonSerialized()>
     Public DefenceModifiers(Weapon.DamageTypes.Max - 1) As Double
     Public Defences(Shields.Sides.Max - 1) As StatDbl
 

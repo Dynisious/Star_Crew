@@ -11,7 +11,7 @@ Public Class Client
     Private ReadOnly BlankShipSpace As New Bitmap(40, 40) 'A blank Bitmap object to draw Ship Models onto while rendering
     Private BytesToReceive As Integer 'An Integer representing how many bytes the Client should wait to receive from the Server
     Private BytesReceived As Integer 'An Integer representing how many bytes of data the Client has Received from the Server
-    Private MessageBuff(11000) As Byte 'An Array of Bytes to store the bytes of data received from the Server
+    Private MessageBuff(17000) As Byte 'An Array of Bytes to store the bytes of data received from the Server
     Private ByteBuff(3) As Byte 'An Array of 4 Bytes to convert into the BytesToReceive Integer
     Private BinarySerializer As New Runtime.Serialization.Formatters.Binary.BinaryFormatter 'A Serialiser Object to serialise/deserialise
     'bytes for sending/receiving
@@ -229,6 +229,7 @@ Public Class Client
             Console.WriteLine(ex.ToString)
             Console.WriteLine()
             ClientLoop = False 'Let the Loop finish
+            Beep()
             Exit Sub 'Leave the Subroutine emmidiately
         End Try
         IncommingMessageMutex.WaitOne() 'Block until the Mutex is free
@@ -257,6 +258,7 @@ Public Class Client
             Console.WriteLine(ex.ToString)
             Console.WriteLine()
             ClientLoop = False 'Let the Loop finish
+            Beep()
         Catch ex As Exception
             Console.WriteLine()
             Console.WriteLine("Error : There was an unexpected and unhandled exception.")
@@ -266,6 +268,7 @@ Public Class Client
             Console.WriteLine(ex.ToString)
             Console.WriteLine()
             ClientLoop = False 'Let the Loop finish
+            Beep()
         End Try
         MyMessageMutex.ReleaseMutex() 'Release the Mutex
         '----------------------
@@ -359,7 +362,7 @@ Public Class Client
                 If MessageData.Warping <> Galaxy.Warp.Warping And
                     MessageData.Warping <> Galaxy.Warp.Exiting And
                     MessageData.State = Galaxy.Scenario.Battle And
-                    MessageData.CenterCraft IsNot Nothing Then 'The Player is in comabat so draw the Weapon arcs
+                    MessageData.Primary IsNot Nothing Then 'The Player is in comabat so draw the Weapon arcs
                     '-----Batteries Arc-----
                     gDisplay.DrawPie(Pens.Yellow, primaryRec, CSng(180 * (
                                      primaryDirection + MessageData.PrimaryMount - (Battery.PlayerArc / 2)) / Math.PI),

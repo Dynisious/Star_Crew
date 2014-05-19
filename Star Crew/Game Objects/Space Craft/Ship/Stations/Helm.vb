@@ -1,4 +1,5 @@
-﻿Public Class Helm
+﻿<Serializable()>
+Public Class Helm
     Inherits Station
     Public TurnSpeed As StatDbl
     Private evadeRight As Boolean = False
@@ -72,17 +73,17 @@
                     '------------------
 
                     '-----Speed-----
-                    If brakes = True And 0 = int(30 * rnd()) Then
+                    If brakes = True And 0 = Int(30 * Rnd()) Then
                         brakes = False
-                    ElseIf 0 = int(50 * rnd()) Then
+                    ElseIf 0 = Int(50 * Rnd()) Then
                         brakes = True
                     End If
                     If brakes = False Then
-                        finalSpeed = parent.speed.max
+                        finalSpeed = Parent.Speed.max
                     End If
                     '---------------
                 ElseIf Parent.Speed.current <> Target.Helm.Parent.Speed.current And
-                    distance < (((Parent.Speed.current - Target.Speed.current) ^ 2) / Parent.Acceleration.current) And
+                    distance - Helm.MinimumDistance < (((Parent.Speed.current - Target.Speed.current) ^ 2) / Parent.Acceleration.current) And
                     distance > MinimumDistance And
                     targetDirection - Parent.Direction < Math.PI / 2 And
                     targetDirection - Parent.Direction > -Math.PI / 2 Then 'Match the enemies speed

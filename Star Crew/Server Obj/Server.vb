@@ -9,12 +9,14 @@ Public Class Server 'Encapslates the Galaxy object of the Server
     Private sendReceiveList As New List(Of ServerSideClient) 'A List of the Clients to communicate with at a particular time
     Public ServerLoop As Boolean = True 'A Boolean to keep the Server Looping
 
-    Public Sub StartServer() 'Begins the Server object
+    Public Sub StartServer(ByVal NewWorld As Boolean) 'Begins the Server object
         Console.WriteLine("Initialising...")
         ServerLoop = True 'Let the Server Loop until it is disposed of
         ConsoleWindow.ServerThread = New Threading.Thread(AddressOf StartCommunications) 'Create a new Thread for the Server
-        GameWorld = New Galaxy
-        GameWorld.StartGame() 'Begin to run the game
+        If NewWorld = True Then
+            GameWorld = New Galaxy
+            GameWorld.StartGame() 'Begin to run the game
+        End If
         Console.WriteLine("Game is now running") 'Write message to console
         ConsoleWindow.ServerThread.Start()
     End Sub

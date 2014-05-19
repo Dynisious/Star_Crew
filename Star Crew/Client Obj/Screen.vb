@@ -7,17 +7,22 @@
         Public Shared WithEvents btnStartServer As System.Windows.Forms.Button
         Public Shared WithEvents btnStartClient As System.Windows.Forms.Button
         Public Shared WithEvents btnExit As System.Windows.Forms.Button
+        Public Shared WithEvents btnLoad As System.Windows.Forms.Button
 
         Public Sub New()
             ConsoleWindow.OutputScreen.Controls.Clear()
+            '-----Initialise Controls-----
             btnStartServer = New System.Windows.Forms.Button()
             btnStartClient = New System.Windows.Forms.Button()
             btnExit = New System.Windows.Forms.Button()
+            btnLoad = New System.Windows.Forms.Button()
+            '-----------------------------
+            '-----Control Settings-----
             '
             'btnStartServer
             '
             btnStartServer.Font = New System.Drawing.Font("Microsoft Sans Serif", 20.0!)
-            btnStartServer.Location = New System.Drawing.Point(400, 100)
+            btnStartServer.Location = New System.Drawing.Point(400, 67)
             btnStartServer.Name = "btnStartServer"
             btnStartServer.Size = New System.Drawing.Size(400, 70)
             btnStartServer.TabIndex = 0
@@ -27,7 +32,7 @@
             'btnStartClient
             '
             btnStartClient.Font = New System.Drawing.Font("Microsoft Sans Serif", 20.0!)
-            btnStartClient.Location = New System.Drawing.Point(400, 273)
+            btnStartClient.Location = New System.Drawing.Point(400, 220)
             btnStartClient.Margin = New System.Windows.Forms.Padding(3, 100, 3, 3)
             btnStartClient.Name = "btnStartClient"
             btnStartClient.Size = New System.Drawing.Size(400, 70)
@@ -38,16 +43,31 @@
             'btnExit
             '
             btnExit.Font = New System.Drawing.Font("Microsoft Sans Serif", 20.0!)
-            btnExit.Location = New System.Drawing.Point(400, 446)
+            btnExit.Location = New System.Drawing.Point(400, 519)
             btnExit.Margin = New System.Windows.Forms.Padding(3, 100, 3, 100)
             btnExit.Name = "btnExit"
             btnExit.Size = New System.Drawing.Size(400, 70)
             btnExit.TabIndex = 2
             btnExit.Text = "Exit"
             btnExit.UseVisualStyleBackColor = True
+            '
+            'btnLoad
+            '
+            btnLoad.Font = New System.Drawing.Font("Microsoft Sans Serif", 20.0!)
+            btnLoad.Location = New System.Drawing.Point(400, 370)
+            btnLoad.Margin = New System.Windows.Forms.Padding(3, 100, 3, 100)
+            btnLoad.Name = "btnLoad"
+            btnLoad.Size = New System.Drawing.Size(400, 70)
+            btnLoad.TabIndex = 3
+            btnLoad.Text = "Load Server"
+            btnLoad.UseVisualStyleBackColor = True
+            '--------------------------
+            '-----Add Controls-----
+            ConsoleWindow.OutputScreen.Controls.Add(btnLoad)
             ConsoleWindow.OutputScreen.Controls.Add(btnExit)
             ConsoleWindow.OutputScreen.Controls.Add(btnStartClient)
             ConsoleWindow.OutputScreen.Controls.Add(btnStartServer)
+            '----------------------
             My.Computer.Audio.Play(My.Resources.The_Adventure_Begins_Extended, AudioPlayMode.BackgroundLoop)
         End Sub
 
@@ -55,11 +75,42 @@
             If ConsoleWindow.GameServer.GameWorld IsNot Nothing Then 'There is already a Server Currently Running
                 ConsoleWindow.GameServer.ServerLoop = False  'Closes the Server
             End If
-            ConsoleWindow.GameServer.StartServer() 'Starts the Server
+            ConsoleWindow.GameServer.StartServer(True) 'Starts the Server
         End Sub
 
         Private Shared Sub btnStartClient_Click() Handles btnStartClient.Click 'Opens the Client Setup Screen 
             Dim temp As New ClientSetupLayout() 'Sets the Screen's GUI to the ClientSetupLayout layout
+        End Sub
+
+        Private Shared Sub btnLoad_Click() Handles btnLoad.Click
+            If IO.File.Exists("C:\Users\" + Environment.UserName + "\Desktop\Star_Crew_Save.save") = True Then
+                If ConsoleWindow.GameServer.GameWorld IsNot Nothing Then
+                    ConsoleWindow.GameServer.ServerLoop = False
+                    ConsoleWindow.ServerThread.Join(30)
+                End If
+                Using fs As New IO.FileStream("C:\Users\" + Environment.UserName + "\Desktop\Star_Crew_Save.save", IO.FileMode.Open, IO.FileAccess.Read)
+                    Dim bf As New Runtime.Serialization.Formatters.Binary.BinaryFormatter
+                    ConsoleWindow.GameServer.GameWorld = bf.Deserialize(fs)
+                    fs.Close()
+                End Using
+                Dim user As String = Environment.UserDomainName + "\" + Environment.UserName 'The identity of the Mutex
+                Dim securityProtocols As New Security.AccessControl.MutexSecurity 'The security settings of the Mutex
+                securityProtocols.AddAccessRule(
+                    New Security.AccessControl.MutexAccessRule(user,
+                                                               Security.AccessControl.MutexRights.Modify Or
+                                                               Security.AccessControl.MutexRights.Synchronize,
+                                                               Security.AccessControl.AccessControlType.Allow))
+                'Allow Threads to Access and Release the Mutex
+                Dim bool As Boolean
+                ConsoleWindow.GameServer.GameWorld.MessageMutex = New Threading.Mutex(False, "MessageMutex", bool, securityProtocols)
+                'Create the Mutex object
+                ConsoleWindow.GameServer.GameWorld.GalaxyTimer = New Timer With {.Interval = 100, .Enabled = True} 'Create and start as new Timer
+                ConsoleWindow.GameServer.StartServer(False)
+                Console.WriteLine("Game has been loaded successfully")
+            Else
+                Console.WriteLine("Error : No save file was found")
+                Beep()
+            End If
         End Sub
 
         Private Shared Sub btnExit_Click() Handles btnExit.Click 'Closes the program
@@ -193,6 +244,7 @@
         Public Shared WithEvents btnEndGame As System.Windows.Forms.Button
         Public Shared WithEvents UserKeyInterfacer As System.Windows.Forms.Button
         Public Shared WithEvents btnPausePlay As System.Windows.Forms.Button
+        Public Shared WithEvents btnSave As System.Windows.Forms.Button
         Public Shared Displaying As Boolean = False
 
         Public Sub New()
@@ -213,10 +265,11 @@
             lblLeft = New System.Windows.Forms.Label()
             lblHull = New System.Windows.Forms.Label()
             pnlMenuButtons = New System.Windows.Forms.Panel()
+            btnPausePlay = New System.Windows.Forms.Button()
             btnEndGame = New System.Windows.Forms.Button()
             btnMainMenu = New System.Windows.Forms.Button()
             UserKeyInterfacer = New System.Windows.Forms.Button()
-            btnPausePlay = New System.Windows.Forms.Button()
+            btnSave = New System.Windows.Forms.Button()
             CType(picDisplayGraphics, System.ComponentModel.ISupportInitialize).BeginInit()
             pnlDisplays.SuspendLayout()
             pnlMenuButtons.SuspendLayout()
@@ -401,6 +454,7 @@
             'pnlMenuButtons
             '
             pnlMenuButtons.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle
+            pnlMenuButtons.Controls.Add(btnSave)
             pnlMenuButtons.Controls.Add(btnPausePlay)
             pnlMenuButtons.Controls.Add(btnEndGame)
             pnlMenuButtons.Controls.Add(btnMainMenu)
@@ -409,11 +463,22 @@
             pnlMenuButtons.Size = New System.Drawing.Size(560, 256)
             pnlMenuButtons.TabIndex = 3
             '
+            'btnPausePlay
+            '
+            btnPausePlay.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+            btnPausePlay.Font = New System.Drawing.Font("Lucida Console", 14.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+            btnPausePlay.Location = New System.Drawing.Point(135, 121)
+            btnPausePlay.Name = "btnPausePlay"
+            btnPausePlay.Size = New System.Drawing.Size(140, 40)
+            btnPausePlay.TabIndex = 3
+            btnPausePlay.Text = "Pause"
+            btnPausePlay.UseVisualStyleBackColor = True
+            '
             'btnEndGame
             '
             btnEndGame.FlatStyle = System.Windows.Forms.FlatStyle.Flat
             btnEndGame.Font = New System.Drawing.Font("Lucida Console", 14.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-            btnEndGame.Location = New System.Drawing.Point(285, 19)
+            btnEndGame.Location = New System.Drawing.Point(285, 33)
             btnEndGame.Name = "btnEndGame"
             btnEndGame.Size = New System.Drawing.Size(140, 40)
             btnEndGame.TabIndex = 2
@@ -424,7 +489,7 @@
             '
             btnMainMenu.FlatStyle = System.Windows.Forms.FlatStyle.Flat
             btnMainMenu.Font = New System.Drawing.Font("Lucida Console", 14.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-            btnMainMenu.Location = New System.Drawing.Point(135, 19)
+            btnMainMenu.Location = New System.Drawing.Point(135, 33)
             btnMainMenu.Name = "btnMainMenu"
             btnMainMenu.Size = New System.Drawing.Size(140, 40)
             btnMainMenu.TabIndex = 1
@@ -440,16 +505,16 @@
             UserKeyInterfacer.TabIndex = 0
             UserKeyInterfacer.UseVisualStyleBackColor = True
             '
-            'btnPausePlay
+            'btnSave
             '
-            btnPausePlay.FlatStyle = System.Windows.Forms.FlatStyle.Flat
-            btnPausePlay.Font = New System.Drawing.Font("Lucida Console", 14.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-            btnPausePlay.Location = New System.Drawing.Point(209, 107)
-            btnPausePlay.Name = "btnPausePlay"
-            btnPausePlay.Size = New System.Drawing.Size(140, 40)
-            btnPausePlay.TabIndex = 3
-            btnPausePlay.Text = "Pause"
-            btnPausePlay.UseVisualStyleBackColor = True
+            btnSave.FlatStyle = System.Windows.Forms.FlatStyle.Flat
+            btnSave.Font = New System.Drawing.Font("Lucida Console", 14.25!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+            btnSave.Location = New System.Drawing.Point(285, 121)
+            btnSave.Name = "btnSave"
+            btnSave.Size = New System.Drawing.Size(140, 40)
+            btnSave.TabIndex = 4
+            btnSave.Text = "Save Game"
+            btnSave.UseVisualStyleBackColor = True
             '--------------------------
 
             '-----Add Controls-----
@@ -465,6 +530,13 @@
             pnlMenuButtons.ResumeLayout(False)
             '--------------------------
             UserKeyInterfacer.Focus()
+            If ConsoleWindow.GameServer.GameWorld IsNot Nothing Then
+                btnPausePlay.Enabled = True
+                btnSave.Enabled = True
+            Else
+                btnPausePlay.Enabled = False
+                btnSave.Enabled = False
+            End If
             If ConsoleWindow.OutputScreen.MyClient.ClientLoop = False Then
                 Dim temp As New MenuScreenLayout
             Else
@@ -497,6 +569,17 @@
                     UserKeyInterfacer.Focus()
                 End If
             End If
+        End Sub
+
+        Private Shared Sub btnSave_Click() Handles btnSave.Click
+            Using fs As New IO.FileStream("C:\Users\" + Environment.UserName + "\Desktop\Star_Crew_Save.save", IO.FileMode.OpenOrCreate, IO.FileAccess.Write)
+                Dim bf As New Runtime.Serialization.Formatters.Binary.BinaryFormatter
+                bf.Serialize(fs, ConsoleWindow.GameServer.GameWorld)
+                fs.Flush()
+                fs.Close()
+            End Using
+            Console.WriteLine("Game has been saved successfully")
+            UserKeyInterfacer.Focus()
         End Sub
 
         Private Shared Sub UserKeyInterfacer_PreviewKeyDown(ByVal sender As Object, ByVal e As PreviewKeyDownEventArgs) Handles UserKeyInterfacer.PreviewKeyDown
@@ -550,7 +633,9 @@
             If e.KeyCode = Keys.Z Then
                 If ConsoleWindow.OutputScreen.MyClient.Zoom = 100 Then
                     ConsoleWindow.OutputScreen.MyClient.Zoom = 30
-                Else
+                ElseIf ConsoleWindow.OutputScreen.MyClient.Zoom = 30 Then
+                    ConsoleWindow.OutputScreen.MyClient.Zoom = 15
+                ElseIf ConsoleWindow.OutputScreen.MyClient.Zoom = 15 Then
                     ConsoleWindow.OutputScreen.MyClient.Zoom = 100
                 End If
             End If
@@ -613,14 +698,18 @@
 
     Public Sub New() 'Creates the MenuScreenLayout layout
         InitializeComponent()
+        '-----Initialise Controls-----
         MenuScreenLayout.btnStartServer = New System.Windows.Forms.Button()
         MenuScreenLayout.btnStartClient = New System.Windows.Forms.Button()
         MenuScreenLayout.btnExit = New System.Windows.Forms.Button()
+        MenuScreenLayout.btnLoad = New System.Windows.Forms.Button()
+        '-----------------------------
+        '-----Control Settings-----
         '
         'btnStartServer
         '
         MenuScreenLayout.btnStartServer.Font = New System.Drawing.Font("Microsoft Sans Serif", 20.0!)
-        MenuScreenLayout.btnStartServer.Location = New System.Drawing.Point(400, 100)
+        MenuScreenLayout.btnStartServer.Location = New System.Drawing.Point(400, 67)
         MenuScreenLayout.btnStartServer.Name = "btnStartServer"
         MenuScreenLayout.btnStartServer.Size = New System.Drawing.Size(400, 70)
         MenuScreenLayout.btnStartServer.TabIndex = 0
@@ -630,7 +719,7 @@
         'btnStartClient
         '
         MenuScreenLayout.btnStartClient.Font = New System.Drawing.Font("Microsoft Sans Serif", 20.0!)
-        MenuScreenLayout.btnStartClient.Location = New System.Drawing.Point(400, 273)
+        MenuScreenLayout.btnStartClient.Location = New System.Drawing.Point(400, 220)
         MenuScreenLayout.btnStartClient.Margin = New System.Windows.Forms.Padding(3, 100, 3, 3)
         MenuScreenLayout.btnStartClient.Name = "btnStartClient"
         MenuScreenLayout.btnStartClient.Size = New System.Drawing.Size(400, 70)
@@ -641,56 +730,64 @@
         'btnExit
         '
         MenuScreenLayout.btnExit.Font = New System.Drawing.Font("Microsoft Sans Serif", 20.0!)
-        MenuScreenLayout.btnExit.Location = New System.Drawing.Point(400, 446)
+        MenuScreenLayout.btnExit.Location = New System.Drawing.Point(400, 519)
         MenuScreenLayout.btnExit.Margin = New System.Windows.Forms.Padding(3, 100, 3, 100)
         MenuScreenLayout.btnExit.Name = "btnExit"
         MenuScreenLayout.btnExit.Size = New System.Drawing.Size(400, 70)
         MenuScreenLayout.btnExit.TabIndex = 2
         MenuScreenLayout.btnExit.Text = "Exit"
         MenuScreenLayout.btnExit.UseVisualStyleBackColor = True
+        '
+        'btnLoad
+        '
+        MenuScreenLayout.btnLoad.Font = New System.Drawing.Font("Microsoft Sans Serif", 20.0!)
+        MenuScreenLayout.btnLoad.Location = New System.Drawing.Point(400, 370)
+        MenuScreenLayout.btnLoad.Margin = New System.Windows.Forms.Padding(3, 100, 3, 100)
+        MenuScreenLayout.btnLoad.Name = "btnLoad"
+        MenuScreenLayout.btnLoad.Size = New System.Drawing.Size(400, 70)
+        MenuScreenLayout.btnLoad.TabIndex = 3
+        MenuScreenLayout.btnLoad.Text = "Load Server"
+        MenuScreenLayout.btnLoad.UseVisualStyleBackColor = True
+        '--------------------------
+        '-----Add Controls-----
+        Controls.Add(MenuScreenLayout.btnLoad)
         Controls.Add(MenuScreenLayout.btnExit)
         Controls.Add(MenuScreenLayout.btnStartClient)
         Controls.Add(MenuScreenLayout.btnStartServer)
-        Focus()
+        ' ''----------------------
+        My.Computer.Audio.Play(My.Resources.The_Adventure_Begins_Extended, AudioPlayMode.BackgroundLoop)
     End Sub
 
     Private Sub UpdateScreen_Handle() Handles Tick.Tick 'Updates the 'stats' displayed on the screen
         If ConsoleWindow.OutputScreen.MyClient.ClientLoop = True And ConsoleWindow.OutputScreen.MyClient.IncomingMessage IsNot Nothing Then
             'There is information to display
             Screen.GamePlayLayout.lblThrottle.Text = "Speed: " +
-                CStr(CInt(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.Speed.current)) +
-                "/" + CStr(CInt(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.Speed.max)) 'Displays the current Speed and max Speed
-            If ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterCraft IsNot Nothing Then 'Their is system information to display
-                If MyClient.IncomingMessage.Positions(0).Hit = True Then 'Make the Hull label flash orange
+                CStr(CInt(MyClient.IncomingMessage.Speed.current)) +
+                "/" + CStr(CInt(MyClient.IncomingMessage.Speed.max)) 'Displays the current Speed and max Speed
+            If MyClient.IncomingMessage.Primary IsNot Nothing Then 'Their is system information to display
+                Dim message As ServerMessage = MyClient.IncomingMessage
+                If message.Positions(0).Hit = True Then 'Make the Hull label flash orange
                     Screen.GamePlayLayout.lblHull.BackColor = Color.Orange
                 Else 'Make the Hull label Transparent
                     Screen.GamePlayLayout.lblHull.BackColor = Color.Transparent
                 End If
                 Screen.GamePlayLayout.lblHull.Text = "Hull: " +
-                    CStr(Math.Round(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterCraft.Hull.current, 2)) +
-                    "/" + CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterCraft.Hull.max) 'Displays the current Hull and max Hull
+                    CStr(Math.Round(message.Positions(0).Hull.current, 2)) +
+                    "/" + CStr(message.Positions(0).Hull.max) 'Displays the current Hull and max Hull
 
                 Screen.GamePlayLayout.lblForward.Text = "Fore: " +
-                    CStr(CInt(MyClient.IncomingMessage.CenterCraft.Shielding.SubSystem.Defences(
-                                Shields.Sides.FrontShield).current)) +
-                    "/" + CStr(MyClient.IncomingMessage.CenterCraft.Shielding.SubSystem.Defences(
-                            Shields.Sides.FrontShield).max) 'Displays the current Fore Shield and max Fore Shield
+                    CStr(CInt(message.ForeShield.current)) +
+                    "/" + CStr(message.ForeShield.max) 'Displays the current Fore Shield and max Fore Shield
                 Screen.GamePlayLayout.lblRight.Text = "Starboard: " +
-                    CStr(CInt(MyClient.IncomingMessage.CenterCraft.Shielding.SubSystem.Defences(
-                                Shields.Sides.RightShield).current)) +
-                    "/" + CStr(MyClient.IncomingMessage.CenterCraft.Shielding.SubSystem.Defences(
-                            Shields.Sides.RightShield).max) 'Displays the current Starboard Shield and max Starboard Shield
+                    CStr(CInt(message.StarboardShield.current)) +
+                    "/" + CStr(message.StarboardShield.max) 'Displays the current Starboard Shield and max Starboard Shield
                 Screen.GamePlayLayout.lblRear.Text = "Aft: " +
-                    CStr(CInt(MyClient.IncomingMessage.CenterCraft.Shielding.SubSystem.Defences(
-                                Shields.Sides.BackShield).current)) +
-                    "/" + CStr(MyClient.IncomingMessage.CenterCraft.Shielding.SubSystem.Defences(
-                            Shields.Sides.BackShield).max) 'Displays the current Aft Shield and max Aft Shield
+                    CStr(CInt(message.AftShield.current)) +
+                    "/" + CStr(message.AftShield.max) 'Displays the current Aft Shield and max Aft Shield
                 Screen.GamePlayLayout.lblLeft.Text = "Port: " +
-                    CStr(CInt(MyClient.IncomingMessage.CenterCraft.Shielding.SubSystem.Defences(
-                                Shields.Sides.LeftShield).current)) +
-                    "/" + CStr(MyClient.IncomingMessage.CenterCraft.Shielding.SubSystem.Defences(
-                            Shields.Sides.LeftShield).max) 'Displays the current Port Shield and max Port Shield
-                Select Case MyClient.IncomingMessage.CenterCraft.Shielding.LastHit 'Select which Shield was last hit
+                    CStr(CInt(message.PortShield.current)) +
+                    "/" + CStr(message.PortShield.max) 'Displays the current Port Shield and max Port Shield
+                Select Case message.LastHit 'Select which Shield was last hit
                     Case Shields.Sides.FrontShield 'Fore
                         Screen.GamePlayLayout.lblForward.BackColor = Color.LightBlue
                         Screen.GamePlayLayout.lblRight.BackColor = Color.Transparent
@@ -730,22 +827,23 @@
                 'Displays the integrety of the Secondary Weapon
 
                 Screen.GamePlayLayout.lblPowerCore.Text = "Power Core: " +
-                    CStr(MyClient.IncomingMessage.CenterCraft.Engineering.SubSystem.PowerCore.current) +
-                    "/" + CStr(MyClient.IncomingMessage.CenterCraft.Engineering.SubSystem.PowerCore.max)
+                    CStr(message.PowerCore.current) +
+                    "/" + CStr(message.PowerCore.max)
                 'Displays the integrety of the Power Core
                 Screen.GamePlayLayout.lblEngines.Text = "Engines: " +
-                    CStr(MyClient.IncomingMessage.CenterCraft.Engineering.SubSystem.Engines.current) +
-                    "/" + CStr(MyClient.IncomingMessage.CenterCraft.Engineering.SubSystem.Engines.max)
+                    CStr(message.Engines.current) +
+                    "/" + CStr(message.Engines.max)
                 'Displays the integrety of the Engines
                 Screen.GamePlayLayout.lblCoreTemp.Text = "Core Temp: " +
-                    CStr(Math.Round(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterCraft.Engineering.Heat, 2)) + "*e5/100*e5"
+                    CStr(Math.Round(message.Heat, 2)) + "*e5/100*e5"
                 'Displays the temperature of the Power Core
                 Screen.GamePlayLayout.lblTempRate.Text = "Temp Rate: " +
-                    CStr(Math.Round(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.CenterCraft.Engineering.Rate, 2)) + "*e5"
+                    CStr(Math.Round(message.Rate, 2)) + "*e5"
                 'Displays the rate of increase in the Power Cores Temperature
             Else 'Display Fleet Stats
                 Screen.GamePlayLayout.lblHull.Text = "Ship Count: " +
-                    CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.ShipCount) 'The number of Ships in the Fleet
+                    CStr(ConsoleWindow.OutputScreen.MyClient.IncomingMessage.ShipCount) + "/" + CStr(Fleet.PopulationCap)
+                'The number of Ships in the Fleet
             End If
         ElseIf MyClient.ClientLoop = False Then 'Return to the Main Menu
             Dim temp As New MenuScreenLayout 'Set the screens GUI to the MenuScreenLayout layout

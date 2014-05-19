@@ -1,4 +1,4 @@
-﻿
+﻿<Serializable()>
 Public Class Battery
     Inherits Station
     Public PrimaryMount As Double 'A Double value representing the primary Weapon's offset from forward facing

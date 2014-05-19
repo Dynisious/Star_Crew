@@ -1,12 +1,13 @@
-﻿Public Class Combat 'Encloses the Ships that are fighting
-    Public centerShip As Ship = New Ship(New Screamer, -1,Galaxy.Allegence.Friendly ) 'The Ship that the Players control
+﻿<Serializable()>
+Public Class Combat 'Encloses the Ships that are fighting
+    Public centerShip As Ship = New Ship(New Screamer, -1, Galaxy.Allegence.Friendly) 'The Ship that the Players control
     Public shipList As New List(Of Ship) 'A List object of Ship objects that are in combat
     Public EnemyFleet As Fleet 'The Fleet fighting the Players Ships
 
     Public Sub Generate(ByRef Enemies As Fleet)
         EnemyFleet = Enemies 'Sets a new enemy Fleet
         shipList.Clear() 'Clear the List of Ships
-        shipList.AddRange(Sector.centerFleet.ShipList) 'Add the Players Ships
+        shipList.AddRange(ConsoleWindow.GameServer.GameWorld.centerFleet.ShipList) 'Add the Players Ships
         shipList.AddRange(Enemies.ShipList) 'Add the Enemies Ships
         shipList.TrimExcess() 'Remove any empty spaces from the List
         Recenter() 'Set the Ship the Player is controling
@@ -17,6 +18,7 @@
             shipList(i).Position = New Point(Rnd() * SpaceCraft.SpawnBox, Rnd() * SpaceCraft.SpawnBox) 'Set the position of the Ship
         Next
         ConsoleWindow.GameServer.GameWorld.State = Galaxy.Scenario.Battle 'Change the Galaxie's State to update the Combat scenario
+        ConsoleWindow.GameServer.GameWorld.GalaxyTimer.Interval = 100 'Make sure the game is not at an accelerated speed
     End Sub
 
     Public Sub Recenter() 'Sets the Ship that the Players control
@@ -41,15 +43,17 @@
     End Sub
 
     Public Sub RemoveShip(ByRef nShip As Ship) 'Remove the specified ship from the List
-        shipList.RemoveAt(nShip.Index) 'Remove the Ship
-        For i As Integer = 0 To shipList.Count - 1 'Set the index of all remaining Ships
-            shipList(i).Index = i
-        Next
-        shipList.TrimExcess() 'Remove the Blank Space
-        If nShip.MyAllegence = Galaxy.Allegence.Friendly Then 'Remove the Ship from it's Fleet
-            Sector.centerFleet.RemoveShip(nShip)
-        Else
-            EnemyFleet.RemoveShip(nShip)
+        If nShip.Index < shipList.Count Then
+            shipList.RemoveAt(nShip.Index) 'Remove the Ship
+            For i As Integer = 0 To shipList.Count - 1 'Set the index of all remaining Ships
+                shipList(i).Index = i
+            Next
+            shipList.TrimExcess() 'Remove the Blank Space
+            If nShip.MyAllegence = Galaxy.Allegence.Friendly Then 'Remove the Ship from it's Fleet
+                ConsoleWindow.GameServer.GameWorld.centerFleet.RemoveShip(nShip)
+            Else
+                EnemyFleet.RemoveShip(nShip)
+            End If
         End If
     End Sub
 
@@ -73,7 +77,7 @@
             health1 = health1 + i.Hull.current
             shield1 = shield1 + i.Shielding.SubSystem.Defences(Shields.Sides.FrontShield).current
         Next
-        damage1 = damage1 / 4
+        damage1 = damage1 / 6
 
         Dim damage2 As Double 'The collective damage of Fleet2
         Dim health2 As Double 'The collective hull of Fleet2
@@ -83,7 +87,7 @@
             health2 = health1 + i.Hull.current
             shield2 = shield1 + i.Shielding.SubSystem.Defences(Shields.Sides.FrontShield).current
         Next
-        damage2 = damage2 / 4
+        damage2 = damage2 / 6
 
         Dim overallDamage As Double = damage1 - shield2 'The damage that makes it through the shield
         If overallDamage < 0 Then 'There was more shield than damage

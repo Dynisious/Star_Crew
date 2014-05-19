@@ -1,6 +1,5 @@
 ﻿<Serializable()>
 Public Class Sector 'Encapsulates a group of Fleets that will interact with each other
-    Public Shared centerFleet As Fleet 'The Players Fleet to control
     Public fleetList As New List(Of Fleet) 'A List of Fleet objects
     Public spaceStations(2) As SpaceStation 'An Array of three SpaceStation Objects
 
@@ -14,9 +13,9 @@ Public Class Sector 'Encapsulates a group of Fleets that will interact with each
                 End If
             Next
         End If
-        For i As Integer = 0 To 2 'Create three neutral Fleets
-            spaceStations(i) = New SpaceStation(i, Me)
-        Next
+        spaceStations(0) = New SpaceStation(0, Me, Galaxy.Allegence.Neutral)
+        spaceStations(1) = New SpaceStation(1, Me, Galaxy.Allegence.Friendly)
+        spaceStations(2) = New SpaceStation(2, Me, Galaxy.Allegence.Pirate)
     End Sub
 
     Public Sub AddFleet(ByRef nFleet As Fleet, Optional ByVal InsertIndex As Integer = -1) 'Add a Fleet object to the List
@@ -30,7 +29,7 @@ Public Class Sector 'Encapsulates a group of Fleets that will interact with each
             Next
         End If
         nFleet.currentSector = Me 'Set the Fleet to exist inside this Sector
-        If ReferenceEquals(nFleet, centerFleet) = True Then 'This is the centerSector now
+        If ReferenceEquals(nFleet, ConsoleWindow.GameServer.GameWorld.centerFleet) = True Then 'This is the centerSector now
             ConsoleWindow.GameServer.GameWorld.centerSector = Me
         End If
     End Sub

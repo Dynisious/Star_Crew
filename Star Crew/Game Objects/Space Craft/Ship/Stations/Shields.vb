@@ -10,7 +10,6 @@ Public Class Shields
         LeftShield
         Max
     End Enum
-    <NonSerialized()>
     Public DamagePerSide(Sides.Max - 1) As Integer 'The amount of damage done to each side of the ship to allow the AI to decide which shields to
     'prioritise
     Public LastHit As Sides 'The side that was last hit

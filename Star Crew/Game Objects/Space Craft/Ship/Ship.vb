@@ -1,21 +1,15 @@
 ﻿<Serializable()>
 Public Class Ship 'A Ship that flies in combat and fights other Ships
     Inherits SpaceCraft 'The base Class for all Ships and Fleets
-    <NonSerialized()>
     Public InCombat As Boolean = False
-    <NonSerialized()>
     Public TargetLock As Boolean = False 'A Boolean value indecating whether the Ship is allowed to switch targets
     Public Hull As StatDbl 'A StatDbl object representing the current and max Hull values
-    <NonSerialized()>
     Public Firing As Boolean = False 'A Boolean value indecating whether the Ship is actively firing
-    <NonSerialized()>
     Public Hit As Boolean = False 'A Boolean value indecating whether the Ship has just been hit
     '-----Helm-----
-    <NonSerialized()>
     Public Helm As New Helm(Me) 'A Helm object responsible for piloting the Ship using AI
     '--------------
     '-----Batteries-----
-    <NonSerialized()>
     Public Batteries As New Battery(Me) 'A Battery object responsible for aiming Weapons and Targeting Ships using AI
     '-------------------
     '-----Shielding-----

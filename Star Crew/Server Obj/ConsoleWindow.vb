@@ -34,13 +34,12 @@
                           "Red: Red Fleets are the enemy and they will also combine forces to combat" + Environment.NewLine +
                           "yours." + Environment.NewLine +
                           "Yellow: Yellow indecates a station which will Repair all ships in a Fleet" + Environment.NewLine +
-                          "up to 40% hull." + Environment.NewLine +
+                          "up to 2/3 hull." + Environment.NewLine +
                           "Interaction: To interact with a Fleet collide your Fleet into it." + Environment.NewLine +
                           "Objective: The Objective of this game is to eleminate all Enemy Fleets." + Environment.NewLine +
                           Environment.NewLine +
                           "-----Genral-----" + Environment.NewLine +
                           "Press 'Z' to toggle Zoom" + Environment.NewLine)
-        My.Computer.Audio.Play(My.Resources.The_Adventure_Begins_Extended, AudioPlayMode.BackgroundLoop)
     End Sub
 
 End Module

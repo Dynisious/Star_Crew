@@ -4,12 +4,26 @@ Public Class ServerMessage 'Represents all the information necessary for a Clien
     Public Speed As StatDbl 'The Speed of the craft
     Public Direction As Double = -1 'The direction the craft is traveling in
     Public ShipCount As Integer = -1 'The number of Ships in the Players Fleet
-    Public CenterCraft As Ship  'The Players ship if in combat
+    '-----Batteries-----
     Public Primary As Weapon 'The Primary Weapon object
     Public PrimaryMount As Double = -1 'The Primary Weapons offset
     Public Secondary As Weapon 'The Secondary Weapon object
     Public SecondaryMount As Double = -1 'The Secondary Weapons offset
     Public Firing As Boolean = False 'A Boolean indecating if the Player is firing weapons
+    '-------------------
+    '-----Shielding-----
+    Public ForeShield As StatDbl 'A StatDbl Object representing the Forward shield of the Player's Ship
+    Public StarboardShield As StatDbl 'A StatDbl Object representing the Right shield of the Player's Ship
+    Public AftShield As StatDbl 'A StatDbl Object representing the Rear shield of the Player's Ship
+    Public PortShield As StatDbl 'A StatDbl Object representing the Left shield of the Player's Ship
+    Public LastHit As Shields.Sides 'An Enumerator specifying which side of the Player's Ship was last shot
+    '-------------------
+    '-----Engineering----
+    Public PowerCore As StatDbl 'A StatDbl Object representing the integrety of the Player's Ship's Power Core
+    Public Engines As StatDbl 'A StatDbl Object representing the integrety of the Player's Ship's Engines
+    Public Heat As Double 'A Double value representing the temperature of the Player's Ship's Power Core
+    Public Rate As Double 'A Double value representing the rate of change of the temperature in the Player's Ship's Power Core
+    '--------------------
     Public Positions() As GraphicPosition 'An Array of GraphicPosition objects representing the Ships
     Public Warping As Galaxy.Warp = -1 'The 'warp' state of the Galaxy
     Public State As Galaxy.Scenario = -1 'The update state of the Galaxy
@@ -21,13 +35,27 @@ Public Class ServerMessage 'Represents all the information necessary for a Clien
         Speed = nSpeed
         Direction = nDirection
         ShipCount = nShipCount
-        CenterCraft = nCenterCraft
         If nCenterCraft IsNot Nothing Then
+            '-----Batteries-----
             Primary = nCenterCraft.Batteries.Primary
             PrimaryMount = nCenterCraft.Batteries.PrimaryMount
             Secondary = nCenterCraft.Batteries.Secondary
             SecondaryMount = nCenterCraft.Batteries.SecondaryMount
             Firing = nCenterCraft.Firing
+            '-------------------
+            '----Shielding-----
+            ForeShield = nCenterCraft.Shielding.SubSystem.Defences(Shields.Sides.FrontShield)
+            StarboardShield = nCenterCraft.Shielding.SubSystem.Defences(Shields.Sides.RightShield)
+            AftShield = nCenterCraft.Shielding.SubSystem.Defences(Shields.Sides.BackShield)
+            PortShield = nCenterCraft.Shielding.SubSystem.Defences(Shields.Sides.LeftShield)
+            LastHit = nCenterCraft.Shielding.LastHit
+            '------------------
+            '-----Engineering----
+            PowerCore = nCenterCraft.Engineering.SubSystem.PowerCore
+            Engines = nCenterCraft.Engineering.SubSystem.Engines
+            Heat = nCenterCraft.Engineering.Heat
+            Rate = nCenterCraft.Engineering.Rate
+            '--------------------
         End If
         Positions = nPositions
         Warping = nWarping

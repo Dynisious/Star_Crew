@@ -1,16 +1,12 @@
 ﻿<Serializable()>
 Public Class Engineering
     Inherits Station
-    <NonSerialized()>
     Public batteriesDraw As Integer
-    <NonSerialized()>
     Public shieldingDraw As Integer
     Public SubSystem As EngineSystem
-    <NonSerialized()>
     Private Heating As Boolean = True
     Public Heat As Double = 50
     Public Rate As Double
-    <NonSerialized()>
     Public Shared ReadOnly RateOfChange = 0.002
     Public Enum Commands
         Heat
