@@ -7,4 +7,9 @@ Public Class StatDbl 'Holds 2 Double values, a current and a max
         current = nCurrent
         max = nMax
     End Sub
+
+    Public Sub New(ByVal nStat As StatInt)
+        current = nStat.current
+        max = nStat.max
+    End Sub
 End Class

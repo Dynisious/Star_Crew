@@ -31,24 +31,11 @@ Public Class Ship 'A Ship that flies in combat and fights other Ships
         nShipStats.Initialise(Me) 'Sets the Stats of the Ship
     End Sub
 
-    Public Sub TakeDamage(ByRef nWeapon As Weapon, ByRef shooter As Ship, ByVal direction As Double) 'Calculates how much damage is done to the
+    Public Sub TakeDamage(ByRef nWeapon As Weapon, ByRef shooter As Ship, ByVal incomingVector As Double) 'Calculates how much damage is done to the
         'Hull
         Dim sideHit As Shields.Sides 'The side of the ship that has been hit
-        Dim adjacent As Integer = (nWeapon.Parent.Parent.Position.X - Position.X) 'The attacking Ships X relative to this Ship
-        Dim opposite As Integer = (nWeapon.Parent.Parent.Position.Y - Position.Y) 'The attacking Ships Y relative to this Ship
-        Dim incomingVector As Double 'A Double representing the direction of the attacking Ship relative to this Ship
-        If adjacent <> 0 Then
-            incomingVector = Math.Tanh(opposite / adjacent)
-            If adjacent < 0 Then
-                incomingVector = incomingVector + Math.PI
-            End If
-            incomingVector = Helm.NormalizeDirection(incomingVector)
-        ElseIf opposite > 0 Then
-            incomingVector = Math.PI / 2
-        Else
-            incomingVector = (3 * Math.PI) / 2
-        End If
-        incomingVector = Helm.NormalizeDirection(incomingVector - direction)
+        incomingVector = Helm.NormalizeDirection(incomingVector - Direction + Math.PI) 'Invert the direction and make it relative
+        'to the Ship's orientation
 
         '-----Calculate which side has been hit-----
         If incomingVector <= Math.PI / 4 Or incomingVector >= (7 * Math.PI) / 4 Then 'Fore

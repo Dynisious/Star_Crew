@@ -385,7 +385,23 @@ Public Class Client
                         g.TranslateTransform(BlankShipSpace.Width / 2, BlankShipSpace.Height / 2) 'Move the turning point into the center of the Graphic
                         g.RotateTransform(180 * MessageData.Positions(i).Direction / Math.PI) 'Rotate the Graphic by the direction of the Ship
                         g.TranslateTransform(-(BlankShipSpace.Width / 2), -(BlankShipSpace.Height / 2)) 'Return the turning point to the edge of the Graphic
-                        g.DrawImage(model, New Point(3, 3)) 'Draw model onto BlankShipSpace
+                        g.DrawImage(model, New PointF((BlankShipSpace.Width - model.Width) / 2, (BlankShipSpace.Height - model.Height) / 2))
+                        'Draw model onto BlankShipSpace
+                        If MessageData.Positions(i).Hull.current <> -1 Then 'There is a need for an indecator
+                            Dim nBrush As Brush
+                            Dim hullFraction As Double = MessageData.Positions(i).Hull.current / MessageData.Positions(i).Hull.max
+                            If MessageData.Positions(i).Hit = True Then
+                                nBrush = Brushes.Orange
+                            ElseIf hullFraction > 2 / 3 Then
+                                nBrush = Brushes.Blue
+                            ElseIf hullFraction > 1 / 3 Then
+                                nBrush = Brushes.GreenYellow
+                            Else
+                                nBrush = Brushes.DarkRed
+                            End If
+                            g.FillEllipse(nBrush, New Rectangle((BlankShipSpace.Width / 2) - 5, (BlankShipSpace.Height / 2) - 5,
+                                                                     10, 10))
+                        End If
                         gDisplay.DrawImage(BlankShipSpace, New Point(MessageData.Positions(i).X - (BlankShipSpace.Width / 2 * zoomScale),
                                                                      MessageData.Positions(i).Y - (BlankShipSpace.Height / 2 * zoomScale)))
                         'Draw BlankShipSpace onto bmp

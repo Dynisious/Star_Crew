@@ -713,7 +713,7 @@
                         Screen.GamePlayLayout.lblLeft.BackColor = Color.LightBlue
                 End Select
 
-                If MyClient.IncomingMessage.Positions(0).Firing = True Then 'Set both Weapons to Flash Light Blue
+                If MyClient.IncomingMessage.Firing = True Then 'Set both Weapons to Flash Light Blue
                     Screen.GamePlayLayout.lblPrimary.BackColor = Color.LightBlue
                     Screen.GamePlayLayout.lblSecondary.BackColor = Color.LightBlue
                 Else 'Set both Weapons to be Transparent

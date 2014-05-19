@@ -3,12 +3,13 @@ Public Class ServerMessage 'Represents all the information necessary for a Clien
     Public TargetIndex As Integer = -1 'The index of the Players targeted Ship
     Public Speed As StatDbl 'The Speed of the craft
     Public Direction As Double = -1 'The direction the craft is traveling in
-    Public ShipCount As Integer = -1 'The number of Ships in the Fleet
+    Public ShipCount As Integer = -1 'The number of Ships in the Players Fleet
     Public CenterCraft As Ship  'The Players ship if in combat
     Public Primary As Weapon 'The Primary Weapon object
     Public PrimaryMount As Double = -1 'The Primary Weapons offset
     Public Secondary As Weapon 'The Secondary Weapon object
     Public SecondaryMount As Double = -1 'The Secondary Weapons offset
+    Public Firing As Boolean = False 'A Boolean indecating if the Player is firing weapons
     Public Positions() As GraphicPosition 'An Array of GraphicPosition objects representing the Ships
     Public Warping As Galaxy.Warp = -1 'The 'warp' state of the Galaxy
     Public State As Galaxy.Scenario = -1 'The update state of the Galaxy
@@ -26,6 +27,7 @@ Public Class ServerMessage 'Represents all the information necessary for a Clien
             PrimaryMount = nCenterCraft.Batteries.PrimaryMount
             Secondary = nCenterCraft.Batteries.Secondary
             SecondaryMount = nCenterCraft.Batteries.SecondaryMount
+            Firing = nCenterCraft.Firing
         End If
         Positions = nPositions
         Warping = nWarping

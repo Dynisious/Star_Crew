@@ -248,12 +248,16 @@
                 End If
             End If
             If ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Direction < Math.PI Then
-                ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Direction = ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Direction - ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Helm.TurnSpeed.current
+                ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Direction =
+                    ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Direction -
+                    ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Helm.TurnSpeed.current
                 If ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Direction < 0 Then
                     ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Direction = 0
                 End If
             ElseIf ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Direction > Math.PI Then
-                ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Direction = ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Direction + ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Helm.TurnSpeed.current
+                ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Direction =
+                    ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Direction +
+                    ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Helm.TurnSpeed.current
                 If ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Direction > 2 * Math.PI Then
                     ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Direction = 0
                 End If
@@ -499,12 +503,13 @@
                     ReDim craftPositions(centerSector.fleetList.Count + centerSector.spaceStations.Length - 1) 'Clear and resize the Array of GraphicPosition objects apropriately
                     '-----Set new positions----- 'Create new GraphicPosition positions for the Fleets and SpaceStations
                     For i As Integer = 0 To centerSector.fleetList.Count - 1
-                        Dim x As Integer = centerSector.fleetList(i).Position.X - Sector.centerFleet.Position.X 'The X coordinate relative to the
+                        Dim X As Integer = centerSector.fleetList(i).Position.X - Sector.centerFleet.Position.X 'The X coordinate relative to the
                         'center Fleet
-                        Dim y As Integer = centerSector.fleetList(i).Position.Y - Sector.centerFleet.Position.Y 'The Y coordinate relative to the
+                        Dim Y As Integer = centerSector.fleetList(i).Position.Y - Sector.centerFleet.Position.Y 'The Y coordinate relative to the
                         'center Fleet
                         craftPositions(i) = New GraphicPosition(centerSector.fleetList(i).MyAllegence, centerSector.fleetList(i).Format,
-                                                                False, False, x, y, centerSector.fleetList(i).Direction) 'Create a new GraphicPosition object
+                                                                False, X, Y, centerSector.fleetList(i).Direction,
+                                                                New StatInt(centerSector.fleetList(i).ShipList.Count, 50)) 'Create a new GraphicPosition object
                     Next
                     For i As Integer = 0 To centerSector.spaceStations.Length - 1
                         Dim X As Integer = centerSector.spaceStations(i).Position.X - Sector.centerFleet.Position.X 'The X coordinate relative to the
@@ -513,7 +518,7 @@
                         'center Fleet
                         craftPositions(centerSector.fleetList.Count + i) = New GraphicPosition(centerSector.spaceStations(i).MyAllegence,
                                                                                                 ShipLayout.Formats.Station, False, False,
-                                                                                                X, Y, 0)
+                                                                                                X, Y, New StatInt(-1, -1))
                     Next
                     '---------------------------
                 End If
@@ -568,10 +573,9 @@
                             ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Position.Y 'The Y coordinate of the Ship relative to the
                         'Players Ship
                         craftPositions(i) = New GraphicPosition(CombatSpace.shipList(i).MyAllegence, CombatSpace.shipList(i).Format,
-                                                                CombatSpace.shipList(i).Hit, CombatSpace.shipList(i).Firing,
-                                                                x, y, CombatSpace.shipList(i).Direction) 'A GraphicPosition object to send to the
-                        'Client's representing the Ship
-                        'Create a new GraphicPosition object
+                                                                CombatSpace.shipList(i).Hit, x, y, CombatSpace.shipList(i).Direction,
+                                                                New StatInt(CombatSpace.shipList(i).Hull))
+                        'A GraphicPosition object to send to the Client's representing the Ship
                     Next
                     '---------------------------
                 End If
