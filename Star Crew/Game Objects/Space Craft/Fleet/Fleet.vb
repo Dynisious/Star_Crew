@@ -11,15 +11,17 @@ Public MustInherit Class Fleet 'A group of Ship objects that flies around a sect
         Target 'The Fleet must go for an actual Fleet
         Wander 'The Fleet can just wander
     End Enum
-    Public MovementState As FleetState = FleetState.Wander
+    Public MovementState As FleetState = FleetState.Wander 'How the Fleet is moving around the Sector
 
-    Public Sub New(ByVal nIndex As Integer, ByVal nAllegence As Galaxy.Allegence, ByVal nFormat As ShipLayout.Formats)
-        MyBase.New(nAllegence, nFormat, nIndex, New Point(Int(Rnd() * SpawnBox), Int(Rnd() * SpawnBox)))
+    Public Sub New(ByVal nIndex As Integer, ByVal nAllegence As Galaxy.Allegence,
+                   ByVal nFormat As ShipLayout.Formats, ByRef nSpaceStation As SpaceStation)
+        MyBase.New(nAllegence, nFormat, nIndex, New Point(nSpaceStation.Position.X + Int(Rnd() * 4 * InteractRange) - (2 * InteractRange),
+                                                          nSpaceStation.Position.Y + Int(Rnd() * 4 * InteractRange) - (2 * InteractRange)))
         Randomize()
         MyAllegence = nAllegence 'Sets the Fleets MyAllegence value to the specified Allegience
         Index = nIndex 'Sets the Fleets Index value to the specified index
         For i As Integer = 0 To Int(Rnd() * PopulationCap / 3) + (PopulationCap / 6) + 1 'Creates between 1/3 and 1/2 Ships
-            'of the population cap
+            'of the population cap inside the Fleet
             Dim Format As ShipLayout
             Select Case Int(Rnd() * (ShipLayout.Formats.ShipsMax - ShipLayout.Formats.ShipsMin)) + ShipLayout.Formats.ShipsMin
                 Case ShipLayout.Formats.Screamer
@@ -29,7 +31,7 @@ Public MustInherit Class Fleet 'A group of Ship objects that flies around a sect
             End Select
             ShipList.Add(New Ship(Format, -1, MyAllegence))
         Next
-        SetStats_Handle()
+        SetStats_Handle() 'Sets the Stats of the Fleet
     End Sub
 
     Public Sub RemoveShip(ByRef nShip As Ship) 'Removes the ship object from the Fleet
@@ -81,7 +83,7 @@ Public MustInherit Class Fleet 'A group of Ship objects that flies around a sect
 
             For i As Integer = 0 To currentSector.fleetList.Count - 1
                 If i < currentSector.fleetList.Count Then
-                    Dim nFleet As Fleet = currentSector.fleetList(i)
+                    Dim nFleet As Fleet = currentSector.fleetList(i) 'The Fleet object being evaluated
                     Dim x As Integer = currentSector.fleetList(i).Position.X - Position.X 'The Target's X position relative to mine
                     Dim y As Integer = nFleet.Position.Y - Position.Y 'The Target's Y position relative to mine
                     Dim distance As Integer = Math.Sqrt((x ^ 2) + (y ^ 2)) 'The Target's distance from me
@@ -92,36 +94,36 @@ Public MustInherit Class Fleet 'A group of Ship objects that flies around a sect
                         'is an enemy or it is an ally and we can combine Fleets and it is not targeting itself.
                         If distance <= InteractRange Then 'Interact with the fleet
                             MovementState = FleetState.Wander 'The Fleet can do as it wishes
-                            If ReferenceEquals(i, ConsoleWindow.GameServer.GameWorld.centerFleet) = False And
+                            If ReferenceEquals(nFleet, ConsoleWindow.GameServer.GameWorld.centerFleet) = False And
                                 nFleet.MyAllegence <> MyAllegence Then
-                                'Run an automated fight cenario
-                                ConsoleWindow.GameServer.GameWorld.CombatSpace.AutoFight(Me, nFleet)
-                                Speed.current = 0
-                            ElseIf nFleet.MyAllegence = MyAllegence And ReferenceEquals(
-                                nFleet, ConsoleWindow.GameServer.GameWorld.centerFleet) = False And
-                                ShipList.Count < PopulationCap And nFleet.ShipList.Count < PopulationCap Then 'Combine the two fleets
-                                Dim temp As Integer = ShipList.Count
-                                For e As Integer = 0 To PopulationCap - 1 - temp
-                                    If nFleet.ShipList.Count > 0 Then
-                                        ShipList.Add(nFleet.ShipList(0))
-                                        Dim nShip As Ship = nFleet.ShipList(0)
-                                        nFleet.RemoveShip(nShip)
-                                    Else
-                                        currentSector.RemoveFleet(nFleet, True, False)
-                                        Exit For
+                                ConsoleWindow.GameServer.GameWorld.CombatSpace.AutoFight(Me, nFleet) 'Run an automated fight cenario
+                                Speed.current = 0 'Set the Speed to 0
+                            ElseIf nFleet.MyAllegence = MyAllegence And
+                                ReferenceEquals(nFleet, ConsoleWindow.GameServer.GameWorld.centerFleet) = False And
+                                ShipList.Count < PopulationCap And
+                                nFleet.ShipList.Count < PopulationCap Then 'Combine the two fleets
+                                Dim temp As Integer = ShipList.Count 'The number of Ships in this Fleet
+                                For e As Integer = 0 To PopulationCap - 1 - temp 'Loop as many times as is necessary to fill up the Fleet
+                                    If nFleet.ShipList.Count > 0 Then 'There's still Ships to move
+                                        Dim nShip As Ship = nFleet.ShipList(0) 'The Ship getting moved
+                                        ShipList.Add(nShip) 'Add the Ship to this Fleet
+                                        nFleet.RemoveShip(nShip) 'Remove the Ship from the other Fleet
+                                    Else 'The other Fleet no longer exists
+                                        currentSector.RemoveFleet(nFleet, True, False) 'Kill the Fleet
+                                        Exit For 'Exit the For loop
                                     End If
                                 Next
-                                Exit Sub
+                                Exit Sub 'Exit the Subroutine
                             End If
                         Else 'Fly towards the Target Fleet
-                            targetDistance = distance
+                            targetDistance = distance 'The distance of the targeted Fleet
                             '-----Target Direction----- 'Get the Target's direction relative to me
                             If x <> 0 Then
                                 targetDirection = Math.Tanh(y / x)
                                 If x < 0 Then
                                     targetDirection = targetDirection + Math.PI
                                 End If
-                                targetDirection = Helm.NormalizeDirection(targetDirection)
+                                targetDirection = Helm.NormaliseDirection(targetDirection)
                             ElseIf y > 0 Then
                                 targetDirection = Math.PI / 2
                             Else
@@ -146,7 +148,7 @@ Public MustInherit Class Fleet 'A group of Ship objects that flies around a sect
                             If X < 0 Then
                                 targetDirection = targetDirection + Math.PI
                             End If
-                            targetDirection = Helm.NormalizeDirection(targetDirection)
+                            targetDirection = Helm.NormaliseDirection(targetDirection)
                         ElseIf Y > 0 Then
                             targetDirection = Math.PI / 2
                         Else
@@ -161,29 +163,32 @@ Public MustInherit Class Fleet 'A group of Ship objects that flies around a sect
                 targetDirection - Direction > -Math.PI / 2 Then 'the Fleet is facing the enemy
                 targetSpeed = Speed.max 'Accelerate to maximum speed
             End If
-            If Helm.NormalizeDirection(targetDirection - Direction + Math.PI) > Math.PI Then 'Turn right to face enemy
+            If Helm.NormaliseDirection(targetDirection - Direction + Math.PI) > Math.PI Then 'Turn right to face enemy
                 Direction = Direction + TurnSpeed
-                If Helm.NormalizeDirection(targetDirection - Direction + Math.PI) < Math.PI Then
+                If Helm.NormaliseDirection(targetDirection - Direction + Math.PI) < Math.PI Then 'Turn back to be facing the enemy
                     Direction = targetDirection
                 Else
-                    Direction = Helm.NormalizeDirection(Direction)
+                    Direction = Helm.NormaliseDirection(Direction) 'Normalise the direction
                 End If
-            ElseIf Helm.NormalizeDirection(targetDirection - Direction + Math.PI) < Math.PI Then 'Turn left to face enemy
+            ElseIf Helm.NormaliseDirection(targetDirection - Direction + Math.PI) < Math.PI Then 'Turn left to face enemy
                 Direction = Direction - TurnSpeed
-                If Helm.NormalizeDirection(targetDirection - Direction + Math.PI) > Math.PI Then
+                If Helm.NormaliseDirection(targetDirection - Direction + Math.PI) > Math.PI Then 'Turn back to be facing the enemy
                     Direction = targetDirection
                 Else
-                    Direction = Helm.NormalizeDirection(Direction)
+                    Direction = Helm.NormaliseDirection(Direction) 'Normalise the direction
                 End If
             End If
             If Speed.current < targetSpeed Then 'Accelerate up to targetSpeed
                 Speed.current = Speed.current + Acceleration.current
-                If Speed.current > targetSpeed Then
+                If Speed.current > targetSpeed Then 'Turn back to the targets speed
                     Speed.current = targetSpeed
+                End If
+                If Speed.current > Speed.max Then 'Turn back to the Fleets maximum speed
+                    Speed.current = Speed.max
                 End If
             ElseIf Speed.current > targetSpeed Then 'Decelerate down to targetSpeed
                 Speed.current = Speed.current - Acceleration.current
-                If Speed.current < targetSpeed Then
+                If Speed.current < targetSpeed Then 'Turn up to the targets speed
                     Speed.current = targetSpeed
                 End If
             End If

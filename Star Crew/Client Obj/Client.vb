@@ -11,7 +11,7 @@ Public Class Client
     Private ReadOnly BlankShipSpace As New Bitmap(40, 40) 'A blank Bitmap object to draw Ship Models onto while rendering
     Private BytesToReceive As Integer 'An Integer representing how many bytes the Client should wait to receive from the Server
     Private BytesReceived As Integer 'An Integer representing how many bytes of data the Client has Received from the Server
-    Private MessageBuff(17000) As Byte 'An Array of Bytes to store the bytes of data received from the Server
+    Private MessageBuff(22000) As Byte 'An Array of Bytes to store the bytes of data received from the Server
     Private ByteBuff(3) As Byte 'An Array of 4 Bytes to convert into the BytesToReceive Integer
     Private BinarySerializer As New Runtime.Serialization.Formatters.Binary.BinaryFormatter 'A Serialiser Object to serialise/deserialise
     'bytes for sending/receiving
@@ -20,9 +20,10 @@ Public Class Client
     Public MyMessageMutex As Threading.Mutex 'A Mutex object to preven cross threading errors concerning keystrokes
     'Client's threads around IncommingMessage
     Private MutexCreated As Boolean 'A Boolean value indecating whether a Mutex object was created succesfully
-    Private ModelDirectory(Galaxy.Allegence.max - 1)() As Bitmap
-    Private LastState As Galaxy.Scenario = -1
-    Public Zoom As Integer = 100
+    Private ModelDirectory(Galaxy.Allegence.max - 1)() As Bitmap 'A staggered Array object which stores all the images used by two enumerators
+    Private LastState As Galaxy.Scenario = -1 'The state the Server's Galaxy was last in to compare to what it is currently in so as to Start
+    'playing audio files
+    Public Zoom As Integer = 100 'An integer representing how far in/out the player is zooming on the image so as to scale the image correctly
 
     Public Class Star
         Public Position As Point 'A Point object indecating the Star's position on the Bitmap that gets displayed
@@ -41,10 +42,11 @@ Public Class Client
         Public Shared Sub Update_Call(ByRef nData As ServerMessage, ByVal nZoom As Double) 'Raises the Update Event
             RaiseEvent Update(nData, nZoom)
 
+            '-----Change the speed of Stars to simulate Warp-----
             If ConsoleWindow.OutputScreen.MyClient.IncomingMessage.Warping = Galaxy.Warp.Warping And
                 WarpCount = -30 Then 'Begin the counter
                 WarpCount = 69
-                My.Computer.Audio.Play(My.Resources.Warp_Audio, AudioPlayMode.Background)
+                My.Computer.Audio.Play(My.Resources.Warp_Audio, AudioPlayMode.Background) 'Play the Audio for warping
             ElseIf WarpCount <= 20 And WarpCount > 0 Then 'Decelerate
                 Speed = Speed - (WarpSpeed / 20)
                 WarpCount = WarpCount - 1
@@ -54,6 +56,7 @@ Public Class Client
             ElseIf WarpCount > -30 Then
                 WarpCount = WarpCount - 1
             End If
+            '----------------------------------------------------
         End Sub
         Private Sub Update_Handle(ByRef nData As ServerMessage, ByVal nZoom As Double) Handles MyClass.Update 'Handles the Update Event
             If Flash = False Then 'Random chance to 'flash'
@@ -97,11 +100,12 @@ Public Class Client
     End Class
 
     Public Sub New(ByVal nIP As String, ByVal nStation As Integer)
-        ClientLoop = True
-        ReDim ModelDirectory(Galaxy.Allegence.Neutral)(ShipLayout.Formats.OmniMax - 1)
-        ReDim ModelDirectory(Galaxy.Allegence.Friendly)(ShipLayout.Formats.ShipsMax - 1)
-        ReDim ModelDirectory(Galaxy.Allegence.Pirate)(ShipLayout.Formats.ShipsMax - 1)
-        For i As Integer = 0 To ShipLayout.Formats.OmniMax - 1
+        ReDim ModelDirectory(Galaxy.Allegence.Neutral)(ShipLayout.Formats.SectorMax - 1) 'Dimentionalise the directory for Neutral objects
+        ReDim ModelDirectory(Galaxy.Allegence.Friendly)(ShipLayout.Formats.ShipsMax - 1) 'Dimentionalse the directory for Friendly objects
+        ReDim ModelDirectory(Galaxy.Allegence.Pirate)(ShipLayout.Formats.ShipsMax - 1) 'Dimentionalise the directior for Enemy objects
+
+        '-----Fill out the Directory-----
+        For i As Integer = 0 To ShipLayout.Formats.SectorMax - 1
             Select Case i
                 Case ShipLayout.Formats.Station
                     ModelDirectory(Galaxy.Allegence.Neutral)(i) = My.Resources.NeutralStation
@@ -131,13 +135,16 @@ Public Class Client
                     ModelDirectory(Galaxy.Allegence.Pirate)(i) = My.Resources.PirateThunder
             End Select
         Next
+        '--------------------------------
 
-        myMessage.Station = nStation 'Set the Station value of myStation to the selected Station.StationTypes enumerator
+        myMessage.Station = nStation 'Set the Station value of myStation to the player's selected Station.StationTypes enumerator
+
+        '-----Attempt to connect to a remote Server-----
         Try
             MyConnector = New Net.Sockets.TcpClient(nIP, 1225) 'Create a new TcpClient object
             MyConnector.Client.ReceiveTimeout = 10000 'Wait 10 Seconds for data to be received before timing out
             MyConnector.Client.SendTimeout = 10000 'Wait 10 seconds for data to be sent before timing out
-            ClientLoop = True 'Set Connected to True
+            ClientLoop = True 'Set ClientLoop to True so that the Client's communications will not close
             For i As Integer = 0 To UBound(stars)
                 stars(i) = New Star(New Point(Int((594 * Rnd()) + 3), Int((594 * Rnd())) + 3)) 'Create the Star objects
             Next
@@ -162,8 +169,9 @@ Public Class Client
             Console.WriteLine("Check address and make sure the server exists")
             Console.WriteLine(ex.ToString)
             Console.Beep()
-            ClientLoop = False
+            ClientLoop = False 'Let the Client's communications close
         End Try
+        '-----------------------------------------------
     End Sub
 
     Public Sub SendCommand(ByVal command As Integer, ByVal value As Integer) 'Send key strokes to the Server
@@ -182,13 +190,16 @@ Public Class Client
         While ClientLoop = True
             RunComms() 'Sends and Receives messages to and from the Server
         End While
-        Tick.Enabled = False
+
+        '-----Finalise the Client object-----
+        Tick.Enabled = False 'Stop the Client object from drawing on the screen
         IncommingMessageMutex.Close() 'Close the Mutex
         MyMessageMutex.Close() 'Close the Mutex
-        If MyConnector.Connected = True Then
+        If MyConnector.Connected = True Then 'The Client is still connected to a Server
             MyConnector.Client.Disconnect(False) 'Disconnects the Socket from the Server
         End If
-        MyConnector.Close()
+        MyConnector.Close() 'Close the TCPClient object
+        '------------------------------------
     End Sub
     Private Sub RunComms()
         '-----Recieve Message-----
@@ -219,6 +230,17 @@ Public Class Client
             Console.WriteLine(ex.ToString)
             Console.WriteLine()
             ClientLoop = False 'Let the Loop finish
+            Beep()
+            Exit Sub 'Leave the Subroutine emmidiately
+        Catch ex As ArgumentOutOfRangeException 'The Server sent a message that was to big for the Client to receive
+            Console.WriteLine()
+            Console.WriteLine("Error : The Client was unable to receive the full message.")
+            Console.WriteLine()
+            Console.WriteLine(ex.ToString)
+            Console.WriteLine("Buffer Size: {0}, Message Size: {1}", MessageBuff.Length, BytesToReceive)
+            Console.WriteLine()
+            ClientLoop = False 'Let the Loop finish
+            Beep()
             Exit Sub 'Leave the Subroutine emmidiately
         Catch ex As Exception
             Console.WriteLine()
@@ -282,25 +304,25 @@ Public Class Client
 
     Private Sub UpdateGraphics() Handles Tick.Tick 'Update the Image to display on the screen
         If IncomingMessage IsNot Nothing Then 'There is a message to read
-            Dim zoomScale As Double = Zoom / 100
+            Dim zoomScale As Double = Zoom / 100 'The scale of the image
             IncommingMessageMutex.WaitOne() 'Block until the Mutex is free
             Dim MessageData As ServerMessage = IncomingMessage 'Create a copy of the IncommingMessage object
             IncommingMessageMutex.ReleaseMutex() 'Release the Mutex
-            If LastState <> MessageData.State Then
-                LastState = MessageData.State
+            If LastState <> MessageData.State Then 'The Server's Galaxy has changed state
+                LastState = MessageData.State 'Set the new LastState
                 Select Case MessageData.State
                     Case Galaxy.Scenario.Battle
-                        If MessageData.Warping = Galaxy.Warp.None Then
+                        If MessageData.Warping = Galaxy.Warp.None Then 'Play the Battle Music
                             My.Computer.Audio.Play(My.Resources.The_Pounce_Extended, AudioPlayMode.BackgroundLoop)
                         End If
                     Case Galaxy.Scenario.Transit
-                        My.Computer.Audio.Play(My.Resources.Timeless_Voyage_Extended, AudioPlayMode.BackgroundLoop)
+                        My.Computer.Audio.Play(My.Resources.Timeless_Voyage_Extended, AudioPlayMode.BackgroundLoop) 'Play the Sector Music
                 End Select
             End If
             If MessageData.State <> -1 Then
                 Star.Update_Call(MessageData, zoomScale) 'Update all of the Star objects
                 If MessageData.State = Galaxy.Scenario.Battle Then 'Set the Weapon directions etc
-                    primaryDirection = Helm.NormalizeDirection(MessageData.Direction + MessageData.Primary.TurnDistance.current)
+                    primaryDirection = Helm.NormaliseDirection(MessageData.Direction + MessageData.Primary.TurnDistance.current)
                     'Set the direction of the Primary Weapon
                     Dim Width As Integer = MessageData.Primary.Range.current * 2 * zoomScale 'Set the Width of primaryRec
                     Dim Height As Integer = MessageData.Primary.Range.current * 2 * zoomScale 'Set the Height of primaryRec
@@ -310,7 +332,7 @@ Public Class Client
                     'of the primaryRec
                     primaryRec = New Rectangle(startX, startY, Width, Height) 'Create the primaryRec Rectangle object
 
-                    secondaryDirection = Helm.NormalizeDirection(MessageData.Direction + MessageData.Secondary.TurnDistance.current)
+                    secondaryDirection = Helm.NormaliseDirection(MessageData.Direction + MessageData.Secondary.TurnDistance.current)
                     'Set the direction of the Secodary Weapon
                     Width = MessageData.Secondary.Range.current * 2 * zoomScale 'Set the Width of the secondaryRec
                     Height = MessageData.Secondary.Range.current * 2 * zoomScale 'Set the Height of the secondaryRec
@@ -334,19 +356,19 @@ Public Class Client
                 '-----Put on Radar----- 'Scale the positions of the Ships back so that they appear on the edge of a
                 'circle if they are off screen; the Player Ship is always at (0,0)
                 For i As Integer = 0 To UBound(MessageData.Positions)
-                    MessageData.Positions(i).X = MessageData.Positions(i).X * zoomScale
-                    MessageData.Positions(i).Y = MessageData.Positions(i).Y * zoomScale
-                    Dim distance As Integer = Math.Sqrt((MessageData.Positions(i).X ^ 2) + (MessageData.Positions(i).Y ^ 2))
-                    'The distance of the Ship from the Player Ship
-                    If distance > 200 Then 'The (X,Y) coordinates need to be scaled back
+                    MessageData.Positions(i).X = MessageData.Positions(i).X * zoomScale 'Scale the X Position
+                    MessageData.Positions(i).Y = MessageData.Positions(i).Y * zoomScale 'Scale the Y Position
+                    Dim distance As Integer = Math.Sqrt((MessageData.Positions(i).X ^ 2) + (MessageData.Positions(i).Y ^ 2)) 'Calculate the
+                    'Ship's distance from the center of the image
+                    If distance > 200 Then 'The (X,Y) coordinates need to be scaled back to put it on the edge of the radar
                         Dim scale As Double = distance / 200 'The scale of the distance relative to 200
                         MessageData.Positions(i).X = (MessageData.Positions(i).X / scale) 'Scale X
                         MessageData.Positions(i).Y = (MessageData.Positions(i).Y / scale) 'Scale Y
                     End If
-                    MessageData.Positions(i).X = MessageData.Positions(i).X + ((Screen.ImageSize.X / 2) - 1) 'Add the offset so that 0 on the X is
-                    'in the center of the screen
-                    MessageData.Positions(i).Y = MessageData.Positions(i).Y + ((Screen.ImageSize.Y / 2) - 1) 'Add the offset so that 0 on the Y is
-                    'in the center of the screen
+                    MessageData.Positions(i).X = MessageData.Positions(i).X + ((Screen.ImageSize.X / 2) - 1) 'Add the offset so that 0
+                    'on the X is in the center of the screen
+                    MessageData.Positions(i).Y = MessageData.Positions(i).Y + ((Screen.ImageSize.Y / 2) - 1) 'Add the offset so that 0
+                    'on the Y is in the center of the screen
                 Next
                 '----------------------
 
@@ -390,8 +412,8 @@ Public Class Client
                         g.TranslateTransform(-(BlankShipSpace.Width / 2), -(BlankShipSpace.Height / 2)) 'Return the turning point to the edge of the Graphic
                         g.DrawImage(model, New PointF((BlankShipSpace.Width - model.Width) / 2, (BlankShipSpace.Height - model.Height) / 2))
                         'Draw model onto BlankShipSpace
-                        If MessageData.Positions(i).Hull.current <> -1 Then 'There is a need for an indecator
-                            Dim nBrush As Brush
+                        If MessageData.Positions(i).Hull.current <> -1 Then 'There is a need for an indecator for the model
+                            Dim nBrush As Brush 'The color of the indecator
                             Dim hullFraction As Double = MessageData.Positions(i).Hull.current / MessageData.Positions(i).Hull.max
                             If MessageData.Positions(i).Hit = True Then
                                 nBrush = Brushes.Orange
@@ -402,12 +424,12 @@ Public Class Client
                             Else
                                 nBrush = Brushes.DarkRed
                             End If
-                            g.FillEllipse(nBrush, New Rectangle((BlankShipSpace.Width / 2) - 5, (BlankShipSpace.Height / 2) - 5,
-                                                                     10, 10))
+                            g.FillEllipse(nBrush, New Rectangle((BlankShipSpace.Width / 2) - 4, (BlankShipSpace.Height / 2) - 4, 8, 8))
+                            'Draw a circle onto the center of the model indecating it's hull
                         End If
                         gDisplay.DrawImage(BlankShipSpace, New Point(MessageData.Positions(i).X - (BlankShipSpace.Width / 2 * zoomScale),
                                                                      MessageData.Positions(i).Y - (BlankShipSpace.Height / 2 * zoomScale)))
-                        'Draw BlankShipSpace onto bmp
+                        'Draw the model onto bmp
                     End If
                 Next
                 '--------------------

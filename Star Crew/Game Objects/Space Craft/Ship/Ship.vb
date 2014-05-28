@@ -1,7 +1,7 @@
 ﻿<Serializable()>
 Public Class Ship 'A Ship that flies in combat and fights other Ships
     Inherits SpaceCraft 'The base Class for all Ships and Fleets
-    Public InCombat As Boolean = False
+    Public InCombat As Boolean = False 'A Boolean value indecating whether the Ship is in combat or not
     Public TargetLock As Boolean = False 'A Boolean value indecating whether the Ship is allowed to switch targets
     Public Hull As StatDbl 'A StatDbl object representing the current and max Hull values
     Public Firing As Boolean = False 'A Boolean value indecating whether the Ship is actively firing
@@ -25,10 +25,10 @@ Public Class Ship 'A Ship that flies in combat and fights other Ships
         nShipStats.Initialise(Me) 'Sets the Stats of the Ship
     End Sub
 
-    Public Sub TakeDamage(ByRef nWeapon As Weapon, ByRef shooter As Ship, ByVal incomingVector As Double) 'Calculates how much damage is done to the
-        'Hull
+    Public Function TakeDamage(ByRef nWeapon As Weapon, ByRef shooter As Ship, ByVal incomingVector As Double) As Boolean 'Calculates
+        'how much damage is done to the Hull and returns true if the Ship is destroyed in the process
         Dim sideHit As Shields.Sides 'The side of the ship that has been hit
-        incomingVector = Helm.NormalizeDirection(incomingVector - Direction + Math.PI) 'Invert the direction and make it relative
+        incomingVector = Helm.NormaliseDirection(incomingVector - Direction + Math.PI) 'Invert the direction and make it relative
         'to the Ship's orientation
 
         '-----Calculate which side has been hit-----
@@ -43,67 +43,101 @@ Public Class Ship 'A Ship that flies in combat and fights other Ships
         End If
         '-------------------------------------------
 
-        Dim incomingDamage As Integer = Shielding.DeflectHit(sideHit, nWeapon) 'The Damage that doesn't get absorbed by the shields
-        Hull.current = Hull.current - incomingDamage 'Take away the remaining damage
+        Dim incomingDamage As Double = Shielding.DeflectHit(sideHit, nWeapon) 'The Damage that doesn't get absorbed by the shields
+        Hull.current = Hull.current - incomingDamage 'Take away the damage that was not absorbed
         Select Case sideHit
             Case Shields.Sides.FrontShield 'Some damage is done to the Primary and Secondary Weapons
-                Batteries.Primary.Integrety.current = Int(Batteries.Primary.Integrety.current - (incomingDamage / 10))
-                If Batteries.Primary.Integrety.current < 0 Then
+                '-----Primary-----
+                Batteries.Primary.Integrety.current = Batteries.Primary.Integrety.current - (incomingDamage / 10) 'Take away the damage done
+                'to the Primary Weapon
+                If Batteries.Primary.Integrety.current < 0 Then 'There cannot be negative integrety so set it to 0
                     Batteries.Primary.Integrety.current = 0
                 End If
-                Batteries.Primary.ChangeStats()
-                Batteries.Secondary.Integrety.current = Int(Batteries.Secondary.Integrety.current - (incomingDamage / 10))
-                If Batteries.Secondary.Integrety.current < 0 Then
+                Batteries.Primary.ChangeStats() 'Change the Weapon's Stats to be relative to it's integrety
+                '-----------------
+
+                '-----Secondary-----
+                Batteries.Secondary.Integrety.current = Batteries.Secondary.Integrety.current - (incomingDamage / 10) 'Take away the damage done
+                'to the Secondary Weapon
+                If Batteries.Secondary.Integrety.current < 0 Then 'There cannot be negative integrety so set it to 0
                     Batteries.Secondary.Integrety.current = 0
                 End If
-                Batteries.Secondary.ChangeStats()
-            Case Shields.Sides.RightShield Or Shields.Sides.LeftShield 'Some damage is done to both the Weapons, the SubSystem.Engines and the Power Core
-                If Int(2 * Rnd()) = 0 Then
-                    Batteries.Primary.Integrety.current = Int(Batteries.Primary.Integrety.current - (incomingDamage / 10))
-                    If Batteries.Primary.Integrety.current < 0 Then
-                        Batteries.Primary.Integrety.current = 0
-                    End If
-                    Batteries.Primary.ChangeStats()
-                    Batteries.Secondary.Integrety.current = Int(Batteries.Secondary.Integrety.current - (incomingDamage / 10))
-                    If Batteries.Secondary.Integrety.current < 0 Then
-                        Batteries.Secondary.Integrety.current = 0
-                    End If
-                    Batteries.Secondary.ChangeStats()
+                Batteries.Secondary.ChangeStats() 'Change the Weapon's Stats to be relative to it's integrety
+                '-------------------
+            Case Shields.Sides.RightShield Or Shields.Sides.LeftShield 'Some damage is done to both the Weapons,
+                'the Engines and the Power Core
+                '-----Weapons-----
+                '-----Primary-----
+                Batteries.Primary.Integrety.current = Batteries.Primary.Integrety.current - (incomingDamage / 10) 'Take away the damage done
+                'to the Primary Weapon
+                If Batteries.Primary.Integrety.current < 0 Then 'There cannot be negative integrety so set it to 0
+                    Batteries.Primary.Integrety.current = 0
                 End If
-                If Int(2 * Rnd()) = 0 Then
-                    Engineering.SubSystem.Engines.current = Int(Engineering.SubSystem.Engines.current - (incomingDamage * 0.05))
-                    If Engineering.SubSystem.Engines.current < 0 Then
-                        Engineering.SubSystem.Engines.current = 0
-                    End If
-                    Engineering.SubSystem.PowerCore.current = Int(Engineering.SubSystem.PowerCore.current - (incomingDamage * 0.05))
-                    If Engineering.SubSystem.PowerCore.current < 1 Then
-                        Engineering.SubSystem.PowerCore.current = 1
-                    End If
+                Batteries.Primary.ChangeStats() 'Change the Weapon's Stats to be relative to it's integrety
+                '-----------------
+
+                '-----Secondary-----
+                Batteries.Secondary.Integrety.current = Batteries.Secondary.Integrety.current - (incomingDamage / 10) 'Take away the damage done
+                'to the Secondary Weapon
+                If Batteries.Secondary.Integrety.current < 0 Then 'There cannot be negative integrety so set it to 0
+                    Batteries.Secondary.Integrety.current = 0
                 End If
-            Case Shields.Sides.BackShield 'Some damage is done to the SubSystem.Engines and Power Core
-                Engineering.SubSystem.Engines.current = Int(Engineering.SubSystem.Engines.current - (incomingDamage * 0.05))
-                If Engineering.SubSystem.Engines.current < 0 Then
+                Batteries.Secondary.ChangeStats() 'Change the Weapon's Stats to be relative to it's integrety
+                '-------------------
+                '-----------------
+
+                '-----Engineering-----
+                '-----Engines-----
+                Engineering.SubSystem.Engines.current = Int(Engineering.SubSystem.Engines.current - (incomingDamage / 20)) 'Take away the damage
+                'done to the Engines
+                If Engineering.SubSystem.Engines.current < 0 Then 'There cannot be negative integrety so set it to 0
                     Engineering.SubSystem.Engines.current = 0
                 End If
-                Engineering.SubSystem.PowerCore.current = Int(Engineering.SubSystem.PowerCore.current - (incomingDamage * 0.05))
-                If Engineering.SubSystem.PowerCore.current < 1 Then
+                '-----------------
+
+                '-----Power Core-----
+                Engineering.SubSystem.PowerCore.current = Int(Engineering.SubSystem.PowerCore.current - (incomingDamage / 20)) 'Take away
+                'the damage done to the Power Core
+                If Engineering.SubSystem.PowerCore.current < 1 Then 'There cannot be negative integrety so set it to 0
                     Engineering.SubSystem.PowerCore.current = 1
                 End If
+                '--------------------
+                '---------------------
+            Case Shields.Sides.BackShield 'Some damage is done to the Engines and Power Core
+                '-----Engines-----
+                Engineering.SubSystem.Engines.current = Int(Engineering.SubSystem.Engines.current - (incomingDamage / 20)) 'Take away the damage
+                'done to the Engines
+                If Engineering.SubSystem.Engines.current < 0 Then 'There cannot be negative integrety so set it to 0
+                    Engineering.SubSystem.Engines.current = 0
+                End If
+                '-----------------
+
+                '-----Power Core-----
+                Engineering.SubSystem.PowerCore.current = Int(Engineering.SubSystem.PowerCore.current - (incomingDamage / 20)) 'Take away
+                'the damage done to the Power Core
+                If Engineering.SubSystem.PowerCore.current < 1 Then 'There cannot be negative integrety so set it to 0
+                    Engineering.SubSystem.PowerCore.current = 1
+                End If
+                '--------------------
         End Select
         Hit = True 'The Ship has just been hit
         If Hull.current <= 0 Then 'Ship is dead and needs to be destroyed
             DestroyShip() 'Destroys the Ship
+            Return True
+        Else
+            Return False
         End If
-    End Sub
+    End Function
 
     Public Overridable Sub DestroyShip() 'Removes all references to the Ship and all references within it's stations
         If Dead = False Then 'The ship hasn't already been destroyed
             If InCombat = True Then 'The Ship must be removed from the combat cenario's list
                 ConsoleWindow.GameServer.GameWorld.CombatSpace.RemoveShip(Me) 'Remove Ship
-                If ReferenceEquals(ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip, Me) = True Then 'There needs to be a new Player Ship
+                If ReferenceEquals(ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip, Me) = True Then 'There needs to be a
+                    'new Player Ship
                     ConsoleWindow.GameServer.GameWorld.CombatSpace.Recenter() 'Try to take over another Ship
                 End If
-                InCombat = False
+                InCombat = False 'Set the Ship to no longer be in combat
             End If
             Helm.Parent = Nothing 'Remove the reference to the Ship in Helm
             Batteries.Parent = Nothing 'Remove the reference to the Ship in Batteries
@@ -122,10 +156,10 @@ Public Class Ship 'A Ship that flies in combat and fights other Ships
         Engineering.Update() 'Distributes power to all Stations and repairs damaged systems
         Shielding.Update() 'Distribute power among the 4 shields
         Helm.Update() 'Pilots the Ship towards the selected target
-        Position.X = Position.X + (Math.Cos(Direction) * (Speed.current * (Engineering.SubSystem.Engines.current / Engineering.SubSystem.Engines.max)))
-        'Sets the new X coordinate
-        Position.Y = Position.Y + (Math.Sin(Direction) * (Speed.current * (Engineering.SubSystem.Engines.current / Engineering.SubSystem.Engines.max)))
-        'Sets the new Y coordinate
+        Position.X = Position.X + (Math.Cos(Direction) * (Speed.current * (Engineering.SubSystem.Engines.current /
+                                                                           Engineering.SubSystem.Engines.max))) 'Sets the new X coordinate
+        Position.Y = Position.Y + (Math.Sin(Direction) * (Speed.current * (Engineering.SubSystem.Engines.current /
+                                                                           Engineering.SubSystem.Engines.max))) 'Sets the new Y coordinate
     End Sub
 
 End Class

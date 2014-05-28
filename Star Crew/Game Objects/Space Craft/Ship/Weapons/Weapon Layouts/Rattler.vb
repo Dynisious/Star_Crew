@@ -3,7 +3,7 @@ Public Class Rattler
     Inherits WeaponLayout
 
     Public Sub New()
-        Damage = New StatDbl(11, 11)
+        Damage = New StatDbl(9, 9)
         DamageType = Weapon.DamageTypes.Laser
         Ammo = New StatInt(2000, 2000)
         Integrety = New StatInt(100, 100)

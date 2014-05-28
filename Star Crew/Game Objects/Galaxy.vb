@@ -37,7 +37,7 @@ Public Class Galaxy 'Encapsulates and runs the Ships and Fleets of the Applicati
         Warping = Warp.None 'Reset the 'warp' stage
         State = Scenario.Transit 'Reset the State of the Galaxy
         centerSector = New Sector(20) 'A new Sector object with 20 AI Fleet objects
-        ConsoleWindow.GameServer.GameWorld.centerFleet = New FriendlyFleet(-1) 'Add a Fleet for the Players to control
+        ConsoleWindow.GameServer.GameWorld.centerFleet = New FriendlyFleet(-1, centerSector.spaceStations(1)) 'Add a Fleet for the Players to control
         centerSector.AddFleet(ConsoleWindow.GameServer.GameWorld.centerFleet, 0) 'Add the Player controled Fleet into the Sector
         Fleet.SetStats_Call() 'Set the initial Stats of all Fleets
         Dim user As String = Environment.UserDomainName + "\" + Environment.UserName 'The identity of the Mutex
@@ -236,14 +236,14 @@ Public Class Galaxy 'Encapsulates and runs the Ships and Fleets of the Applicati
     Private Sub TurnRight()
         If TurnRightCheck = True Then
             ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Direction =
-            Helm.NormalizeDirection(ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Direction +
+            Helm.NormaliseDirection(ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Direction +
                                          ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Helm.TurnSpeed.current)
         End If
     End Sub
     Private Sub TurnLeft()
         If TurnLeftCheck = True Then
             ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Direction =
-                Helm.NormalizeDirection(ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Direction -
+                Helm.NormaliseDirection(ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Direction -
                                         ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Helm.TurnSpeed.current)
         End If
     End Sub
@@ -352,7 +352,7 @@ Public Class Galaxy 'Encapsulates and runs the Ships and Fleets of the Applicati
                     If adjacent < 0 Then
                         direction = direction + Math.PI
                     End If
-                    direction = Helm.NormalizeDirection(direction)
+                    direction = Helm.NormaliseDirection(direction)
                 ElseIf opposite > 0 Then
                     direction = Math.PI / 2
                 Else
@@ -383,7 +383,7 @@ Public Class Galaxy 'Encapsulates and runs the Ships and Fleets of the Applicati
                         If adjacent < 0 Then
                             direction = direction + Math.PI
                         End If
-                        direction = Helm.NormalizeDirection(direction)
+                        direction = Helm.NormaliseDirection(direction)
                     ElseIf opposite > 0 Then
                         direction = Math.PI / 2
                     Else
@@ -495,13 +495,13 @@ Public Class Galaxy 'Encapsulates and runs the Ships and Fleets of the Applicati
     End Sub
 
     Public Sub UpdateGalaxy() Handles GalaxyTimer.Tick 'Update the Galaxy object
-        Dim stateToSend As Integer = State
-        If Paused = True Then
+        Dim stateToSend As Integer = State 'An Integer representing the current state of the Galaxy
+        If Paused = True Then 'Set the state to send to -1 to indecate that the game is not active
             stateToSend = -1
         End If
         Select Case State
             Case Scenario.Transit 'Update Fleets
-                If stateToSend <> -1 Then
+                If Paused = False Then 'The game is not paused
                     If ThrottleUpCheck = True Then 'Accelerate the Players Fleet
                         centerFleet.Speed.current = centerFleet.Speed.current + centerFleet.Acceleration.current
                         If centerFleet.Speed.current > centerFleet.Speed.max Then
@@ -515,10 +515,10 @@ Public Class Galaxy 'Encapsulates and runs the Ships and Fleets of the Applicati
                         End If
                     End If
                     If TurnRightCheck = True Then 'Turn the Players Fleet right
-                        centerFleet.Direction = Helm.NormalizeDirection(centerFleet.Direction + centerFleet.TurnSpeed)
+                        centerFleet.Direction = Helm.NormaliseDirection(centerFleet.Direction + centerFleet.TurnSpeed)
                     End If
                     If TurnLeftCheck = True Then 'Turn the Players Fleet left
-                        centerFleet.Direction = Helm.NormalizeDirection(centerFleet.Direction - centerFleet.TurnSpeed)
+                        centerFleet.Direction = Helm.NormaliseDirection(centerFleet.Direction - centerFleet.TurnSpeed)
                     End If
                     centerSector.UpdateSector()
 
@@ -552,7 +552,7 @@ Public Class Galaxy 'Encapsulates and runs the Ships and Fleets of the Applicati
                                                        Warping, stateToSend) 'Update the ServerMessage object
                 MessageMutex.ReleaseMutex() 'Release the Mutex
             Case Scenario.Battle
-                If stateToSend <> -1 Then
+                If Paused = False Then
                     CombatSpace.UpdateCombatSenario() 'Update the Combat object
                     '-----Set Warp----- 'See what 'warp' actions are necessary
                     Select Case Warping

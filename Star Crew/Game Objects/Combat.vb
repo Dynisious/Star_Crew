@@ -6,6 +6,7 @@ Public Class Combat 'Encloses the Ships that are fighting
 
     Public Sub Generate(ByRef Enemies As Fleet)
         EnemyFleet = Enemies 'Sets a new enemy Fleet
+        EnemyFleet.Speed.current = 0
         shipList.Clear() 'Clear the List of Ships
         shipList.AddRange(ConsoleWindow.GameServer.GameWorld.centerFleet.ShipList) 'Add the Players Ships
         shipList.AddRange(Enemies.ShipList) 'Add the Enemies Ships
@@ -16,9 +17,11 @@ Public Class Combat 'Encloses the Ships that are fighting
             shipList(i).Index = i 'Set the index of the Ship in the List
             shipList(i).Speed.current = Helm.MinimumSpeed 'Set the Speed of the Ship
             shipList(i).Position = New Point(Rnd() * SpaceCraft.SpawnBox, Rnd() * SpaceCraft.SpawnBox) 'Set the position of the Ship
+            For e As Integer = 0 To Shields.Sides.Max - 1
+                shipList(i).Shielding.SubSystem.Defences(e).current = shipList(i).Shielding.SubSystem.Defences(e).max 'Reset the Shields
+            Next
         Next
         ConsoleWindow.GameServer.GameWorld.State = Galaxy.Scenario.Battle 'Change the Galaxie's State to update the Combat scenario
-        ConsoleWindow.GameServer.GameWorld.GalaxyTimer.Interval = 100 'Make sure the game is not at an accelerated speed
     End Sub
 
     Public Sub Recenter() 'Sets the Ship that the Players control
@@ -49,18 +52,21 @@ Public Class Combat 'Encloses the Ships that are fighting
                 shipList(i).Index = i
             Next
             shipList.TrimExcess() 'Remove the Blank Space
-            If nShip.MyAllegence = Galaxy.Allegence.Friendly Then 'Remove the Ship from it's Fleet
+
+            '-----Remove the Ship from it's Fleet-----
+            If nShip.MyAllegence = Galaxy.Allegence.Friendly Then 'It's part of the Players Ship
                 ConsoleWindow.GameServer.GameWorld.centerFleet.RemoveShip(nShip)
-            Else
+            Else 'It's part of the enemies Ship
                 EnemyFleet.RemoveShip(nShip)
             End If
+            '-----------------------------------------
         End If
     End Sub
 
     Public Sub UpdateCombatSenario() 'Updates the Ship
         ConsoleWindow.GameServer.GameWorld.RunPlayerControls() 'Run the Player controls
         For i As Integer = 0 To shipList.Count - 1
-            If i < shipList.Count Then
+            If i < shipList.Count Then 'The Loop has reached the end of the Loop
                 shipList(i).UpdateShip() 'Update Ships
             Else
                 Exit For
@@ -68,71 +74,27 @@ Public Class Combat 'Encloses the Ships that are fighting
         Next
     End Sub
 
-    Public Sub AutoFight(ByRef fleet1 As Fleet, ByRef fleet2 As Fleet) 'Battles 2 AI Fleets with the combined values of all their Ships
-        Dim damage1 As Double 'The collective damage of Fleet1
-        Dim health1 As Double 'The collective hull of Fleet1
-        Dim shield1 As Double 'The collective fore shield of Fleet1
-        For Each i As Ship In fleet1.ShipList 'Set the values of Fleet1
-            damage1 = damage1 + i.Batteries.Primary.Damage.current + i.Batteries.Secondary.Damage.current
-            health1 = health1 + i.Hull.current
-            shield1 = shield1 + i.Shielding.SubSystem.Defences(Shields.Sides.FrontShield).current
-        Next
-        damage1 = damage1 / 6
-
-        Dim damage2 As Double 'The collective damage of Fleet2
-        Dim health2 As Double 'The collective hull of Fleet2
-        Dim shield2 As Double 'The collective fore shield of Fleet2
-        For Each i As Ship In fleet2.ShipList 'Set the values of Fleet2
-            damage2 = damage1 + i.Batteries.Primary.Damage.current + i.Batteries.Secondary.Damage.current
-            health2 = health1 + i.Hull.current
-            shield2 = shield1 + i.Shielding.SubSystem.Defences(Shields.Sides.FrontShield).current
-        Next
-        damage2 = damage2 / 6
-
-        Dim overallDamage As Double = damage1 - shield2 'The damage that makes it through the shield
-        If overallDamage < 0 Then 'There was more shield than damage
-            shield2 = -overallDamage 'Set shield2 to the remaining shield
-        Else 'There's no shield left
-            shield2 = 0
-        End If
-        health2 = health2 - overallDamage 'Remove the overallDamage from health2
-        If health2 <= 0 Then 'Destroy Fleet2
-            fleet2.currentSector.RemoveFleet(fleet2, True, True)
+    Public Sub AutoFight(ByRef attacking As Fleet, ByRef defending As Fleet) 'Battles 2 AI Fleets
+        If attacking.ShipList.Count = 0 Then 'The Fleet needs to be destroyed
+            attacking.currentSector.RemoveFleet(attacking, True, False) 'Destroy the Fleet
             Exit Sub
-        Else 'Distribute the remaining health and shields among Fleet2
-            For Each i As Ship In fleet2.ShipList
-                i.Hull.current = health2 / fleet2.ShipList.Count
-                If i.Hull.current > i.Hull.max Then
-                    i.Hull.current = i.Hull.max
-                End If
-                i.Shielding.SubSystem.Defences(Shields.Sides.FrontShield).current = shield2 / fleet2.ShipList.Count
-                If i.Shielding.SubSystem.Defences(Shields.Sides.FrontShield).current > i.Shielding.SubSystem.Defences(Shields.Sides.FrontShield).max Then
-                    i.Shielding.SubSystem.Defences(Shields.Sides.FrontShield).current = i.Shielding.SubSystem.Defences(Shields.Sides.FrontShield).max
-                End If
-            Next
+        ElseIf defending.ShipList.Count = 0 Then 'The Fleet needs to be destroyed
+            defending.currentSector.RemoveFleet(defending, True, False) 'Destroy the Fleet
+            Exit Sub
+        End If
+        Dim attacker As Ship = attacking.ShipList(Int(Rnd() * attacking.ShipList.Count)) 'The Ship that is attacking
+        Dim target As Ship = defending.ShipList(Int(Rnd() * defending.ShipList.Count)) 'The Ship that is defending
+        Dim direction As Double = (Rnd() * 2 * Math.PI) 'The vector that the attacker is attacking from
+        If target.TakeDamage(attacker.Batteries.Primary, attacker, direction) = False Then 'The target is still alive
+            If target.TakeDamage(attacker.Batteries.Secondary, attacker, direction) = True Then 'The target was destroyed
+                defending.RemoveShip(target) 'Remove the Ship from the Fleet
+            End If
+        Else 'The target was destroyed
+            defending.RemoveShip(target) 'Remove the Ship from the Fleet
         End If
 
-        overallDamage = damage2 - shield1 'The damage that makes it through the shield
-        If overallDamage < 0 Then 'There was more shield than damage
-            shield1 = -overallDamage
-        Else 'There's no more shield
-            shield1 = 0
-        End If
-        health1 = health1 - overallDamage 'remove the overallDamage from health1
-        If health1 <= 0 Then 'Destroy Fleet1
-            fleet1.currentSector.RemoveFleet(fleet1, True, True)
-            Exit Sub
-        Else 'Distribute the remaining shield and health
-            For Each i As Ship In fleet1.ShipList
-                i.Hull.current = health1 / fleet1.ShipList.Count
-                If i.Hull.current > i.Hull.max Then
-                    i.Hull.current = i.Hull.max
-                End If
-                i.Shielding.SubSystem.Defences(Shields.Sides.FrontShield).current = shield1 / fleet1.ShipList.Count
-                If i.Shielding.SubSystem.Defences(Shields.Sides.FrontShield).current > i.Shielding.SubSystem.Defences(Shields.Sides.FrontShield).max Then
-                    i.Shielding.SubSystem.Defences(Shields.Sides.FrontShield).current = i.Shielding.SubSystem.Defences(Shields.Sides.FrontShield).max
-                End If
-            Next
+        If defending.ShipList.Count = 0 Then 'Destroy the Fleet
+            defending.currentSector.RemoveFleet(defending, True, False)
         End If
     End Sub
 

@@ -2,7 +2,7 @@
     Inherits WeaponLayout
 
     Public Sub New()
-        Damage = New StatDbl(15, 15)
+        Damage = New StatDbl(13, 13)
         DamageType = Weapon.DamageTypes.Slug
         Ammo = New StatInt(800, 800)
         Integrety = New StatInt(110, 110)

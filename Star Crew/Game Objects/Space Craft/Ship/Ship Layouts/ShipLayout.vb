@@ -1,20 +1,20 @@
 ﻿Public MustInherit Class ShipLayout
     Public Enum Formats
-        OmniMin
-        Station = OmniMin
-        Fleet
-        OmniMax
-        ShipsMin = OmniMax
-        Screamer = OmniMax
-        Thunder
-        ShipsMax
+        SectorMin 'The minimum value of SpaceCraft that are not Ships
+        Station = SectorMin 'A Space Station that heals Fleets and acts as a spawn point for Fleets
+        Fleet 'A Fleet that represents a group of Ship's moving together through a Sector
+        SectorMax 'The maximum value of SpaceCraft that are not Ships
+        ShipsMin = SectorMax 'The minimum value of SpaceCraft that are Ships
+        Screamer = SectorMax 'A small light fighter
+        Thunder 'A heavier more powerful fighter
+        ShipsMax 'The maximum value of SpaceCraft that are Ships
     End Enum
 
     '-----Ship-----
-    Public Format As Integer
-    Public Hull As StatDbl
-    Public Speed As StatDbl
-    Public Acceleration As StatDbl
+    Public Format As Integer 'An Enumerator specifying the Format of the Ship
+    Public Hull As StatDbl 'A StatDbl object representing the current and maximum values of the Ship's hull
+    Public Speed As StatDbl 'A StatDbl object representing the current and maximum values of the Ship's speed
+    Public Acceleration As StatDbl 'A StatDbl object representing the current and maximum values of the Ship's acceleration
     '--------------
 
     '-----Helm-----

@@ -2,7 +2,7 @@
     Inherits ShipLayout
 
     Public Sub New()
-        Format = ShipLayout.Formats.Screamer
+        Format = ShipLayout.Formats.Screamer 'Set the Format for the Layout
         Hull = New StatDbl(125, 125)
         Speed = New StatDbl(Helm.MinimumSpeed, 15)
         Acceleration = New StatDbl(0.3, 0.3)

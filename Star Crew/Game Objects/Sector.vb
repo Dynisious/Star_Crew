@@ -4,21 +4,22 @@ Public Class Sector 'Encapsulates a group of Fleets that will interact with each
     Public spaceStations(2) As SpaceStation 'An Array of three SpaceStation Objects
 
     Public Sub New(ByVal fleetCount As Integer)
+        spaceStations(0) = New SpaceStation(0, Me, Galaxy.Allegence.Neutral) 'Creates a Neutral Station
+        spaceStations(1) = New SpaceStation(1, Me, Galaxy.Allegence.Friendly) 'Creates a Friendly Station
+        spaceStations(2) = New SpaceStation(2, Me, Galaxy.Allegence.Pirate) 'Creates a Pirate Station
+
         If fleetCount <> 0 Then 'Create the specified number of Fleets with random Allegencies
             For i As Integer = 0 To fleetCount - 1
-                If Int(Rnd() * 2) = 0 Then
-                    AddFleet(New FriendlyFleet(i))
+                If Int(Rnd() * 2) = 0 Then 'There's a 50/50 chance that the Fleet will spawn as a Pirate or Friendly Fleet
+                    AddFleet(New FriendlyFleet(i, spaceStations(1)))
                 Else
-                    AddFleet(New PirateFleet(i))
+                    AddFleet(New PirateFleet(i, spaceStations(2)))
                 End If
             Next
         End If
-        spaceStations(0) = New SpaceStation(0, Me, Galaxy.Allegence.Neutral)
-        spaceStations(1) = New SpaceStation(1, Me, Galaxy.Allegence.Friendly)
-        spaceStations(2) = New SpaceStation(2, Me, Galaxy.Allegence.Pirate)
     End Sub
 
-    Public Sub AddFleet(ByRef nFleet As Fleet, Optional ByVal InsertIndex As Integer = -1) 'Add a Fleet object to the List
+    Public Sub AddFleet(ByRef nFleet As Fleet, Optional ByVal InsertIndex As Integer = -1) 'Add a Fleet object to the List of Fleets
         If InsertIndex = -1 Then 'Add the Fleet to the end of the List
             nFleet.Index = fleetList.Count
             fleetList.Add(nFleet)
@@ -34,7 +35,8 @@ Public Class Sector 'Encapsulates a group of Fleets that will interact with each
         End If
     End Sub
 
-    Public Sub RemoveFleet(ByRef nFleet As Fleet, ByVal KillFleet As Boolean, ByVal KillShips As Boolean) 'Remove the Specified Fleet from the List
+    Public Sub RemoveFleet(ByRef nFleet As Fleet, ByVal KillFleet As Boolean, ByVal KillShips As Boolean) 'Remove the Specified Fleet
+        'from the List of Fleets and Kills the Fleet and any Ships inside of it as specified
         fleetList.RemoveAt(nFleet.Index) 'Remove the Fleet
         fleetList.TrimExcess() 'Remove the blank space
         For i As Integer = 0 To fleetList.Count - 1 'Update the Fleets indexs
@@ -60,7 +62,7 @@ Public Class Sector 'Encapsulates a group of Fleets that will interact with each
                 fleetList(i).UpdateFleet()
             End If
         Next
-        For Each i As SpaceStation In spaceStations 'Update all Fleets
+        For Each i As SpaceStation In spaceStations 'Update all Space Stations
             i.UpdateStation()
         Next
     End Sub

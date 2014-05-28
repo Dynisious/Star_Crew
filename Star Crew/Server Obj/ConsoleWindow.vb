@@ -5,7 +5,6 @@
     Public ServerThread As Threading.Thread 'A Thread object for GameServer
 
     Public Sub Main() 'Starts the application
-        clientThread.Start() 'Opens the GUI
         Console.WriteLine("-----Star Crew-----")
         Console.WriteLine("for help with commands type '/help'" + Environment.NewLine +
                           Environment.NewLine +
@@ -29,17 +28,24 @@
                           "Core will not be at full efficiency." + Environment.NewLine +
                           Environment.NewLine +
                           "-----Sector Mechanics-----" + Environment.NewLine +
-                          "Green: Green Fleets are Friendly and if you come close enough to them they" + Environment.NewLine +
-                          "will add their forces to yours." + Environment.NewLine +
-                          "Red: Red Fleets are the enemy and they will also combine forces to combat" + Environment.NewLine +
-                          "yours." + Environment.NewLine +
-                          "Yellow: Yellow indecates a station which will Repair all ships in a Fleet" + Environment.NewLine +
-                          "up to 2/3 hull." + Environment.NewLine +
-                          "Interaction: To interact with a Fleet collide your Fleet into it." + Environment.NewLine +
+                          "Green: Green means Friendly. If it is a Friendly Fleet then interact with it" + Environment.NewLine +
+                          "to Add it's Ships to your Fleet." + Environment.NewLine +
+                          "Red: Red means Enemy. If it is a Enemy Fleet interact with it to engage your" + Environment.NewLine +
+                          "Ships with theirs." + Environment.NewLine +
+                          "Yellow: Yellow means neutral. Neutral objects will lay dormant until they are" +
+                          "captured by a team." + Environment.NewLine +
+                          "Space Stations: The hexagons on the scanner indecate Space Stations. Space Stations" + Environment.NewLine +
+                          "align themselves to the team with the greatest number of Fleet in proximity." + Environment.NewLine +
+                          "Interaction: To interact with an object collide your Fleet into it." + Environment.NewLine +
                           "Objective: The Objective of this game is to eleminate all Enemy Fleets." + Environment.NewLine +
                           Environment.NewLine +
-                          "-----Genral-----" + Environment.NewLine +
-                          "Press 'Z' to toggle Zoom" + Environment.NewLine)
+                          "-----General-----" + Environment.NewLine +
+                          "Press 'Z' to zoom out" + Environment.NewLine +
+                          "Press 'X' to zoom out" + Environment.NewLine)
+        Console.WriteLine("Press the 'Enter' key to continue to the Menu...")
+        Console.ReadLine()
+        clientThread.Start() 'Opens the GUI
+        OutputScreen.Focus() 'Sets the focus to the GUI
     End Sub
 
 End Module

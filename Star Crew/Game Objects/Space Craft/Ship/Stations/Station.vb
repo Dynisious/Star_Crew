@@ -1,7 +1,7 @@
 ﻿<Serializable()>
 Public MustInherit Class Station
-    Public WithEvents Parent As Ship
-    Public PlayerControled As Boolean = False
+    Public Parent As Ship 'The parent Ship that the Station is a part of
+    Public PlayerControled As Boolean = False 'A Boolean value indecating if a Player is controling this station or if it is AI controlled
     Public Enum StationTypes
         Helm
         Batteries
@@ -9,13 +9,13 @@ Public MustInherit Class Station
         Engineering
         Max
     End Enum
-    Public Power As Double
-    Public Influx As Integer
+    Public Power As Double 'A Double value indecating the Power Stored within the Station
+    Public Influx As Integer 'An integer value indecating how many units of power the Station receives per update
 
     Public Sub New(ByRef nParent As Ship)
         Parent = nParent
     End Sub
 
-    Public MustOverride Sub Update()
+    Public MustOverride Sub Update() 'A Subroutine that updates the Station
 
 End Class

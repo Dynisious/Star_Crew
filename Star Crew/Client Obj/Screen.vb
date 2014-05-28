@@ -83,12 +83,12 @@
         End Sub
 
         Private Shared Sub btnLoad_Click() Handles btnLoad.Click
-            If IO.File.Exists("C:\Users\" + Environment.UserName + "\Desktop\Star_Crew_Save.save") = True Then
+            If IO.File.Exists("C:\Users\" + Environment.UserName + "\Desktop\Star Crew Save.save") = True Then
                 If ConsoleWindow.GameServer.GameWorld IsNot Nothing Then
                     ConsoleWindow.GameServer.ServerLoop = False
                     ConsoleWindow.ServerThread.Join(30)
                 End If
-                Using fs As New IO.FileStream("C:\Users\" + Environment.UserName + "\Desktop\Star_Crew_Save.save", IO.FileMode.Open, IO.FileAccess.Read)
+                Using fs As New IO.FileStream("C:\Users\" + Environment.UserName + "\Desktop\Star Crew Save.save", IO.FileMode.Open, IO.FileAccess.Read)
                     Dim bf As New Runtime.Serialization.Formatters.Binary.BinaryFormatter
                     ConsoleWindow.GameServer.GameWorld = bf.Deserialize(fs)
                     fs.Close()
@@ -572,7 +572,7 @@
         End Sub
 
         Private Shared Sub btnSave_Click() Handles btnSave.Click
-            Using fs As New IO.FileStream("C:\Users\" + Environment.UserName + "\Desktop\Star_Crew_Save.save", IO.FileMode.OpenOrCreate, IO.FileAccess.Write)
+            Using fs As New IO.FileStream("C:\Users\" + Environment.UserName + "\Desktop\Star Crew Save.save", IO.FileMode.OpenOrCreate, IO.FileAccess.Write)
                 Dim bf As New Runtime.Serialization.Formatters.Binary.BinaryFormatter
                 bf.Serialize(fs, ConsoleWindow.GameServer.GameWorld)
                 fs.Flush()
@@ -632,10 +632,18 @@
             End Select
             If e.KeyCode = Keys.Z Then
                 If ConsoleWindow.OutputScreen.MyClient.Zoom = 100 Then
+                    ConsoleWindow.OutputScreen.MyClient.Zoom = 65
+                ElseIf ConsoleWindow.OutputScreen.MyClient.Zoom = 65 Then
                     ConsoleWindow.OutputScreen.MyClient.Zoom = 30
                 ElseIf ConsoleWindow.OutputScreen.MyClient.Zoom = 30 Then
                     ConsoleWindow.OutputScreen.MyClient.Zoom = 15
-                ElseIf ConsoleWindow.OutputScreen.MyClient.Zoom = 15 Then
+                End If
+            ElseIf e.KeyCode = Keys.X Then
+                If ConsoleWindow.OutputScreen.MyClient.Zoom = 15 Then
+                    ConsoleWindow.OutputScreen.MyClient.Zoom = 30
+                ElseIf ConsoleWindow.OutputScreen.MyClient.Zoom = 30 Then
+                    ConsoleWindow.OutputScreen.MyClient.Zoom = 65
+                ElseIf ConsoleWindow.OutputScreen.MyClient.Zoom = 65 Then
                     ConsoleWindow.OutputScreen.MyClient.Zoom = 100
                 End If
             End If

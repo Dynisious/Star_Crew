@@ -76,7 +76,7 @@ Public Class Server 'Encapslates the Galaxy object of the Server
                 If i < sendReceiveList.Count Then
                     Try
                         sendReceiveList(i).Blocking = True 'Set the ServerSideClient to block
-                        sendReceiveList(i).Send(BitConverter.GetBytes(sendBuff.Length())) 'Send 4 Bytes representing how many bytes will be in the next message
+                        sendReceiveList(i).Send(BitConverter.GetBytes(sendBuff.Length)) 'Send 4 Bytes representing how many bytes will be in the next message
                         sendReceiveList(i).Blocking = True 'Set the ServerSideClient to block
                         sendReceiveList(i).Send(sendBuff) 'Send the message
                     Catch ex As SocketException
