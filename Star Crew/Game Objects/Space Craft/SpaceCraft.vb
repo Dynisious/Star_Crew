@@ -9,6 +9,8 @@ Public MustInherit Class SpaceCraft 'Holds the values within all SpaceCraft and 
     Public Speed As New StatDbl(0, 0) 'A StatDbl object repesenting the SpaceCraft's current and max speeds
     Public Acceleration As New StatDbl(0, 0) 'The rate at which the SpaceCraft changes it's Speed
     Public Dead As Boolean = False 'A Boolean Value indecating whether or not the SpaceCraft is Active or waiting to be garbage collected
+    Public TargetLock As Boolean = False 'The SpaceCraft can change its own target
+    Public Target As SpaceCraft 'The SpaceCraft's target
 
     Public Sub New(ByVal nAllegence As Galaxy.Allegence, ByVal nFormat As ShipLayout.Formats, ByVal nIndex As Integer, ByVal nPosition As Point)
         MyAllegence = nAllegence 'Set the Allegence of the SpaceCraft

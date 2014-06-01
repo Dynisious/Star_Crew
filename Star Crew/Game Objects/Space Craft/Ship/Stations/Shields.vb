@@ -20,9 +20,10 @@ Public Class Shields
         BoostLeft
     End Enum
 
-    Public Sub New(ByRef nParent As Ship, ByVal nSystem As ShieldSystem)
+    Public Sub New(ByRef nParent As Ship, ByRef nSystem As ShieldSystem, ByRef nPower As StatInt)
         MyBase.New(nParent)
         SubSystem = nSystem
+        Power = nPower
     End Sub
 
     Public Function DeflectHit(ByVal side As Sides, ByVal nWeapon As Weapon) As Double 'Returns the damage that does not get absorbed by the
@@ -47,6 +48,7 @@ Public Class Shields
     End Function
 
     Public Overrides Sub Update()
+        Power.current = Power.current + Influx
         Dim totalDamage As Integer = DamagePerSide(Sides.FrontShield) +
             DamagePerSide(Sides.LeftShield) + DamagePerSide(Sides.BackShield) +
             DamagePerSide(Sides.RightShield) 'The total damage that has been taken by all sides
@@ -55,14 +57,17 @@ Public Class Shields
         Parent.Engineering.shieldingDraw = (SubSystem.Defences(Sides.FrontShield).max - SubSystem.Defences(Sides.FrontShield).current) +
             (SubSystem.Defences(Sides.RightShield).max - SubSystem.Defences(Sides.RightShield).current) +
             (SubSystem.Defences(Sides.BackShield).max - SubSystem.Defences(Sides.BackShield).current) +
-            (SubSystem.Defences(Sides.LeftShield).max - SubSystem.Defences(Sides.LeftShield).current) 'Let Engineering know how much power
+            (SubSystem.Defences(Sides.LeftShield).max - SubSystem.Defences(Sides.LeftShield).current) - Power.current 'Let Engineering know how much power
         'will be needed to recharge all the Shields
+        If Parent.Engineering.shieldingDraw < 0 Then 'Ask for no power
+            Parent.Engineering.shieldingDraw = 0
+        End If
         '----------------------------
 
         '-----Distribute the power-----
         If totalDamage <> 0 Then 'There won't be any divide by 0 errors
             '-----Add up the power-----
-            Dim usablePower As Integer = Power + Influx + (SubSystem.Defences(Sides.FrontShield).current +
+            Dim usablePower As Integer = Power.current + (SubSystem.Defences(Sides.FrontShield).current +
                 SubSystem.Defences(Sides.LeftShield).current +
                 SubSystem.Defences(Sides.BackShield).current + SubSystem.Defences(Sides.RightShield).current) 'How much power is available for
             'distribution
@@ -117,7 +122,11 @@ Public Class Shields
                         End If
                     Next
                 End If
-                Power = usablePower 'Store the remaining power for later use
+                Power.current = usablePower 'Store the remaining power for later use
+                If Power.current > Power.max Then 'Send remaining power to engineering
+                    Parent.Engineering.Power.current = Parent.Engineering.Power.current + Power.current - Power.max 'Send off the excess power
+                    Power.current = Power.max 'Set the current power to the maximum
+                End If
             End If
         End If
         '-------------------------

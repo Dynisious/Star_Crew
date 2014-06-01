@@ -4,7 +4,7 @@
     Public Range As StatInt 'The range that the Weapon can fire
     Public Ready As StatDbl 'A StatDbl object indecating when the Weapon is ready to fire and controling
     'how long it takes to reload the Weapon
-    Public Ammo As StatInt 'A StatInt object representing the current and maximum number of times this Weapon can fire
+    Public Ammunition As StatInt 'A StatInt object representing the current and maximum number of times this Weapon can fire
     Public Integrety As StatInt 'A StatInt object representing the Weapons current integrety out of it's
     'maximum integrety
     Public TurnDistance As StatDbl 'A StatDbl object representing the current and maximum values
@@ -17,7 +17,7 @@
         nWeapon.DamageType = DamageType
         nWeapon.Range = Range
         nWeapon.Ready = Ready
-        nWeapon.Ammo = Ammo
+        nWeapon.Ammunition = Ammunition
         nWeapon.Integrety = Integrety
         nWeapon.TurnDistance = TurnDistance
         nWeapon.TurnSpeed = TurnSpeed

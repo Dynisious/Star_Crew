@@ -51,6 +51,63 @@ Public Class Galaxy 'Encapsulates and runs the Ships and Fleets of the Applicati
         MessageMutex = New Threading.Mutex(False, "MessageMutex", MutexCreated, securityProtocols) 'Create the Mutex object
         GalaxyTimer.Enabled = True 'Start the Timer responsible for updating the game
     End Sub
+    Public Sub LoadGame()
+
+        '-----Set initial Message-----
+        Select Case State
+            Case Scenario.Transit 'Sector view
+                ReDim craftPositions(centerSector.fleetList.Count + centerSector.spaceStations.Length - 1) 'Clear and resize the Array of GraphicPosition objects apropriately
+                '-----Set new positions----- 'Create new GraphicPosition positions for the Fleets and SpaceStations
+                For i As Integer = 0 To centerSector.fleetList.Count - 1
+                    Dim X As Integer = centerSector.fleetList(i).Position.X - centerFleet.Position.X 'The X coordinate relative to the
+                    'center Fleet
+                    Dim Y As Integer = centerSector.fleetList(i).Position.Y - centerFleet.Position.Y 'The Y coordinate relative to the
+                    'center Fleet
+                    craftPositions(i) = New GraphicPosition(centerSector.fleetList(i).MyAllegence, centerSector.fleetList(i).Format,
+                                                            False, X, Y, centerSector.fleetList(i).Direction,
+                                                            New StatInt(centerSector.fleetList(i).ShipList.Count, Fleet.PopulationCap))
+                    'Create a new GraphicPosition object
+                Next
+                For i As Integer = 0 To centerSector.spaceStations.Length - 1
+                    Dim X As Integer = centerSector.spaceStations(i).Position.X - centerFleet.Position.X 'The X coordinate relative to the
+                    'center Fleet
+                    Dim Y As Integer = centerSector.spaceStations(i).Position.Y - centerFleet.Position.Y 'The Y coordinate relative to the
+                    'center Fleet
+                    craftPositions(centerSector.fleetList.Count + i) = New GraphicPosition(centerSector.spaceStations(i).MyAllegence,
+                                                                                            ShipLayout.Formats.Station, False,
+                                                                                            X, Y, 0, New StatInt(-1, -1))
+                Next
+                '---------------------------
+
+                MessageToSend = New ServerMessage(-1, centerFleet.Speed, centerFleet.Direction,
+                                                       centerFleet.ShipList.Count, Nothing, craftPositions,
+                                                       Warping, Scenario.Transit) 'Update the ServerMessage object
+            Case Scenario.Battle
+                ReDim craftPositions(CombatSpace.shipList.Count - 1) 'Clear and resize the Array of GraphicPosition objects apropriately
+
+                '-----Set new positions----- 'Create new GraphicPosition objects
+                For i As Integer = 0 To ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList.Count - 1
+                    Dim x As Integer = ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i).Position.X -
+                        ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Position.X 'The X coordinate of the Ship relative to the
+                    'Players Ship
+                    Dim y As Integer = ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i).Position.Y -
+                        ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Position.Y 'The Y coordinate of the Ship relative to the
+                    'Players Ship
+                    craftPositions(i) = New GraphicPosition(CombatSpace.shipList(i).MyAllegence, CombatSpace.shipList(i).Format,
+                                                            CombatSpace.shipList(i).Hit, x, y, CombatSpace.shipList(i).Direction,
+                                                            New StatInt(CombatSpace.shipList(i).Hull))
+                    'A GraphicPosition object to send to the Client's representing the Ship
+                Next
+                '---------------------------
+                Dim targetIndex As Integer = If(CombatSpace.centerShip.Target IsNot Nothing, CombatSpace.centerShip.Target.Index, -1)
+                'Get the index of the Player's targeted Ship if there is one
+
+                MessageToSend = New ServerMessage(targetIndex, CombatSpace.centerShip.Speed, CombatSpace.centerShip.Direction,
+                                                      -1, CombatSpace.centerShip, craftPositions, Warping, Scenario.Battle) 'Update the
+                'ServerMessage object
+                '-----------------------------
+        End Select
+    End Sub
 
     Public Sub RunCommand(ByVal clientCommand As ClientMessage) 'Change a Boolean value indecating whether the Client is pressing a key or not
         Select Case clientCommand.Station
@@ -410,7 +467,7 @@ Public Class Galaxy 'Encapsulates and runs the Ships and Fleets of the Applicati
                     Dim distance As Integer = Math.Sqrt(((ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i).Position.X - ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Position.X) ^ 2) + ((ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i).Position.Y - ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Position.Y) ^ 2))
                     If (distance < lastDistance And distance <> 0) Or lastDistance = 0 Then
                         lastDistance = distance
-                        ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Helm.Target = ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i)
+                        ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Target = ConsoleWindow.GameServer.GameWorld.CombatSpace.shipList(i)
                     End If
                 End If
             Next
@@ -560,6 +617,8 @@ Public Class Galaxy 'Encapsulates and runs the Ships and Fleets of the Applicati
                             Warping = Warp.Warping 'Set the warp
                             For Each i As Ship In CombatSpace.shipList
                                 i.InCombat = False 'Take all ships out of combat
+                                i.Engineering.batteriesDraw = 0 'Set the power draw from the batteries to 0
+                                i.Engineering.shieldingDraw = 0 'Set the power draw from shielding to 0
                             Next
                             WarpCounter = 50 'Set the count down to 8 seconds
                         Case Warp.Warping 'The Player is 'warping'
@@ -602,7 +661,7 @@ Public Class Galaxy 'Encapsulates and runs the Ships and Fleets of the Applicati
                     Next
                     '---------------------------
                 End If
-                Dim targetIndex As Integer = If(CombatSpace.centerShip.Helm.Target IsNot Nothing, CombatSpace.centerShip.Helm.Target.Index, -1)
+                Dim targetIndex As Integer = If(CombatSpace.centerShip.Target IsNot Nothing, CombatSpace.centerShip.Target.Index, -1)
                 'Get the index of the Player's targeted Ship if there is one
 
                 MessageMutex.WaitOne() 'Wait for the Mutex to be free

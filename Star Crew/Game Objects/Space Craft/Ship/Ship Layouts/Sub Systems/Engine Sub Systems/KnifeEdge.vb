@@ -4,7 +4,7 @@ Public Class KnifeEdge
 
     Public Sub New()
         Engines = New StatDbl(100, 100)
-        PowerCore = New StatDbl(3, 3)
+        PowerCore = New StatDbl(6, 6)
     End Sub
 
 End Class

@@ -4,41 +4,41 @@
     Public Shared ReadOnly ImageSize As New Point(600, 600) 'The Size of the Bitmap Image displayed on screen
 
     Public Class MenuScreenLayout 'The GUI layout of the Main Menu
-        Public Shared WithEvents btnStartServer As System.Windows.Forms.Button
-        Public Shared WithEvents btnStartClient As System.Windows.Forms.Button
+        Public Shared WithEvents btnHostGame As System.Windows.Forms.Button
+        Public Shared WithEvents btnJoinGame As System.Windows.Forms.Button
         Public Shared WithEvents btnExit As System.Windows.Forms.Button
-        Public Shared WithEvents btnLoad As System.Windows.Forms.Button
+        Public Shared WithEvents btnLoadGame As System.Windows.Forms.Button
 
         Public Sub New()
             ConsoleWindow.OutputScreen.Controls.Clear()
             '-----Initialise Controls-----
-            btnStartServer = New System.Windows.Forms.Button()
-            btnStartClient = New System.Windows.Forms.Button()
+            btnHostGame = New System.Windows.Forms.Button()
+            btnJoinGame = New System.Windows.Forms.Button()
             btnExit = New System.Windows.Forms.Button()
-            btnLoad = New System.Windows.Forms.Button()
+            btnLoadGame = New System.Windows.Forms.Button()
             '-----------------------------
             '-----Control Settings-----
             '
-            'btnStartServer
+            'btnHostGame
             '
-            btnStartServer.Font = New System.Drawing.Font("Microsoft Sans Serif", 20.0!)
-            btnStartServer.Location = New System.Drawing.Point(400, 67)
-            btnStartServer.Name = "btnStartServer"
-            btnStartServer.Size = New System.Drawing.Size(400, 70)
-            btnStartServer.TabIndex = 0
-            btnStartServer.Text = "Open Server"
-            btnStartServer.UseVisualStyleBackColor = True
+            btnHostGame.Font = New System.Drawing.Font("Microsoft Sans Serif", 20.0!)
+            btnHostGame.Location = New System.Drawing.Point(400, 67)
+            btnHostGame.Name = "btnHostGame"
+            btnHostGame.Size = New System.Drawing.Size(400, 70)
+            btnHostGame.TabIndex = 0
+            btnHostGame.Text = "Host Game"
+            btnHostGame.UseVisualStyleBackColor = True
             '
-            'btnStartClient
+            'btnJoinGame
             '
-            btnStartClient.Font = New System.Drawing.Font("Microsoft Sans Serif", 20.0!)
-            btnStartClient.Location = New System.Drawing.Point(400, 220)
-            btnStartClient.Margin = New System.Windows.Forms.Padding(3, 100, 3, 3)
-            btnStartClient.Name = "btnStartClient"
-            btnStartClient.Size = New System.Drawing.Size(400, 70)
-            btnStartClient.TabIndex = 1
-            btnStartClient.Text = "Open Client"
-            btnStartClient.UseVisualStyleBackColor = True
+            btnJoinGame.Font = New System.Drawing.Font("Microsoft Sans Serif", 20.0!)
+            btnJoinGame.Location = New System.Drawing.Point(400, 220)
+            btnJoinGame.Margin = New System.Windows.Forms.Padding(3, 100, 3, 3)
+            btnJoinGame.Name = "btnJoinGame"
+            btnJoinGame.Size = New System.Drawing.Size(400, 70)
+            btnJoinGame.TabIndex = 1
+            btnJoinGame.Text = "Join Game"
+            btnJoinGame.UseVisualStyleBackColor = True
             '
             'btnExit
             '
@@ -51,38 +51,40 @@
             btnExit.Text = "Exit"
             btnExit.UseVisualStyleBackColor = True
             '
-            'btnLoad
+            'btnLoadGame
             '
-            btnLoad.Font = New System.Drawing.Font("Microsoft Sans Serif", 20.0!)
-            btnLoad.Location = New System.Drawing.Point(400, 370)
-            btnLoad.Margin = New System.Windows.Forms.Padding(3, 100, 3, 100)
-            btnLoad.Name = "btnLoad"
-            btnLoad.Size = New System.Drawing.Size(400, 70)
-            btnLoad.TabIndex = 3
-            btnLoad.Text = "Load Server"
-            btnLoad.UseVisualStyleBackColor = True
+            btnLoadGame.Font = New System.Drawing.Font("Microsoft Sans Serif", 20.0!)
+            btnLoadGame.Location = New System.Drawing.Point(400, 370)
+            btnLoadGame.Margin = New System.Windows.Forms.Padding(3, 100, 3, 100)
+            btnLoadGame.Name = "btnLoadGame"
+            btnLoadGame.Size = New System.Drawing.Size(400, 70)
+            btnLoadGame.TabIndex = 3
+            btnLoadGame.Text = "Load Game"
+            btnLoadGame.UseVisualStyleBackColor = True
             '--------------------------
             '-----Add Controls-----
-            ConsoleWindow.OutputScreen.Controls.Add(btnLoad)
+            ConsoleWindow.OutputScreen.Controls.Add(btnLoadGame)
             ConsoleWindow.OutputScreen.Controls.Add(btnExit)
-            ConsoleWindow.OutputScreen.Controls.Add(btnStartClient)
-            ConsoleWindow.OutputScreen.Controls.Add(btnStartServer)
+            ConsoleWindow.OutputScreen.Controls.Add(btnJoinGame)
+            ConsoleWindow.OutputScreen.Controls.Add(btnHostGame)
             '----------------------
             My.Computer.Audio.Play(My.Resources.The_Adventure_Begins_Extended, AudioPlayMode.BackgroundLoop)
         End Sub
 
-        Private Shared Sub btnStartServer_Click() Handles btnStartServer.Click 'Starts the Server
+        Private Shared Sub btnHostGame_Click() Handles btnHostGame.Click 'Starts the Server
             If ConsoleWindow.GameServer.GameWorld IsNot Nothing Then 'There is already a Server Currently Running
                 ConsoleWindow.GameServer.ServerLoop = False  'Closes the Server
             End If
             ConsoleWindow.GameServer.StartServer(True) 'Starts the Server
+            ConsoleWindow.OutputScreen.MyClient = New Client("127.0.0.1", Station.StationTypes.Helm) 'Connect the Player to the Helm
+            Dim temp = New Screen.GamePlayLayout
         End Sub
 
-        Private Shared Sub btnStartClient_Click() Handles btnStartClient.Click 'Opens the Client Setup Screen 
+        Private Shared Sub btnJoinGame_Click() Handles btnJoinGame.Click 'Opens the Client Setup Screen 
             Dim temp As New ClientSetupLayout() 'Sets the Screen's GUI to the ClientSetupLayout layout
         End Sub
 
-        Private Shared Sub btnLoad_Click() Handles btnLoad.Click
+        Private Shared Sub btnLoad_Click() Handles btnLoadGame.Click
             If IO.File.Exists("C:\Users\" + Environment.UserName + "\Desktop\Star Crew Save.save") = True Then
                 If ConsoleWindow.GameServer.GameWorld IsNot Nothing Then
                     ConsoleWindow.GameServer.ServerLoop = False
@@ -106,6 +108,8 @@
                 'Create the Mutex object
                 ConsoleWindow.GameServer.GameWorld.GalaxyTimer = New Timer With {.Interval = 100, .Enabled = True} 'Create and start as new Timer
                 ConsoleWindow.GameServer.StartServer(False)
+                ConsoleWindow.OutputScreen.MyClient = New Client("127.0.0.1", Station.StationTypes.Helm) 'Connect the Player to the Helm
+                Dim temp = New Screen.GamePlayLayout
                 Console.WriteLine("Game has been loaded successfully")
             Else
                 Console.WriteLine("Error : No save file was found")
@@ -707,33 +711,33 @@
     Public Sub New() 'Creates the MenuScreenLayout layout
         InitializeComponent()
         '-----Initialise Controls-----
-        MenuScreenLayout.btnStartServer = New System.Windows.Forms.Button()
-        MenuScreenLayout.btnStartClient = New System.Windows.Forms.Button()
+        MenuScreenLayout.btnHostGame = New System.Windows.Forms.Button()
+        MenuScreenLayout.btnJoinGame = New System.Windows.Forms.Button()
         MenuScreenLayout.btnExit = New System.Windows.Forms.Button()
-        MenuScreenLayout.btnLoad = New System.Windows.Forms.Button()
+        MenuScreenLayout.btnLoadGame = New System.Windows.Forms.Button()
         '-----------------------------
         '-----Control Settings-----
         '
-        'btnStartServer
+        'btnHostGame
         '
-        MenuScreenLayout.btnStartServer.Font = New System.Drawing.Font("Microsoft Sans Serif", 20.0!)
-        MenuScreenLayout.btnStartServer.Location = New System.Drawing.Point(400, 67)
-        MenuScreenLayout.btnStartServer.Name = "btnStartServer"
-        MenuScreenLayout.btnStartServer.Size = New System.Drawing.Size(400, 70)
-        MenuScreenLayout.btnStartServer.TabIndex = 0
-        MenuScreenLayout.btnStartServer.Text = "Open Server"
-        MenuScreenLayout.btnStartServer.UseVisualStyleBackColor = True
+        MenuScreenLayout.btnHostGame.Font = New System.Drawing.Font("Microsoft Sans Serif", 20.0!)
+        MenuScreenLayout.btnHostGame.Location = New System.Drawing.Point(400, 67)
+        MenuScreenLayout.btnHostGame.Name = "btnHostGame"
+        MenuScreenLayout.btnHostGame.Size = New System.Drawing.Size(400, 70)
+        MenuScreenLayout.btnHostGame.TabIndex = 0
+        MenuScreenLayout.btnHostGame.Text = "Host Game"
+        MenuScreenLayout.btnHostGame.UseVisualStyleBackColor = True
         '
-        'btnStartClient
+        'btnJoinGame
         '
-        MenuScreenLayout.btnStartClient.Font = New System.Drawing.Font("Microsoft Sans Serif", 20.0!)
-        MenuScreenLayout.btnStartClient.Location = New System.Drawing.Point(400, 220)
-        MenuScreenLayout.btnStartClient.Margin = New System.Windows.Forms.Padding(3, 100, 3, 3)
-        MenuScreenLayout.btnStartClient.Name = "btnStartClient"
-        MenuScreenLayout.btnStartClient.Size = New System.Drawing.Size(400, 70)
-        MenuScreenLayout.btnStartClient.TabIndex = 1
-        MenuScreenLayout.btnStartClient.Text = "Open Client"
-        MenuScreenLayout.btnStartClient.UseVisualStyleBackColor = True
+        MenuScreenLayout.btnJoinGame.Font = New System.Drawing.Font("Microsoft Sans Serif", 20.0!)
+        MenuScreenLayout.btnJoinGame.Location = New System.Drawing.Point(400, 220)
+        MenuScreenLayout.btnJoinGame.Margin = New System.Windows.Forms.Padding(3, 100, 3, 3)
+        MenuScreenLayout.btnJoinGame.Name = "btnJoinGame"
+        MenuScreenLayout.btnJoinGame.Size = New System.Drawing.Size(400, 70)
+        MenuScreenLayout.btnJoinGame.TabIndex = 1
+        MenuScreenLayout.btnJoinGame.Text = "Join Game"
+        MenuScreenLayout.btnJoinGame.UseVisualStyleBackColor = True
         '
         'btnExit
         '
@@ -746,23 +750,23 @@
         MenuScreenLayout.btnExit.Text = "Exit"
         MenuScreenLayout.btnExit.UseVisualStyleBackColor = True
         '
-        'btnLoad
+        'btnLoadGame
         '
-        MenuScreenLayout.btnLoad.Font = New System.Drawing.Font("Microsoft Sans Serif", 20.0!)
-        MenuScreenLayout.btnLoad.Location = New System.Drawing.Point(400, 370)
-        MenuScreenLayout.btnLoad.Margin = New System.Windows.Forms.Padding(3, 100, 3, 100)
-        MenuScreenLayout.btnLoad.Name = "btnLoad"
-        MenuScreenLayout.btnLoad.Size = New System.Drawing.Size(400, 70)
-        MenuScreenLayout.btnLoad.TabIndex = 3
-        MenuScreenLayout.btnLoad.Text = "Load Server"
-        MenuScreenLayout.btnLoad.UseVisualStyleBackColor = True
+        MenuScreenLayout.btnLoadGame.Font = New System.Drawing.Font("Microsoft Sans Serif", 20.0!)
+        MenuScreenLayout.btnLoadGame.Location = New System.Drawing.Point(400, 370)
+        MenuScreenLayout.btnLoadGame.Margin = New System.Windows.Forms.Padding(3, 100, 3, 100)
+        MenuScreenLayout.btnLoadGame.Name = "btnLoadGame"
+        MenuScreenLayout.btnLoadGame.Size = New System.Drawing.Size(400, 70)
+        MenuScreenLayout.btnLoadGame.TabIndex = 3
+        MenuScreenLayout.btnLoadGame.Text = "Load Game"
+        MenuScreenLayout.btnLoadGame.UseVisualStyleBackColor = True
         '--------------------------
         '-----Add Controls-----
-        Controls.Add(MenuScreenLayout.btnLoad)
+        Controls.Add(MenuScreenLayout.btnLoadGame)
         Controls.Add(MenuScreenLayout.btnExit)
-        Controls.Add(MenuScreenLayout.btnStartClient)
-        Controls.Add(MenuScreenLayout.btnStartServer)
-        ' ''----------------------
+        Controls.Add(MenuScreenLayout.btnJoinGame)
+        Controls.Add(MenuScreenLayout.btnHostGame)
+        '----------------------
         My.Computer.Audio.Play(My.Resources.The_Adventure_Begins_Extended, AudioPlayMode.BackgroundLoop)
     End Sub
 
@@ -826,12 +830,12 @@
                     Screen.GamePlayLayout.lblSecondary.BackColor = Color.Transparent
                 End If
                 Screen.GamePlayLayout.lblPrimary.Text = "Primary: " +
-                    CStr(MyClient.IncomingMessage.Primary.Integrety.current) +
-                    "/" + CStr(MyClient.IncomingMessage.Primary.Integrety.max)
+                    CStr(MyClient.IncomingMessage.Primary.Ammunition.current) +
+                    "/" + CStr(MyClient.IncomingMessage.Primary.Ammunition.max)
                 'Displays the integrety of the Primary Weapon
                 Screen.GamePlayLayout.lblSecondary.Text = "Secondary: " +
-                    CStr(MyClient.IncomingMessage.Secondary.Integrety.current) +
-                    "/" + CStr(MyClient.IncomingMessage.Secondary.Integrety.max)
+                    CStr(MyClient.IncomingMessage.Secondary.Ammunition.current) +
+                    "/" + CStr(MyClient.IncomingMessage.Secondary.Ammunition.max)
                 'Displays the integrety of the Secondary Weapon
 
                 Screen.GamePlayLayout.lblPowerCore.Text = "Power Core: " +

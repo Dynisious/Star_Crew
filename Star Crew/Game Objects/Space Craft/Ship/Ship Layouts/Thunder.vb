@@ -13,10 +13,13 @@
         SecondaryMount = -Math.PI / 6
         Primary = New Weapon(New Thumper)
         Secondary = New Weapon(New Rattler)
+        BatteriesPower = New StatInt(0, 40)
 
         ShieldingStats = New HeriaShields
+        ShieldingPower = New StatInt(0, 60)
 
         EngineeringStats = New CorrierEngine
+        EngineeringPower = New StatInt(0, 150)
     End Sub
 
 End Class

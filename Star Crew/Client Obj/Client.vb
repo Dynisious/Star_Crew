@@ -141,7 +141,7 @@ Public Class Client
 
         '-----Attempt to connect to a remote Server-----
         Try
-            MyConnector = New Net.Sockets.TcpClient(nIP, 1225) 'Create a new TcpClient object
+            MyConnector = New Net.Sockets.TcpClient(nIP, 1225) 'Create a new TcpClient object and connect it to a Server
             MyConnector.Client.ReceiveTimeout = 10000 'Wait 10 Seconds for data to be received before timing out
             MyConnector.Client.SendTimeout = 10000 'Wait 10 seconds for data to be sent before timing out
             ClientLoop = True 'Set ClientLoop to True so that the Client's communications will not close

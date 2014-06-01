@@ -9,7 +9,7 @@ Public MustInherit Class Station
         Engineering
         Max
     End Enum
-    Public Power As Double 'A Double value indecating the Power Stored within the Station
+    Public Power As StatInt 'A StatInt object indecating the current and maximum units of Power Stored within the Station
     Public Influx As Integer 'An integer value indecating how many units of power the Station receives per update
 
     Public Sub New(ByRef nParent As Ship)

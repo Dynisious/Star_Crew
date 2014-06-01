@@ -13,11 +13,13 @@
         SecondaryMount = -Math.PI / 8
         Primary = New Weapon(New Rattler)
         Secondary = New Weapon(New Rattler)
+        BatteriesPower = New StatInt(0, 40)
 
         ShieldingStats = New HeriaShields
+        ShieldingPower = New StatInt(0, 60)
 
         EngineeringStats = New KnifeEdge
-
+        EngineeringPower = New StatInt(0, 100)
     End Sub
 
 End Class

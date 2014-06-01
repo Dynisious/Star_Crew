@@ -7,15 +7,23 @@ Public Class Server 'Encapslates the Galaxy object of the Server
     Private BinarySerializer As New Runtime.Serialization.Formatters.Binary.BinaryFormatter 'A Serialiser object to send messages
     Private sendBuff() As Byte 'An Array of Bytes to send to Clients
     Private sendReceiveList As New List(Of ServerSideClient) 'A List of the Clients to communicate with at a particular time
-    Public ServerLoop As Boolean = True 'A Boolean to keep the Server Looping
+    Public ServerLoop As Boolean = False 'A Boolean to keep the Server Looping
 
     Public Sub StartServer(ByVal NewWorld As Boolean) 'Begins the Server object
+        If ServerLoop = True Then 'Close last session
+            Console.WriteLine("Closing previous Server...")
+            ServerLoop = False 'Let the Server close
+            ConsoleWindow.ServerThread.Join() 'Wait for the Server to close
+            Console.WriteLine("Server closed successfuly")
+        End If
         Console.WriteLine("Initialising...")
         ServerLoop = True 'Let the Server Loop until it is disposed of
         ConsoleWindow.ServerThread = New Threading.Thread(AddressOf StartCommunications) 'Create a new Thread for the Server
         If NewWorld = True Then
             GameWorld = New Galaxy
             GameWorld.StartGame() 'Begin to run the game
+        Else
+            GameWorld.LoadGame()
         End If
         Console.WriteLine("Game is now running") 'Write message to console
         ConsoleWindow.ServerThread.Start()
@@ -29,10 +37,8 @@ Public Class Server 'Encapslates the Galaxy object of the Server
             If MyListener.Pending = True Then 'There's a pending connection request and the Server is not closing
                 AddClient(MyListener.AcceptSocket()) 'Add the new Client
             End If
-            If Clients.Count > 0 Then 'There's Clients to talk with
-                Send() 'Send messages to Clients
-                Listen() 'Listen for messages
-            End If
+            Send() 'Send messages to Clients
+            Listen() 'Listen for messages
         End While
 
         GameWorld.GalaxyTimer.Stop() 'Stops the Galaxy Object from Updating
@@ -46,6 +52,8 @@ Public Class Server 'Encapslates the Galaxy object of the Server
 
     Private Sub Listen() 'Receive messages and handle connection requests
         If Clients.Count > 0 Then
+            sendReceiveList.Clear() 'Clear the List
+            sendReceiveList.TrimExcess() 'Remove all spare spots from the List
             '-----Recieve Messages-----
             sendReceiveList.AddRange(Clients) 'Add the Clients to the List
             Socket.Select(sendReceiveList, Nothing, Nothing, -1)
@@ -54,14 +62,14 @@ Public Class Server 'Encapslates the Galaxy object of the Server
                     sendReceiveList(i).DecodeMessage() 'Receive the message
                 End If
             Next
-            sendReceiveList.Clear() 'Clear the List
-            sendReceiveList.TrimExcess() 'Remove all spare spots from the List
             '--------------------------
         End If
     End Sub
 
     Private Sub Send() 'Send a message to all Clients
-        If Clients.Count > 0 And GameWorld.MessageToSend IsNot Nothing Then
+        If Clients.Count > 0 Then
+            sendReceiveList.Clear() 'Clear the List
+            sendReceiveList.TrimExcess() 'Remove spare spots from the List
             '-----Send Messages to Clients-----
             sendReceiveList.AddRange(Clients) 'Add the Clients to the List
             Socket.Select(Nothing, sendReceiveList, Nothing, 100) 'Filter out all Sockets that can't be sent to right now
@@ -75,9 +83,8 @@ Public Class Server 'Encapslates the Galaxy object of the Server
             For i As Integer = 0 To sendReceiveList.Count - 1 'Send the message to all available ServerSideClient objects
                 If i < sendReceiveList.Count Then
                     Try
-                        sendReceiveList(i).Blocking = True 'Set the ServerSideClient to block
-                        sendReceiveList(i).Send(BitConverter.GetBytes(sendBuff.Length)) 'Send 4 Bytes representing how many bytes will be in the next message
-                        sendReceiveList(i).Blocking = True 'Set the ServerSideClient to block
+                        sendReceiveList(i).Send(BitConverter.GetBytes(sendBuff.Length)) 'Send 4 Bytes representing how many
+                        'bytes will be in the next message
                         sendReceiveList(i).Send(sendBuff) 'Send the message
                     Catch ex As SocketException
                         Dim temp As ServerSideClient = sendReceiveList(i)
@@ -93,8 +100,6 @@ Public Class Server 'Encapslates the Galaxy object of the Server
                     End Try
                 End If
             Next
-            sendReceiveList.Clear() 'Clear the List
-            sendReceiveList.TrimExcess() 'Remove spare spots from the List
             '----------------------------------
         End If
     End Sub
@@ -102,7 +107,6 @@ Public Class Server 'Encapslates the Galaxy object of the Server
     Public Sub AddClient(ByRef nSocket As Socket) 'Attempt to add the a ServerSideClient object
         If Clients.Count < 4 Then 'There is less than the maximum number of Clients
             Clients.Add(New ServerSideClient(nSocket.DuplicateAndClose(Process.GetCurrentProcess.Id))) 'Add a new ServerSideClient
-            Clients(Clients.Count - 1).DecodeMessage() 'Finalise the Client's connection
         Else 'There is no more Space for Clients
             Console.WriteLine(nSocket.RemoteEndPoint.ToString + ": Could not be connected. Server is full") 'Write the message to the console
             nSocket.Close() 'Close the connection

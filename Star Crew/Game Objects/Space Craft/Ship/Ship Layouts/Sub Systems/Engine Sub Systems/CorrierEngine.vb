@@ -4,7 +4,7 @@ Public Class CorrierEngine
 
     Public Sub New()
         Engines = New StatDbl(150, 150)
-        PowerCore = New StatDbl(4, 4)
+        PowerCore = New StatDbl(8, 8)
     End Sub
 
 End Class

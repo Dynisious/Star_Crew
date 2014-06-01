@@ -13,9 +13,10 @@ Public Class Engineering
         Cool
     End Enum
 
-    Public Sub New(ByRef nParent As Ship, ByVal nSystem As EngineSystem)
+    Public Sub New(ByRef nParent As Ship, ByRef nSystem As EngineSystem, ByRef nPower As StatInt)
         MyBase.New(nParent)
         SubSystem = nSystem
+        Power = nPower
     End Sub
 
     Public Overrides Sub Update()
@@ -60,20 +61,11 @@ Public Class Engineering
             End If
             CoreStability = 1 / ((Math.Sqrt((Int(Heat - 50) / 100) ^ 2)) + 1) 'How close to completely stable the Power Core's temperature is
         End If
-        Power = Power + (SubSystem.PowerCore.current * CoreStability) 'Add Power to the stored power in the system
+        Power.current = Power.current + (SubSystem.PowerCore.current * CoreStability) 'Add Power to the stored power in the system
 
-        If totalPowerDraw <> 0 Then
-            '-----Power Core-----
-            Dim powerCoreCost As Integer = Power * (powerCoreDraw / totalPowerDraw) 'The fraction of the usable power allowed for
-            'repairing the Power Core
-            If powerCoreCost > powerCoreDraw Then 'Too much power is being allowed for the Power Core so bring it down
-                powerCoreCost = powerCoreDraw
-            End If
-            SubSystem.PowerCore.current = SubSystem.PowerCore.current + powerCoreCost 'Repair the Power Core
-            '--------------------
-
+        If totalPowerDraw <> 0 Then 'There will not be a divide by 0 error
             '-----Batteries-----
-            Dim batteriesCost As Integer = Power * (batteriesDraw / totalPowerDraw) 'The fraction of the usable power allowed for
+            Dim batteriesCost As Integer = Power.current * (batteriesDraw / totalPowerDraw) 'The fraction of the usable power allowed for
             'powering the Batteries
             If batteriesCost > batteriesDraw Then 'Too much power is being allowed for the Batteries so bring it down
                 batteriesCost = batteriesDraw
@@ -82,7 +74,7 @@ Public Class Engineering
             '-------------------
 
             '-----Shielding-----
-            Dim shieldingCost As Integer = Power * (shieldingDraw / totalPowerDraw) 'The fraction of the usable power allowed for
+            Dim shieldingCost As Integer = Power.current * (shieldingDraw / totalPowerDraw) 'The fraction of the usable power allowed for
             'powering the Shields
             If shieldingCost > shieldingDraw Then 'Too much power is being allowed for the Shields so bring it down
                 shieldingCost = shieldingDraw
@@ -90,39 +82,51 @@ Public Class Engineering
             Parent.Shielding.Influx = shieldingCost 'Power the Shields
             '-------------------
 
+            '-----Power Core-----
+            Dim powerCoreCost As Integer = Power.current * (powerCoreDraw / totalPowerDraw) 'The fraction of the usable power allowed for
+            'repairing the Power Core
+            If powerCoreCost > (powerCoreDraw * 10) Then 'Too much power is being allowed for the Power Core so bring it down
+                powerCoreCost = (powerCoreDraw * 10)
+            End If
+            SubSystem.PowerCore.current = SubSystem.PowerCore.current + (powerCoreCost / 10) 'Repair the Power Core
+            '--------------------
+
             '-----Primary Weapon-----
-            Dim primaryCost As Integer = Power * (primaryDraw / totalPowerDraw) 'The fraction of the usable power allowed for
+            Dim primaryCost As Integer = Power.current * (primaryDraw / totalPowerDraw) 'The fraction of the usable power allowed for
             'repairing the Primary Weapon
-            If primaryCost > primaryDraw Then 'Too much power is being allowed for repairing the Primary Weapon so bring it down
-                primaryCost = primaryDraw
+            If primaryCost > (primaryDraw * 10) Then 'Too much power is being allowed for repairing the Primary Weapon so bring it down
+                primaryCost = (primaryDraw * 10)
             End If
             Parent.Batteries.Primary.Integrety.current =
-            Parent.Batteries.Primary.Integrety.current + primaryCost 'Repair the Primary Weapon
+            Parent.Batteries.Primary.Integrety.current + (primaryCost / 10) 'Repair the Primary Weapon
             Parent.Batteries.Primary.ChangeStats() 'Update the statistics inside the Primary Weapon
             '------------------------
 
             '-----Secondary Weapon-----
-            Dim secondaryCost As Integer = Power * (secondaryDraw / totalPowerDraw) 'The fraction of the usable power allowed for
+            Dim secondaryCost As Integer = Power.current * (secondaryDraw / totalPowerDraw) 'The fraction of the usable power allowed for
             'repairing the Secondary Weapon
-            If secondaryCost > secondaryDraw Then 'Too much power is being allowed for repairing the Secondary Weapon so bring it down
-                secondaryCost = secondaryDraw
+            If secondaryCost > (secondaryDraw * 10) Then 'Too much power is being allowed for repairing the Secondary Weapon so bring it down
+                secondaryCost = (secondaryDraw * 10)
             End If
             Parent.Batteries.Secondary.Integrety.current =
-            Parent.Batteries.Secondary.Integrety.current + secondaryCost 'Repair the Secondary Weapon
+            Parent.Batteries.Secondary.Integrety.current + (secondaryCost / 10) 'Repair the Secondary Weapon
             Parent.Batteries.Secondary.ChangeStats() 'Update the statistics inside the Secondary Weapon
             '------------------------
 
             '-----Engines-----
-            Dim enginesCost As Integer = Power * (enginesDraw / totalPowerDraw) 'The fraction of the usable power allowd
+            Dim enginesCost As Integer = Power.current * (enginesDraw / totalPowerDraw) 'The fraction of the usable power allowd
             'for repairing the Engines
-            If enginesCost > (enginesDraw) Then 'Too much power is being allowed for repairing the Engines
-                enginesCost = (enginesDraw)
+            If enginesCost > (enginesDraw * 10) Then 'Too much power is being allowed for repairing the Engines
+                enginesCost = (enginesDraw * 10)
             End If
-            SubSystem.Engines.current = SubSystem.Engines.current + enginesCost 'Repair the Engines
+            SubSystem.Engines.current = SubSystem.Engines.current + (enginesCost / 10) 'Repair the Engines
             '-----------------
 
-            Power = Power - batteriesCost - shieldingCost - primaryCost - secondaryCost - enginesCost - powerCoreCost 'Remove all
+            Power.current = Power.current - batteriesCost - shieldingCost - primaryCost - secondaryCost - enginesCost - powerCoreCost 'Remove all
             'the power used from the stored power
+            If Power.current > Power.max Then 'Release the excess power
+                Power.current = Power.max 'Set the current stored power to the maximum value
+            End If
         End If
     End Sub
 

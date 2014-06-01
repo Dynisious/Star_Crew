@@ -2,15 +2,14 @@
 Public Class Ship 'A Ship that flies in combat and fights other Ships
     Inherits SpaceCraft 'The base Class for all Ships and Fleets
     Public InCombat As Boolean = False 'A Boolean value indecating whether the Ship is in combat or not
-    Public TargetLock As Boolean = False 'A Boolean value indecating whether the Ship is allowed to switch targets
     Public Hull As StatDbl 'A StatDbl object representing the current and max Hull values
     Public Firing As Boolean = False 'A Boolean value indecating whether the Ship is actively firing
     Public Hit As Boolean = False 'A Boolean value indecating whether the Ship has just been hit
     '-----Helm-----
-    Public Helm As New Helm(Me) 'A Helm object responsible for piloting the Ship using AI
+    Public Helm As Helm 'A Helm object responsible for piloting the Ship using AI
     '--------------
     '-----Batteries-----
-    Public Batteries As New Battery(Me) 'A Battery object responsible for aiming Weapons and Targeting Ships using AI
+    Public Batteries As Battery 'A Battery object responsible for aiming Weapons and Targeting Ships using AI
     '-------------------
     '-----Shielding-----
     Public Shielding As Shields 'A Shields object responsible for distributing power between the 4 shields using AI

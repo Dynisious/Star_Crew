@@ -6,7 +6,8 @@ Public Class Combat 'Encloses the Ships that are fighting
 
     Public Sub Generate(ByRef Enemies As Fleet)
         EnemyFleet = Enemies 'Sets a new enemy Fleet
-        EnemyFleet.Speed.current = 0
+        EnemyFleet.Speed.current = 0 'Set the Fleet to stop moving
+        ConsoleWindow.GameServer.GameWorld.centerFleet.Speed.current = 0 'Set the Fleet to stop moving
         shipList.Clear() 'Clear the List of Ships
         shipList.AddRange(ConsoleWindow.GameServer.GameWorld.centerFleet.ShipList) 'Add the Players Ships
         shipList.AddRange(Enemies.ShipList) 'Add the Enemies Ships
@@ -75,6 +76,8 @@ Public Class Combat 'Encloses the Ships that are fighting
     End Sub
 
     Public Sub AutoFight(ByRef attacking As Fleet, ByRef defending As Fleet) 'Battles 2 AI Fleets
+        attacking.Speed.current = 0 'Stop the Fleet
+        defending.Speed.current = 0 'Stop the Fleet
         If attacking.ShipList.Count = 0 Then 'The Fleet needs to be destroyed
             attacking.currentSector.RemoveFleet(attacking, True, False) 'Destroy the Fleet
             Exit Sub

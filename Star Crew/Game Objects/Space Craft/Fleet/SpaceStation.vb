@@ -1,7 +1,9 @@
 ﻿<Serializable()>
 Public Class SpaceStation 'A Fleet with no alignment
     Inherits SpaceCraft 'The base Class of Ships, Fleets and Stations
-    Public currentSector As Sector 'The Sector object the Fleet is currently inside
+    Public currentSector As Sector 'The Sector object the Space Station is currently inside
+    Public Population As New List(Of Fleet) 'The Fleets nearby the SpaceStation
+    Public Shared PopCap As Integer = 3 'The maximum number of Fleets allowed to stay at the station
 
     Public Sub New(ByVal nIndex As Integer, ByRef nSector As Sector, ByVal nAllegience As Galaxy.Allegence)
         MyBase.New(nAllegience, ShipLayout.Formats.Station, nIndex, New Point(Int(Rnd() * SpawnBox), Int(Rnd() * SpawnBox)))
@@ -19,24 +21,21 @@ Public Class SpaceStation 'A Fleet with no alignment
     End Sub
 
     Public Sub UpdateStation()
-        Dim pop As New List(Of Fleet) 'The Fleets nearby the SpaceStation
-        For Each i As Fleet In currentSector.fleetList
+        Population.Clear() 'Clear the population of the Station
+        Population.TrimExcess()
+        For Each i As Fleet In currentSector.fleetList 'Loop through all Fleets in the Sector
             Dim distance As Integer = Math.Sqrt(((Position.X - i.Position.X) ^ 2) + ((Position.Y - i.Position.Y) ^ 2)) 'Calculate the distance
             'of the Fleet
-            If distance < Fleet.InteractRange * 5 Then 'They are part of the population of the Space Station
-                If i.MyAllegence = MyAllegence Then 'Heal the Fleet
+            If distance < Fleet.DetectRange Then 'They are part of the population of the Space Station
+                If i.MyAllegence = MyAllegence And distance < Fleet.InteractRange Then 'Heal the Fleet
                     SpaceStation.Heal(i)
                 End If
-                pop.Add(i) 'Add them to the population of the Space Station
+                Population.Add(i) 'Add them to the population of the Space Station
             End If
         Next
-        If pop.Count > 3 Then 'The Station is overpopulated
-            For i As Integer = 1 To pop.Count - 3 'Loop through the excess population
-                pop(Int(Rnd() * pop.Count)).MovementState = Fleet.FleetState.Target 'Send this random Fleet to fight
-            Next
-        End If
+
         If MyAllegence <> Galaxy.Allegence.Neutral Then
-            If 0 = Int(Rnd() * 60) Then 'Spawn in a new Fleet every 6 seconds roughly
+            If 0 = Int(Rnd() * 70) Then 'Spawn in a new Fleet every 7 seconds roughly
                 Select Case MyAllegence
                     Case Galaxy.Allegence.Friendly
                         currentSector.AddFleet(New FriendlyFleet(currentSector.fleetList.Count, Me))
@@ -50,12 +49,28 @@ Public Class SpaceStation 'A Fleet with no alignment
             End If
         End If
         Dim popDivision(Galaxy.Allegence.max - 1) As Integer 'The number of Fleets sorted by allegience
-        For Each i As Fleet In pop
+        For Each i As Fleet In Population 'Loop through the population of the Fleet
             popDivision(i.MyAllegence) = popDivision(i.MyAllegence) + 1 'Add 1 to the allegience
         Next
         For i As Integer = 0 To Galaxy.Allegence.max - 1
             If popDivision(i) > popDivision(MyAllegence) Then 'This allegience is the majority
                 MyAllegence = i 'Set the allegience to the majority
+            End If
+        Next
+        For i As Integer = 0 To Population.Count - 1 'Loop through the population of the Fleet
+            If i < Population.Count Then 'Continue
+                If Population(i).MyAllegence <> MyAllegence Then 'It's not allied with the Space Station
+                    Population.Remove(Population(i)) 'Remove the Fleet from the population
+                End If
+            Else 'Exit the Loop
+                Exit For
+            End If
+        Next
+        For i As Integer = 0 To Population.Count - 1 'Loop through the remaining population
+            If i < PopCap Then 'The Fleet is allowed to remain at the Station
+                currentSector.fleetList(i).TargetLock = False 'The Fleet can choose it's own target
+            Else 'Exit the Loop
+                Exit For
             End If
         Next
     End Sub

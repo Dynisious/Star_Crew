@@ -13,38 +13,39 @@ Public Class ServerSideClient 'An object that sends and receives messages too an
         MyBase.New(nSocketInformation)
         SendTimeout = 100
         ReceiveTimeout = 100
+
+        Try
+            While BytesReceived < 4 'Receive 4 Bytes to convert into MyStation
+                BytesReceived = BytesReceived + Receive(ByteBuff, BytesReceived, 4 - BytesReceived, SocketFlags.None)
+            End While
+            MyStation = BitConverter.ToInt32(ByteBuff, 0) 'Convert the 4 Bytes into the MyStation Integer
+            For Each i As ServerSideClient In ConsoleWindow.GameServer.Clients 'Check that the Station is free
+                If ReferenceEquals(Me, i) = False And i.MyStation = MyStation Then 'A different Client already has this Station
+                    GameServer.RemoveClient(Me, False) 'Remove this ServerSideClient from the List but do not reset control of the Station
+                    Exit Sub 'Exit the Sub here
+                End If
+            Next
+            Console.WriteLine((MyStation.ToString() + ": Has been connected")) 'The connection was succesful
+        Catch ex As SocketException
+            GameServer.RemoveClient(Me, False)
+        End Try
+        Select Case MyStation 'Set the selected Station to be Player controled
+            Case Station.StationTypes.Helm
+                ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Helm.PlayerControled = True
+            Case Station.StationTypes.Batteries
+                ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Batteries.PlayerControled = True
+            Case Station.StationTypes.Shielding
+                ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Shielding.PlayerControled = True
+            Case Station.StationTypes.Engineering
+                ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Engineering.PlayerControled = True
+        End Select
     End Sub
 
     Public Sub DecodeMessage() 'Receive a message from the Client
-        If MyStation = Station.StationTypes.Max Then 'The Client is connecting
-            Try
-                While BytesReceived < 4 'Receive 4 Bytes to convert into MyStation
-                    BytesReceived = BytesReceived + Receive(ByteBuff, BytesReceived, 4 - BytesReceived, SocketFlags.None)
-                End While
-                MyStation = BitConverter.ToInt32(ByteBuff, 0) 'Convert the 4 Bytes into the MyStation Integer
-                For Each i As ServerSideClient In ConsoleWindow.GameServer.Clients 'Check that the Station is free
-                    If ReferenceEquals(Me, i) = False And i.MyStation = MyStation Then 'A different Client already has this Station
-                        GameServer.RemoveClient(Me, False) 'Remove this ServerSideClient from the List but do not reset control of the Station
-                        Exit Sub 'Exit the Sub here
-                    End If
-                Next
-                Console.WriteLine((MyStation.ToString() + ": Has been connected")) 'The connection was succesful
-            Catch ex As SocketException
-                GameServer.RemoveClient(Me, False)
-            End Try
-            Select Case MyStation 'Set the selected Station to be Player controled
-                Case Station.StationTypes.Helm
-                    ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Helm.PlayerControled = True
-                Case Station.StationTypes.Batteries
-                    ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Batteries.PlayerControled = True
-                Case Station.StationTypes.Shielding
-                    ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Shielding.PlayerControled = True
-                Case Station.StationTypes.Engineering
-                    ConsoleWindow.GameServer.GameWorld.CombatSpace.centerShip.Engineering.PlayerControled = True
-            End Select
-        ElseIf Available > 0 Then 'Receive a ClientMessage object
+        If Available > 0 Then
             BytesReceived = 0
             BytesToReceive = 0
+
             Try
                 While BytesReceived < 4 'Receive 4 Bytes to deserialise into the BytesToReceive Integer
                     BytesReceived = BytesReceived + Receive(ByteBuff, BytesReceived, 4 - BytesReceived, SocketFlags.None)
