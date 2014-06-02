@@ -11,7 +11,7 @@ Public Class Client
     Private ReadOnly BlankShipSpace As New Bitmap(40, 40) 'A blank Bitmap object to draw Ship Models onto while rendering
     Private BytesToReceive As Integer 'An Integer representing how many bytes the Client should wait to receive from the Server
     Private BytesReceived As Integer 'An Integer representing how many bytes of data the Client has Received from the Server
-    Private MessageBuff(22000) As Byte 'An Array of Bytes to store the bytes of data received from the Server
+    Private MessageBuff(24000) As Byte 'An Array of Bytes to store the bytes of data received from the Server
     Private ByteBuff(3) As Byte 'An Array of 4 Bytes to convert into the BytesToReceive Integer
     Private BinarySerializer As New Runtime.Serialization.Formatters.Binary.BinaryFormatter 'A Serialiser Object to serialise/deserialise
     'bytes for sending/receiving

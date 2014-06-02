@@ -3,7 +3,8 @@ Public Class SpaceStation 'A Fleet with no alignment
     Inherits SpaceCraft 'The base Class of Ships, Fleets and Stations
     Public currentSector As Sector 'The Sector object the Space Station is currently inside
     Public Population As New List(Of Fleet) 'The Fleets nearby the SpaceStation
-    Public Shared PopCap As Integer = 3 'The maximum number of Fleets allowed to stay at the station
+    Public Shared ReadOnly PopulationCap As Integer = 2 'The maximum number of Fleets allowed to stay at the station
+    Public Shared ReadOnly HealRange As Integer = 60 'The distance at which a Station can heal a Fleet
 
     Public Sub New(ByVal nIndex As Integer, ByRef nSector As Sector, ByVal nAllegience As Galaxy.Allegence)
         MyBase.New(nAllegience, ShipLayout.Formats.Station, nIndex, New Point(Int(Rnd() * SpawnBox), Int(Rnd() * SpawnBox)))
@@ -22,12 +23,11 @@ Public Class SpaceStation 'A Fleet with no alignment
 
     Public Sub UpdateStation()
         Population.Clear() 'Clear the population of the Station
-        Population.TrimExcess()
         For Each i As Fleet In currentSector.fleetList 'Loop through all Fleets in the Sector
             Dim distance As Integer = Math.Sqrt(((Position.X - i.Position.X) ^ 2) + ((Position.Y - i.Position.Y) ^ 2)) 'Calculate the distance
             'of the Fleet
             If distance < Fleet.DetectRange Then 'They are part of the population of the Space Station
-                If i.MyAllegence = MyAllegence And distance < Fleet.InteractRange Then 'Heal the Fleet
+                If i.MyAllegence = MyAllegence And distance < HealRange Then 'Heal the Fleet
                     SpaceStation.Heal(i)
                 End If
                 Population.Add(i) 'Add them to the population of the Space Station
@@ -35,7 +35,7 @@ Public Class SpaceStation 'A Fleet with no alignment
         Next
 
         If MyAllegence <> Galaxy.Allegence.Neutral Then
-            If 0 = Int(Rnd() * 70) Then 'Spawn in a new Fleet every 7 seconds roughly
+            If 0 = Int(Rnd() * 200) Then 'Spawn in a new Fleet roughly every 20 second
                 Select Case MyAllegence
                     Case Galaxy.Allegence.Friendly
                         currentSector.AddFleet(New FriendlyFleet(currentSector.fleetList.Count, Me))
@@ -66,13 +66,13 @@ Public Class SpaceStation 'A Fleet with no alignment
                 Exit For
             End If
         Next
-        For i As Integer = 0 To Population.Count - 1 'Loop through the remaining population
-            If i < PopCap Then 'The Fleet is allowed to remain at the Station
-                currentSector.fleetList(i).TargetLock = False 'The Fleet can choose it's own target
-            Else 'Exit the Loop
-                Exit For
-            End If
-        Next
+        If Population.Count > PopulationCap Then 'The Space Station is overpopulated
+            For i As Integer = PopulationCap To Population.Count - 1 'Loop through the excess population
+                Dim nFleet As Fleet = Population(PopulationCap) 'The Fleet to be removed from the population
+                Population.Remove(nFleet)
+            Next
+        End If
+        Population.TrimExcess() 'Remove the excess spaces inside the list
     End Sub
 
 End Class

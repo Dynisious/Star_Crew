@@ -23,7 +23,7 @@ Public Class Server 'Encapslates the Galaxy object of the Server
             GameWorld = New Galaxy
             GameWorld.StartGame() 'Begin to run the game
         Else
-            GameWorld.LoadGame()
+            GameWorld.FinaliseGameStart() 'Set up an initial message to send from the Server
         End If
         Console.WriteLine("Game is now running") 'Write message to console
         ConsoleWindow.ServerThread.Start()
@@ -34,11 +34,15 @@ Public Class Server 'Encapslates the Galaxy object of the Server
         Console.WriteLine("Server is now listening on " + MyListener.Server.LocalEndPoint.ToString) 'Write message to Console
 
         While ServerLoop = True
-            If MyListener.Pending = True Then 'There's a pending connection request and the Server is not closing
-                AddClient(MyListener.AcceptSocket()) 'Add the new Client
-            End If
-            Send() 'Send messages to Clients
-            Listen() 'Listen for messages
+            Try
+                If MyListener.Pending = True Then 'There's a pending connection request and the Server is not closing
+                    AddClient(MyListener.AcceptSocket()) 'Add the new Client
+                End If
+                Send() 'Send messages to Clients
+                Listen() 'Listen for messages
+            Catch ex As Exception
+                Console.WriteLine(ex.ToString)
+            End Try
         End While
 
         GameWorld.GalaxyTimer.Stop() 'Stops the Galaxy Object from Updating

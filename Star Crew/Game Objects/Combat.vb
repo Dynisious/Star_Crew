@@ -78,26 +78,21 @@ Public Class Combat 'Encloses the Ships that are fighting
     Public Sub AutoFight(ByRef attacking As Fleet, ByRef defending As Fleet) 'Battles 2 AI Fleets
         attacking.Speed.current = 0 'Stop the Fleet
         defending.Speed.current = 0 'Stop the Fleet
-        If attacking.ShipList.Count = 0 Then 'The Fleet needs to be destroyed
-            attacking.currentSector.RemoveFleet(attacking, True, False) 'Destroy the Fleet
-            Exit Sub
-        ElseIf defending.ShipList.Count = 0 Then 'The Fleet needs to be destroyed
-            defending.currentSector.RemoveFleet(defending, True, False) 'Destroy the Fleet
-            Exit Sub
-        End If
-        Dim attacker As Ship = attacking.ShipList(Int(Rnd() * attacking.ShipList.Count)) 'The Ship that is attacking
-        Dim target As Ship = defending.ShipList(Int(Rnd() * defending.ShipList.Count)) 'The Ship that is defending
-        Dim direction As Double = (Rnd() * 2 * Math.PI) 'The vector that the attacker is attacking from
-        If target.TakeDamage(attacker.Batteries.Primary, attacker, direction) = False Then 'The target is still alive
-            If target.TakeDamage(attacker.Batteries.Secondary, attacker, direction) = True Then 'The target was destroyed
+        If defending.ShipList.Count <> 0 Then 'Their defending ships
+            Dim attacker As Ship = attacking.ShipList(Int(Rnd() * attacking.ShipList.Count)) 'The Ship that is attacking
+            Dim target As Ship = defending.ShipList(Int(Rnd() * defending.ShipList.Count)) 'The Ship that is defending
+            Dim direction As Double = (Rnd() * 2 * Math.PI) 'The vector that the attacker is attacking from
+            If target.TakeDamage(attacker.Batteries.Primary, attacker, direction) = False Then 'The target is still alive
+                If target.TakeDamage(attacker.Batteries.Secondary, attacker, direction) = True Then 'The target was destroyed
+                    defending.RemoveShip(target) 'Remove the Ship from the Fleet
+                End If
+            Else 'The target was destroyed
                 defending.RemoveShip(target) 'Remove the Ship from the Fleet
             End If
-        Else 'The target was destroyed
-            defending.RemoveShip(target) 'Remove the Ship from the Fleet
-        End If
 
-        If defending.ShipList.Count = 0 Then 'Destroy the Fleet
-            defending.currentSector.RemoveFleet(defending, True, False)
+            defending.SetStats_Handle() 'Update the stats of the Fleet
+        Else
+            defending.currentSector.RemoveFleet(defending, True, False) 'Destroy the Fleet
         End If
     End Sub
 

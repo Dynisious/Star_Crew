@@ -49,9 +49,10 @@ Public Class Galaxy 'Encapsulates and runs the Ships and Fleets of the Applicati
                                                        Security.AccessControl.AccessControlType.Allow))
         'Allow Threads to Access and Release the Mutex
         MessageMutex = New Threading.Mutex(False, "MessageMutex", MutexCreated, securityProtocols) 'Create the Mutex object
+        FinaliseGameStart() 'Set up an initial message to send from the Server
         GalaxyTimer.Enabled = True 'Start the Timer responsible for updating the game
     End Sub
-    Public Sub LoadGame()
+    Public Sub FinaliseGameStart()
 
         '-----Set initial Message-----
         Select Case State

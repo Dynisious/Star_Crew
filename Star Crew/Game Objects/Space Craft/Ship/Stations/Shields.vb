@@ -1,8 +1,8 @@
 ﻿<Serializable()>
 Public Class Shields
     Inherits Station
-    Public SubSystem As ShieldSystem 'A ShieldSystem object that contains the values for the Ships shields and the damage modifiers for the type of
-    'shield it is
+    Public SubSystem As ShieldSystem 'A ShieldSystem object that contains the values for the Ships
+    'shields and the damage modifiers for the type of shield it is
     Public Enum Sides
         FrontShield
         RightShield
@@ -10,8 +10,8 @@ Public Class Shields
         LeftShield
         Max
     End Enum
-    Public DamagePerSide(Sides.Max - 1) As Integer 'The amount of damage done to each side of the ship to allow the AI to decide which shields to
-    'prioritise
+    Public DamagePerSide(Sides.Max - 1) As Integer 'The amount of damage done to each side of the
+    'ship to allow the AI to decide which shields to prioritise
     Public LastHit As Sides 'The side that was last hit
     Public Enum Commands
         BoostForward
@@ -48,94 +48,97 @@ Public Class Shields
     End Function
 
     Public Overrides Sub Update()
-        Power.current = Power.current + Influx
-        Dim totalDamage As Integer = DamagePerSide(Sides.FrontShield) +
-            DamagePerSide(Sides.LeftShield) + DamagePerSide(Sides.BackShield) +
-            DamagePerSide(Sides.RightShield) 'The total damage that has been taken by all sides
+        If Parent IsNot Nothing Then
+            Power.current = Power.current + Influx
+            Dim totalDamage As Integer = DamagePerSide(Sides.FrontShield) +
+                DamagePerSide(Sides.LeftShield) + DamagePerSide(Sides.BackShield) +
+                DamagePerSide(Sides.RightShield) 'The total damage that has been taken by all sides
 
-        '-----Send off the costs-----
-        Parent.Engineering.shieldingDraw = (SubSystem.Defences(Sides.FrontShield).max - SubSystem.Defences(Sides.FrontShield).current) +
-            (SubSystem.Defences(Sides.RightShield).max - SubSystem.Defences(Sides.RightShield).current) +
-            (SubSystem.Defences(Sides.BackShield).max - SubSystem.Defences(Sides.BackShield).current) +
-            (SubSystem.Defences(Sides.LeftShield).max - SubSystem.Defences(Sides.LeftShield).current) - Power.current 'Let Engineering know how much power
-        'will be needed to recharge all the Shields
-        If Parent.Engineering.shieldingDraw < 0 Then 'Ask for no power
-            Parent.Engineering.shieldingDraw = 0
-        End If
-        '----------------------------
-
-        '-----Distribute the power-----
-        If totalDamage <> 0 Then 'There won't be any divide by 0 errors
-            '-----Add up the power-----
-            Dim usablePower As Integer = Power.current + (SubSystem.Defences(Sides.FrontShield).current +
-                SubSystem.Defences(Sides.LeftShield).current +
-                SubSystem.Defences(Sides.BackShield).current + SubSystem.Defences(Sides.RightShield).current) 'How much power is available for
-            'distribution
-            '--------------------------
+            '-----Send off the costs-----
+            Parent.Engineering.shieldingDraw =
+                (SubSystem.Defences(Sides.FrontShield).max - SubSystem.Defences(Sides.FrontShield).current) +
+                (SubSystem.Defences(Sides.RightShield).max - SubSystem.Defences(Sides.RightShield).current) +
+                (SubSystem.Defences(Sides.BackShield).max - SubSystem.Defences(Sides.BackShield).current) +
+                (SubSystem.Defences(Sides.LeftShield).max - SubSystem.Defences(Sides.LeftShield).current) - Power.current 'Let Engineering
+            'know how much power will be needed to recharge all the Shields
+            If Parent.Engineering.shieldingDraw < 0 Then 'Ask for no power
+                Parent.Engineering.shieldingDraw = 0
+            End If
+            '----------------------------
 
             '-----Distribute the power-----
-            For i As Integer = 0 To Sides.Max - 1 'Loop through all the Shields
-                SubSystem.Defences(i).current = usablePower * (DamagePerSide(i) / totalDamage) 'Give the Shield it's allowed fraction of
-                'the power
-                If SubSystem.Defences(i).current > SubSystem.Defences(i).max Then 'Set the Shield to it's maximum power value
-                    SubSystem.Defences(i).current = SubSystem.Defences(i).max
-                End If
-            Next
-            '------------------------------
+            If totalDamage <> 0 Then 'There won't be any divide by 0 errors
+                '-----Add up the power-----
+                Dim usablePower As Integer = Power.current + (SubSystem.Defences(Sides.FrontShield).current +
+                    SubSystem.Defences(Sides.LeftShield).current +
+                    SubSystem.Defences(Sides.BackShield).current + SubSystem.Defences(Sides.RightShield).current) 'How much power is
+                'available for distribution
+                '--------------------------
 
-            '-----See if theres remaining usablePower-----
-            usablePower = usablePower - SubSystem.Defences(Sides.FrontShield).current -
-                SubSystem.Defences(Sides.LeftShield).current - SubSystem.Defences(Sides.BackShield).current -
-                SubSystem.Defences(Sides.RightShield).current 'Subtract the combined values of all the Shields from the usable power
-            '---------------------------------------
-
-            '-----Remaining usablePower-----
-            If usablePower > 0 Then 'Theres spare Power to be distributed between the Shields
-                Dim nCost As Integer = SubSystem.Defences(LastHit).max - SubSystem.Defences(LastHit).current 'How much power the side that
-                'was last hit will need to be at full charge
-                If nCost > usablePower Then 'There is not enough power to fully charge the Shield
-                    nCost = usablePower 'Set the cost to the ramaining power
-                End If
-                SubSystem.Defences(LastHit).current = SubSystem.Defences(LastHit).current + nCost 'Add the available power into the Shield
-                usablePower = usablePower - nCost 'Take away the spent power from the stored power
-
-                Dim maxed As Int16 'A 16 Bit Integer representing how many Shields are at full charge
+                '-----Distribute the power-----
                 For i As Integer = 0 To Sides.Max - 1 'Loop through all the Shields
-                    If SubSystem.Defences(i).current = SubSystem.Defences(i).max Then 'The Shield is at maximum charge
-                        maxed = maxed + 1 'Add it to the count of fully charged Shields
+                    SubSystem.Defences(i).current = usablePower * (DamagePerSide(i) / totalDamage) 'Give the Shield it's allowed fraction of
+                    'the power
+                    If SubSystem.Defences(i).current > SubSystem.Defences(i).max Then 'Set the Shield to it's maximum power value
+                        SubSystem.Defences(i).current = SubSystem.Defences(i).max
                     End If
                 Next
-                If maxed <> Sides.Max Then 'There are still Shields to be Charged
-                    Dim factor As Integer = Sides.Max - maxed 'How many Shields there are to divide power between
-                    For i As Integer = 0 To Sides.Max - 1 'Loop through all of the Shields
-                        If SubSystem.Defences(i).current <> SubSystem.Defences(i).max Then 'The Shield is not at full charge
-                            SubSystem.Defences(i).current = SubSystem.Defences(i).current + (usablePower / factor) 'Put the allowed
-                            'fraction of the power into the Shield
-                        End If
-                    Next
-                    usablePower = 0 'Set the stored power to 0
-                    For i As Integer = 0 To Sides.Max - 1 'Loop through all the Shields
-                        If SubSystem.Defences(i).current > SubSystem.Defences(i).max Then 'The Shield is overchargered
-                            usablePower = usablePower + (SubSystem.Defences(i).current - SubSystem.Defences(i).max) 'Add the excess power
-                            'to the stored power
-                            SubSystem.Defences(i).current = SubSystem.Defences(i).max 'Set the Shield to it's maximum charge
-                        End If
-                    Next
-                End If
-                Power.current = usablePower 'Store the remaining power for later use
-                If Power.current > Power.max Then 'Send remaining power to engineering
-                    Parent.Engineering.Power.current = Parent.Engineering.Power.current + Power.current - Power.max 'Send off the excess power
-                    Power.current = Power.max 'Set the current power to the maximum
-                End If
-            End If
-        End If
-        '-------------------------
+                '------------------------------
 
-        For i As Integer = 0 To Sides.Max - 1 'Loop through all Shields
-            If DamagePerSide(i) > 0 Then 'Take away one point of received damage to change the distribution scale
-                DamagePerSide(i) = DamagePerSide(i) - 1
+                '-----See if theres remaining usablePower-----
+                usablePower = usablePower - SubSystem.Defences(Sides.FrontShield).current -
+                    SubSystem.Defences(Sides.LeftShield).current - SubSystem.Defences(Sides.BackShield).current -
+                    SubSystem.Defences(Sides.RightShield).current 'Subtract the combined values of all the Shields from the usable power
+                '---------------------------------------
+
+                '-----Remaining usablePower-----
+                If usablePower > 0 Then 'Theres spare Power to be distributed between the Shields
+                    Dim nCost As Integer = SubSystem.Defences(LastHit).max - SubSystem.Defences(LastHit).current 'How much power the side that
+                    'was last hit will need to be at full charge
+                    If nCost > usablePower Then 'There is not enough power to fully charge the Shield
+                        nCost = usablePower 'Set the cost to the ramaining power
+                    End If
+                    SubSystem.Defences(LastHit).current = SubSystem.Defences(LastHit).current + nCost 'Add the available power into the Shield
+                    usablePower = usablePower - nCost 'Take away the spent power from the stored power
+
+                    Dim maxed As Int16 'A 16 Bit Integer representing how many Shields are at full charge
+                    For i As Integer = 0 To Sides.Max - 1 'Loop through all the Shields
+                        If SubSystem.Defences(i).current = SubSystem.Defences(i).max Then 'The Shield is at maximum charge
+                            maxed = maxed + 1 'Add it to the count of fully charged Shields
+                        End If
+                    Next
+                    If maxed <> Sides.Max Then 'There are still Shields to be Charged
+                        Dim factor As Integer = Sides.Max - maxed 'How many Shields there are to divide power between
+                        For i As Integer = 0 To Sides.Max - 1 'Loop through all of the Shields
+                            If SubSystem.Defences(i).current <> SubSystem.Defences(i).max Then 'The Shield is not at full charge
+                                SubSystem.Defences(i).current = SubSystem.Defences(i).current + (usablePower / factor) 'Put the allowed
+                                'fraction of the power into the Shield
+                            End If
+                        Next
+                        usablePower = 0 'Set the stored power to 0
+                        For i As Integer = 0 To Sides.Max - 1 'Loop through all the Shields
+                            If SubSystem.Defences(i).current > SubSystem.Defences(i).max Then 'The Shield is overchargered
+                                usablePower = usablePower + (SubSystem.Defences(i).current - SubSystem.Defences(i).max) 'Add the excess power
+                                'to the stored power
+                                SubSystem.Defences(i).current = SubSystem.Defences(i).max 'Set the Shield to it's maximum charge
+                            End If
+                        Next
+                    End If
+                    Power.current = usablePower 'Store the remaining power for later use
+                    If Power.current > Power.max Then 'Send remaining power to engineering
+                        Parent.Engineering.Power.current = Parent.Engineering.Power.current + Power.current - Power.max 'Send off the excess power
+                        Power.current = Power.max 'Set the current power to the maximum
+                    End If
+                End If
             End If
-        Next
+            '-------------------------
+
+            For i As Integer = 0 To Sides.Max - 1 'Loop through all Shields
+                If DamagePerSide(i) > 0 Then 'Take away one point of received damage to change the distribution scale
+                    DamagePerSide(i) = DamagePerSide(i) - 1
+                End If
+            Next
+        End If
     End Sub
 
 End Class
