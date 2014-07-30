@@ -75,13 +75,12 @@
   <ItemGroup>
     <Compile Include="Game obj\Ship obj\Stations\Battery.vb" />
     <Compile Include="Game obj\CombatSpace.vb" />
-    <Compile Include="Game obj\Ship obj\Stations\Engine\Engines.vb" />
+    <Compile Include="Game obj\Ship obj\Stations\Engines.vb" />
     <Compile Include="Game obj\Fleet obj\Fleet.vb" />
     <Compile Include="Game obj\Galaxy.vb" />
     <Compile Include="Game obj\Ship obj\Stations\Helm.vb" />
     <Compile Include="Game obj\Fleet obj\Item.vb" />
     <Compile Include="Game obj\Sector obj\Planet.vb" />
-    <Compile Include="Game obj\Ship obj\Stations\Engine\PowerNode.vb" />
     <Compile Include="Game obj\Sector obj\Sector.vb" />
     <Compile Include="Server.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
@@ -106,6 +105,7 @@
     <Compile Include="Game obj\Sector obj\SpaceStation.vb" />
     <Compile Include="Game obj\Ship obj\Weapon\Weapon.vb" />
     <Compile Include="Game obj\Ship obj\Weapon\WeaponMount.vb" />
+    <Compile Include="ServerClient.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="My Project\Resources.resx">

@@ -1,57 +1,102 @@
 ﻿Public Class Battery 'Object responsible for Aiming and firing the Ship's Weapons and targeting the Closest enemy and detecting upcoming collisions
     Inherits ShipStation
-    Public Powered As Boolean = True 'A Boolean value indicating whether or not the Station is receiving power
+    Public PlayerControled As Integer 'An Integer value indicating which Weapon the Player is in control of
 
     Public Overrides Sub Update() 'Selects the Closest Enemy, aims the Weapons and Fires the Weapons if necessary and detects upcomming collisions collisions
-        '-----Select Target-----
-        Dim evadeCount As Integer = 0 'The difference of how many Ship's need to be evaded to the right or left (negative = right)
-        Dim targetDistance As Integer = -1 'The last distance calculated so to compare against other distances so as to know whether to change the target
-        Dim targetDirection As Double = -1 'The direction of the targeted enemy in radians in object space
-        For Each i As Ship In Server.GameWorld.Combat.Combatants 'Loop through all Ships
-            If i.CombatIndex <> ParentShip.CombatIndex Then 'This Ship is not targeting itself
-                Dim xOffset As Integer = (i.X - ParentShip.X) 'The offset of the other Ship from this Ship on the x-axis
-                Dim yOffset As Integer = (i.Y - ParentShip.Y) 'The offset of the other Ship from this Ship on the y-axis
-                Dim distance As Integer = Math.Sqrt((xOffset ^ 2) + (yOffset ^ 2)) 'The distance of the other Ship from the enemy Ship
-                If distance < (2 * ParentShip.MinimumDistance) Then 'This Ship needs to be evaded
+        If Powered = True Then
+            '-----Select Target-----
+            Dim evadeCount As Integer = 0 'The difference of how many Ship's need to be evaded to the right or left (negative = right)
+            Dim enemyDistances As New List(Of Integer) 'A list of Integer values representing how close the enemy is to the Ship in ascending order
+            Dim enemyDirections As New List(Of Double) 'A list of Double values representing the direction of the enemy in object space, ordered by how close they are
+            Dim enemyIndexes As New List(Of Integer) 'A list of Integer values representing the CombatIndex of the enemy, ordered by how close they are
+            For Each i As Ship In Server.GameWorld.Combat.Combatants 'Loop through all Fleets
+                If i.CombatIndex <> ParentShip.CombatIndex Then 'This Ship is not targeting itself
+                    '-----Calculate Distance and direction------
+                    Dim xOffset As Integer = (i.X - ParentShip.X) 'The offset of the other Ship from this Ship on the x-axis
+                    Dim yOffset As Integer = (i.Y - ParentShip.Y) 'The offset of the other Ship from this Ship on the y-axis
+                    Dim distance As Integer = Math.Sqrt((xOffset ^ 2) + (yOffset ^ 2)) 'The distance of the other Ship from the enemy Ship
+                    Dim direction As Double 'The direction of the other Ship in object space
                     If xOffset <> 0 Then 'They are not aligned on the x-axis
-                        Dim direction As Double = Math.Tanh(yOffset / xOffset) 'Calculate the direction of the Ship in world space
+                        direction = Math.Tanh(yOffset / xOffset) 'Calculate the direction of the Ship in world space
                         If xOffset < 0 Then 'The direction is reflected in the lin y=x
                             direction = direction + Math.PI 'Reflect
                         End If
-                        direction = Server.Normalise_Direction(direction - ParentShip.Direction) 'Get the direction of the Ship in object space
+                    ElseIf yOffset > 0 Then 'The other Ship is directly above this Ship
+                        direction = (Math.PI / 2)
+                    Else 'The other Ship is directly bellow this Ship
+                        direction = (3 * Math.PI / 2)
+                    End If
+                    direction = Server.Normalise_Direction(direction - ParentShip.Direction) 'Get the direction of the Ship in object space
+                    '-------------------------------------------
+
+                    '-----DetectCollisions-----
+                    If distance < (2 * ParentShip.MinimumDistance) Then 'This Ship needs to be evaded
                         If direction < Math.PI Then 'They are to the Left
                             evadeCount = evadeCount - 1 'Evade right
                         Else 'They are to the right
                             evadeCount = evadeCount + 1 'Evade left
                         End If
-                    Else 'They are aligned on the x-axis
-                        evadeCount = evadeCount - 1 'Evade right
+                    End If
+                    '--------------------------
+
+                    If i.myAllegiance <> ParentShip.myAllegiance Then 'The Ship is an enemy
+                        If enemyDistances.Count <> 0 Then 'Theirs at least one distance in the lists
+                            For e As Integer = 0 To enemyDistances.Count - 1 'Loop through all the distances
+                                If enemyDistances(e) > distance Then 'Insert at this index
+                                    enemyDistances.Insert(e, distance) 'Insert the distance
+                                    enemyDirections.Insert(e, direction) 'Insert the direction
+                                    enemyIndexes.Insert(e, i.CombatIndex) 'Insert the index
+                                    Exit For
+                                End If
+                            Next
+                        Else 'The lists are empty
+                            enemyDistances.Add(distance) 'Add the distance
+                            enemyDirections.Add(direction) 'Add the direction
+                            enemyIndexes.Add(i.CombatIndex) 'add the index
+                        End If
                     End If
                 End If
-                If ((distance < targetDistance) Or (targetDistance = -1)) And (i.myAllegiance <> ParentShip.myAllegiance) Then 'The Ship is either closer or there is no targeted Ship yet and the Ship is an enemy
-                    ParentShip.target = i.CombatIndex 'Set the new target
-                    targetDistance = distance 'Set the new targetDistance
-                    If xOffset <> 0 Then 'The Ships are not aligned on the x-axis
-
-                    ElseIf yOffset > 0 Then 'The enemy is directly above the Ship
-
-                    Else 'The enemy is directly bellow the Ship
-
-                    End If
-                End If
+            Next
+            If evadeCount < 0 Then 'Evade right
+                ParentShip.Bridge.EvadeDirection = -1
+            ElseIf evadeCount > 0 Then 'Evade left
+                ParentShip.Bridge.EvadeDirection = 1
             End If
-        Next
-        If evadeCount < 0 Then 'Evade right
-            ParentShip.Bridge.EvadeDirection = -1
-        ElseIf evadeCount > 0 Then 'Evade left
-            ParentShip.Bridge.EvadeDirection = 1
-        End If
-        '-----------------------
+            ParentShip.target = enemyIndexes(0) 'Set the new target
+            ParentShip.targetDirection = Server.Normalise_Direction(enemyDirections(0) + ParentShip.Direction) 'Convert the direction to world space set the new direction
+            ParentShip.targetDistance = enemyDistances(0) 'Set the targets distance
+            '-----------------------
 
-        '-----Fire at target-----
-        If targetDistance <> -1 Then
+            '-----Fire Weapons-----
+            For Each i As WeaponMount In ParentShip.Mounts 'Loop through all mounts
+                If i.MountedWeapon IsNot Nothing Then 'There's a weapon mounted
+                    If AIControled = True Or i.MountedWeapon.Index <> PlayerControled Then 'The AI is in control of all Weapons or it is not the Weapon currently being controlled by a player
+                        For e As Integer = 0 To enemyDirections.Count - 1 'loop through all directions
+                            Dim relativeDirection As Double = Server.Normalise_Direction(enemyDirections(e) - i.Offset - i.Sweep.Minimum) 'The direction of the enemy relative to the rightmost edge of it's field of view
+                            If relativeDirection < (i.Sweep.Maximum - i.Sweep.Minimum) Then 'This enemy is the closest enemy within the field of view
+                                Dim turnOffset As Double = enemyDirections(e) - i.Offset - i.Sweep.Current 'How far the Weapon needs to turn to face the enemy
+                                Dim turnRight As Boolean = False 'A Boolean value indicating whether the Weapon should turn right
+                                If turnOffset < 0 Then 'Make sure it is positive
+                                    turnOffset = -turnOffset
+                                    turnRight = True
+                                End If
+                                If turnOffset < i.MountedWeapon.TurningSpeed Then 'The Weapon can turn to face the enemy
+                                    i.Sweep.Current = enemyDirections(e) - i.Offset 'Turn to face the enemy
+                                    If enemyDistances(e) < i.MountedWeapon.Range.Current Then 'The enemy is within range
+                                        i.MountedWeapon.Fire_Weapon(Server.GameWorld.Combat.Combatants(enemyIndexes(e))) 'Fire at the enemy
+                                    End If
+                                ElseIf turnRight = False Then 'The enemy is to the left
+                                    i.Sweep.Current = i.Sweep.Current + i.MountedWeapon.TurningSpeed 'Turn left
+                                Else 'The enemy is to the right
+                                    i.Sweep.Current = i.Sweep.Current - i.MountedWeapon.TurningSpeed 'Turn right
+                                End If
+                            End If
+                        Next
+                    End If
+                End If
+            Next
+            '----------------------
         End If
-        '------------------------
     End Sub
 
 End Class

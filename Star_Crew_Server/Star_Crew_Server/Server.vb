@@ -22,4 +22,8 @@
 
     End Function
 
+    Public Sub Game_Over() 'Ends the game because the Clients have been defeated
+
+    End Sub
+
 End Module

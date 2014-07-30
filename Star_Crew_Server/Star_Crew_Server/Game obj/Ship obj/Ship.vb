@@ -15,12 +15,13 @@
     Public Firing As Boolean 'A Boolean value indecating whether the Ship fired this Update
     Public Hit As Boolean 'A Boolean value indicating whether the Ship has been hit this Update
     Public InCombat As Boolean 'A Boolean value indecating whether the Ship is actively in Ship to Ship combat
-    Public Bridge As New Helm 'A Helm object responsible for piloting the Ship
-    Public Batteries As New Battery 'A Battery object responsible for aiming and firing the Ships weapons
+    Public Bridge As Helm 'A Helm object responsible for piloting the Ship
+    Public Batteries As Battery 'A Battery object responsible for aiming and firing the Ships weapons
     Public Shielding As Shields 'A Shield object responsible for powering the Ship's Shields
     Public Engineering As Engines 'An Engines object responsible for routing power through the Ship
     Public target As Integer 'An Integer value representing the CombatIndex of the Ship this Ship is targeting
-    Public PowerNet() As PowerNode 'An array of PowerNode objects representing the Power Network of the Ship
+    Public targetDirection As Double 'A Double value representing the direction of the target in world space
+    Public targetDistance As Integer 'An Integer value representing the distance of the target from the Ship
     Public Mounts() As WeaponMount 'An array of WeaponMount objects where Weapons can be fitted
 
     Public Sub Take_Damage(ByVal IncomingVector As Double, ByVal IncomingDamage As Double, ByVal Type As Weapon.DamageTypes) 'Calculates how much damage is done to the Ship
@@ -28,29 +29,55 @@
         Hull.Current = Hull.Current - IncomingDamage 'Take the remaining damage away from the hull
         If Hull.Current <= 0 Then 'Destroy the Ship
             Destroy()
-        ElseIf IncomingDamage <> 0 Then 'Do damage to the power network
-            Dim hitNode As PowerNode 'The PowerNode that may be hit
-            For Each i As PowerNode In PowerNet
-                If i.Operational = True Then 'This node can be hit
-                    Dim offset As Double = IncomingVector - i.Direction 'The offset of the incoming vector from the nodes direction from the center of the Ship
-                    If offset < 0 Then 'The offset needs to be positive
-                        offset = -offset
+        ElseIf IncomingDamage <> 0 Then 'Do damage to the ShipStations
+            Dim hitStation As ShipStation.StationTypes = Int(Server.Normalise_Direction(IncomingVector + (Math.PI / 4)) / (Math.PI / 2)) 'Which Station got hit
+            If hitStation = ShipStation.StationTypes.max Then hitStation = hitStation - 1
+            Select Case hitStation
+                Case ShipStation.StationTypes.Helm
+                    Bridge.Integrity.Current = Bridge.Integrity.Current - IncomingDamage
+                    If Bridge.Integrity.Current <= 0 Then
+                        Bridge.Integrity.Current = 0
+                        Bridge.Powered = False
                     End If
-                    If offset <= Math.PI / 8 Then
-                        If hitNode IsNot Nothing Then 'Compare which node is most outward
-                            If hitNode.Distance < i.Distance Then 'This node is the most outward
-                                hitNode = i 'Assign this node
+                Case ShipStation.StationTypes.Battery
+                    Batteries.Integrity.Current = Batteries.Integrity.Current - IncomingDamage
+                    If Batteries.Integrity.Current <= 0 Then
+                        Batteries.Integrity.Current = 0
+                        Batteries.Powered = False
+                    End If
+                    For Each i As WeaponMount In Mounts
+                        If i.MountedWeapon IsNot Nothing Then 'There's a mounted Weapon
+                            i.MountedWeapon.Integrity.Current = i.MountedWeapon.Integrity.Current - IncomingDamage
+                            If i.MountedWeapon.Integrity.Current < 0 Then
+                                i.MountedWeapon.Integrity.Current = 0
                             End If
-                        Else 'Assign this node
-                            hitNode = i
+                            Dim percentage As Double = (i.MountedWeapon.Integrity.Current / i.MountedWeapon.Integrity.Maximum) 'The percentage of the Weapons integrity
+                            i.MountedWeapon.Damage.Current = i.MountedWeapon.Damage.Maximum * percentage 'Set the damage relative to the integrity of the Ship
+                            If i.MountedWeapon.Damage.Current < i.MountedWeapon.Damage.Minimum Then 'Set the damage to the minimum
+                                i.MountedWeapon.Damage.Current = i.MountedWeapon.Damage.Minimum
+                            End If
+                            i.MountedWeapon.Range.Current = i.MountedWeapon.Range.Maximum * percentage 'Set the range relative to the integrity of the Ship
+                            If i.MountedWeapon.Range.Current < i.MountedWeapon.Range.Minimum Then 'Set the range to the minimum
+                                i.MountedWeapon.Range.Current = i.MountedWeapon.Range.Minimum
+                            End If
                         End If
+                    Next
+                Case ShipStation.StationTypes.Shields
+                    Shielding.Integrity.Current = Shielding.Integrity.Current - IncomingDamage
+                    If Shielding.Integrity.Current <= 0 Then
+                        Shielding.Integrity.Current = 0
+                        Shielding.Powered = False
                     End If
-                End If
-            Next
-            If Int(Rnd() * 100 / IncomingDamage) = 0 Then 'The node no longer transfers power
-                hitNode.Operational = False
-                hitNode.Update()
-            End If
+                Case ShipStation.StationTypes.Engines
+                    Engineering.Integrity.Current = Engineering.Integrity.Current - IncomingDamage
+                    If Engineering.Integrity.Current <= 0 Then
+                        Engineering.Integrity.Current = 0
+                        Engineering.Powered = False
+                        Batteries.Powered = False
+                        Shielding.Powered = False
+                        Bridge.Powered = False
+                    End If
+            End Select
         End If
     End Sub
 
@@ -73,17 +100,16 @@
         Shielding = Nothing 'Clear the reference
         Engineering.ParentShip = Nothing 'Remove the reference to the Ship
         Engineering = Nothing 'Clear the reference
-        For Each i As PowerNode In PowerNet
-            i.ParentShip = Nothing 'Remove the reference to the Ship
+        For Each i As WeaponMount In Mounts
+            i.MountedWeapon.ParentShip = Nothing 'Remove the reference to the Ship
         Next
-        ReDim PowerNet(-1) 'Clear the array
         ReDim Mounts(-1) 'Clear the array
     End Sub
 
     Public Overrides Sub Update() 'Updates the Ship
         Firing = False 'Reset the indicator of whether the Ship is firing
         Hit = False 'Reset the indicator of whether the Ship has been hit
-        Speed = (Engineering.Integrety.Current / Engineering.Integrety.Maximum) * Engineering.Throttle.Current 'Set the Speed of the Ship
+        Speed = (Engineering.Integrity.Current / Engineering.Integrity.Maximum) * Engineering.Throttle.Current 'Set the Speed of the Ship
         target = -1
         X = X + (Speed * Math.Cos(Direction)) 'Update the Ship's X position
         Y = Y + (Speed * Math.Sin(Direction)) 'Update the Ship's Y position
