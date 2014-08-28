@@ -1,6 +1,13 @@
 ﻿Public Class Battery 'Object responsible for Aiming and firing the Ship's Weapons and targeting the Closest enemy and detecting upcoming collisions
     Inherits ShipStation
-    Public PlayerControled As Integer 'An Integer value indicating which Weapon the Player is in control of
+
+    Public Sub New(ByRef nParent As Ship, ByVal nIntegrity As Game_Library.StatInt, ByVal nRepairCost As Double)
+        MyBase.New(nParent, nIntegrity, nRepairCost)
+    End Sub
+
+    Protected Overrides Sub Finalise_Destroy() 'Removes all references to the Battery object
+        ParentShip.Batteries = Nothing 'Remove the reference
+    End Sub
 
     Public Overrides Sub Update() 'Selects the Closest Enemy, aims the Weapons and Fires the Weapons if necessary and detects upcomming collisions collisions
         If Powered = True Then
@@ -17,8 +24,8 @@
                     Dim distance As Integer = Math.Sqrt((xOffset ^ 2) + (yOffset ^ 2)) 'The distance of the other Ship from the enemy Ship
                     Dim direction As Double 'The direction of the other Ship in object space
                     If xOffset <> 0 Then 'They are not aligned on the x-axis
-                        direction = Math.Tanh(yOffset / xOffset) 'Calculate the direction of the Ship in world space
-                        If xOffset < 0 Then 'The direction is reflected in the lin y=x
+                        direction = Math.Atan(yOffset / xOffset) 'Calculate the direction of the Ship in world space
+                        If Math.Sign(xOffset) = -1 Then 'The direction is reflected in the line Y=X
                             direction = direction + Math.PI 'Reflect
                         End If
                     ElseIf yOffset > 0 Then 'The other Ship is directly above this Ship
@@ -29,7 +36,7 @@
                     direction = Server.Normalise_Direction(direction - ParentShip.Direction) 'Get the direction of the Ship in object space
                     '-------------------------------------------
 
-                    '-----DetectCollisions-----
+                    '-----Detect Collisions-----
                     If distance < (2 * ParentShip.MinimumDistance) Then 'This Ship needs to be evaded
                         If direction < Math.PI Then 'They are to the Left
                             evadeCount = evadeCount - 1 'Evade right
@@ -39,7 +46,7 @@
                     End If
                     '--------------------------
 
-                    If i.myAllegiance <> ParentShip.myAllegiance Then 'The Ship is an enemy
+                    If i.ParentFleet.myAllegiance <> ParentShip.ParentFleet.myAllegiance Then 'The Ship is an enemy
                         If enemyDistances.Count <> 0 Then 'Theirs at least one distance in the lists
                             For e As Integer = 0 To enemyDistances.Count - 1 'Loop through all the distances
                                 If enemyDistances(e) > distance Then 'Insert at this index
@@ -57,11 +64,7 @@
                     End If
                 End If
             Next
-            If evadeCount < 0 Then 'Evade right
-                ParentShip.Bridge.EvadeDirection = -1
-            ElseIf evadeCount > 0 Then 'Evade left
-                ParentShip.Bridge.EvadeDirection = 1
-            End If
+            ParentShip.Bridge.EvadeDirection = Math.Sign(evadeCount) 'Decide which way to evade; 1 is right, -1 is left and 0 is none
             ParentShip.target = enemyIndexes(0) 'Set the new target
             ParentShip.targetDirection = Server.Normalise_Direction(enemyDirections(0) + ParentShip.Direction) 'Convert the direction to world space set the new direction
             ParentShip.targetDistance = enemyDistances(0) 'Set the targets distance
@@ -70,9 +73,9 @@
             '-----Fire Weapons-----
             For Each i As WeaponMount In ParentShip.Mounts 'Loop through all mounts
                 If i.MountedWeapon IsNot Nothing Then 'There's a weapon mounted
-                    If AIControled = True Or i.MountedWeapon.Index <> PlayerControled Then 'The AI is in control of all Weapons or it is not the Weapon currently being controlled by a player
+                    If AIControled = True Or i.MountedWeapon.Index <> Server.GameWorld.ClientInteractions.SelectedWeapon Then 'The AI is in control of all Weapons or it is not the Weapon currently being controlled by a player
                         For e As Integer = 0 To enemyDirections.Count - 1 'loop through all directions
-                            Dim relativeDirection As Double = Server.Normalise_Direction(enemyDirections(e) - i.Offset - i.Sweep.Minimum) 'The direction of the enemy relative to the rightmost edge of it's field of view
+                            Dim relativeDirection As Double = Server.Normalise_Direction(enemyDirections(e) - i.Offset - i.Sweep.Minimum) 'The direction of the enemy relative to the rightmost edge of the Weapon's field of view
                             If relativeDirection < (i.Sweep.Maximum - i.Sweep.Minimum) Then 'This enemy is the closest enemy within the field of view
                                 Dim turnOffset As Double = enemyDirections(e) - i.Offset - i.Sweep.Current 'How far the Weapon needs to turn to face the enemy
                                 Dim turnRight As Boolean = False 'A Boolean value indicating whether the Weapon should turn right
@@ -82,9 +85,7 @@
                                 End If
                                 If turnOffset < i.MountedWeapon.TurningSpeed Then 'The Weapon can turn to face the enemy
                                     i.Sweep.Current = enemyDirections(e) - i.Offset 'Turn to face the enemy
-                                    If enemyDistances(e) < i.MountedWeapon.Range.Current Then 'The enemy is within range
-                                        i.MountedWeapon.Fire_Weapon(Server.GameWorld.Combat.Combatants(enemyIndexes(e))) 'Fire at the enemy
-                                    End If
+                                    i.MountedWeapon.Fire_Weapon(Server.GameWorld.Combat.Combatants(enemyIndexes(e)), Server.Normalise_Direction(enemyDirections(e) + ParentShip.Direction), enemyDistances(e)) 'Fire at the enemy
                                 ElseIf turnRight = False Then 'The enemy is to the left
                                     i.Sweep.Current = i.Sweep.Current + i.MountedWeapon.TurningSpeed 'Turn left
                                 Else 'The enemy is to the right
