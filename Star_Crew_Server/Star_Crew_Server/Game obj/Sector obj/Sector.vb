@@ -60,7 +60,7 @@
             _myAllegiance = Star_Crew_Shared_Libraries.Shared_Values.Allegiances.Contested 'Set the Sector's allegiance to be conteseted
             If FleetList.Count <> 1 Then 'Combat needs to be initiated
                 For Each i As Fleet In FleetList 'Loop through all Fleets
-                    If Object.ReferenceEquals(Server.GameWorld.ClientFleet, nFleet) = True Then 'Engage in Ship to Ship combat
+                    If Object.ReferenceEquals(Server.GameWorld.ClientFleet, i) = True Then 'Engage in Ship to Ship combat
                         Server.GameWorld.Combat.Generate_Scenario(FleetList) 'Generate the combat scenario
                     End If
                 Next
@@ -78,6 +78,8 @@
                 FleetList(i).index = i 'Set the new index
             Next
         End If
+        If FleetList.Count = 0 Then _myAllegiance =
+            Star_Crew_Shared_Libraries.Shared_Values.Allegiances.nill 'There's no Fleets inside the Sector
     End Sub
 
     Public Sub Update() 'Updates performs any AI_Combat for the Sector

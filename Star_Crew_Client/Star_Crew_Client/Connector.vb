@@ -1,8 +1,10 @@
 ﻿Public Class Connector 'The object used to connect to and communicate with a Server
     Inherits Game_Library.Networking.Client
     Public LoopComms As Boolean = True 'A Boolean value to control when the communications stop looping
+    Private ReadOnly displayBoxSideLength As Integer = My.Resources.NormalSpace.Height 'The length of one side of the display box
+    Private ReadOnly displayBoxMargin As Integer = (Client_Console.OutputScreen.Height - displayBoxSideLength) / 2 'The margin from the left side and top of the display form that displayBox is located
 
-    Public Sub New(ByVal nStation As Star_Crew_Shared_Libraries.Shared_Values.StationTypes, ByVal nIP As String, ByVal nPort As Integer, ByVal nName As String)
+    Public Sub New(ByVal nStation As Star_Crew_Shared_Libraries.Shared_Values.StationTypes, ByVal nIP As String, ByVal nPort As Integer, ByVal nName As String, ByVal hosting As Boolean)
         MyBase.New(nIP, nPort, nName) 'Attempts to connect to a Server and Set's the name etc of the Client
         Console.WriteLine("Client : Connecting to {0} at {1}:{2}", nStation.ToString(), nIP, nPort)
         Dim successful As Boolean = True 'The Client was successful in connecting to the Server
@@ -32,6 +34,8 @@
         If successful = False Then 'There was an error trying to connect
             Disconnect_Client("", Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Client_Disconnecting) 'Disconnect the Client
         Else 'There was no error and the Client is connected properly
+            Screen.GameScreen.Layout(Client_Console.OutputScreen, hosting) 'Set the layout on the Screen to the GameScreen layout
+            Client_Console.OutputScreen.CreateGraphics.DrawRectangle(New System.Drawing.Pen(Drawing.Brushes.DarkTurquoise, 2), displayBoxMargin, displayBoxMargin, displayBoxSideLength, displayBoxSideLength) 'Draw a border
             Client_Console.CommsThread = New System.Threading.Thread(AddressOf Run_Comms) 'Create a new thread to run the comms
             Client_Console.CommsThread.Start() 'Start the thread
         End If
@@ -58,6 +62,46 @@
                             Dim message As Star_Crew_Shared_Libraries.Networking_Messages.SectorView = Game_Library.Serialisation.FromBytes(buffer) 'Serialise the message into a SectorView object
                         Case Star_Crew_Shared_Libraries.Shared_Values.GalaxyStates.Ship_To_Ship 'The Galaxy is in the Ship_To_Ship state
                             Dim message As Star_Crew_Shared_Libraries.Networking_Messages.ShipView = Game_Library.Serialisation.FromBytes(buffer) 'Serialise the message into a ShipView object
+
+                            '-----Draw Graphics-----
+                            Dim displayBox As System.Drawing.Bitmap = My.Resources.NormalSpace.Clone() 'The image to draw onto
+                            Dim g As System.Drawing.Graphics = System.Drawing.Graphics.FromImage(displayBox) 'Create a graphics object from the NormalSpace bitmap
+                            For i As Integer = 0 To message.Allegiancies.Length - 1 'Loop through every object
+                                Dim distance As Integer = Math.Sqrt((message.Positions(i).X ^ 2) + (message.Positions(i).Y ^ 2)) 'The distance of the object from the ClientShip
+                                Dim colour As System.Drawing.Brush
+                                If message.Allegiancies(i) = Star_Crew_Shared_Libraries.Shared_Values.Allegiances.Emperial_Forces Then
+                                    colour = Drawing.Brushes.Blue
+                                Else
+                                    colour = Drawing.Brushes.Red
+                                End If
+                                If distance > 200 Then 'Draw a dot on the border
+                                    Dim ratio As Double = 200 / distance
+                                    g.FillEllipse(colour, CInt((displayBoxSideLength / 2) - 5 + (message.Positions(i).X * ratio)),
+                                                  CInt((displayBoxSideLength / 2) - 5 + (message.Positions(i).Y * ratio)), 10, 10) 'Draw a circle on the border of the circle
+                                Else 'Draw the Ship
+                                    Dim bmp As System.Drawing.Bitmap 'The Bitmap that gets drawn onto the screen
+                                    Dim sideLength As Integer 'The length of the image's cross section
+                                    Select Case message.Types(i) 'Select the type of object this one is
+                                        Case Star_Crew_Shared_Libraries.Shared_Values.ShipTypes.Screamer
+                                            sideLength = Math.Sqrt((My.Resources.FriendlyScreamer.Width ^ 2) + (My.Resources.FriendlyScreamer.Height ^ 2))
+                                            bmp = New System.Drawing.Bitmap(sideLength, sideLength)
+                                    End Select
+                                    Dim drawer As System.Drawing.Graphics = System.Drawing.Graphics.FromImage(bmp) 'Create a graphics object from bmp
+                                    drawer.TranslateTransform(sideLength / 2, sideLength / 2) 'Translate the origin into the center of the image
+                                    drawer.RotateTransform(180 * message.Directions(i) / Math.PI) 'Rotate the image
+                                    drawer.TranslateTransform(-sideLength / 2, -sideLength / 2) 'Translate the origin back to the upper left corner
+                                    Dim xCoord As Integer = (sideLength - My.Resources.FriendlyScreamer.Width) / 2 'The X coord for the upper left corner of the image inside bmp
+                                    Dim yCoord As Integer = (sideLength - My.Resources.FriendlyScreamer.Height) / 2 'The Y coord for the upper left corner of the image inside bmp
+                                    drawer.DrawImage(My.Resources.FriendlyScreamer, xCoord, yCoord) 'Draw the image onto bmp
+                                    drawer.FillEllipse(colour, CInt((sideLength / 2) - 5), CInt((sideLength / 2) - 5), 10, 10)
+                                    bmp.MakeTransparent(Drawing.Color.White) 'Set all white pixels to transparent
+                                    xCoord = (message.Positions(i).X + (displayBox.Width / 2) - (sideLength / 2)) 'The X coord for the upper left corner of bmp inside displayBox
+                                    yCoord = (message.Positions(i).Y + (displayBox.Height / 2) - (sideLength / 2)) 'The Y coord for the upper left corner of bmp inside displayBox
+                                    g.DrawImage(bmp, xCoord, yCoord) 'Draw bmp onto displayBox
+                                End If
+                            Next
+                            Client_Console.OutputScreen.CreateGraphics.DrawImage(displayBox, displayBoxMargin, displayBoxMargin) 'Draw displayBox onto the Screen
+                            '-----------------------
                         Case Star_Crew_Shared_Libraries.Shared_Values.GalaxyStates.Shop_Interface 'The Galaxy is in the Shop_Interface state
 
                         Case Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Bad_Connection_Exception 'The Server received a bad message from the Client

@@ -78,21 +78,30 @@
                             Dim relativeDirection As Double = Server.Normalise_Direction(enemyDirections(e) - i.Offset - i.Sweep.Minimum) 'The direction of the enemy relative to the rightmost edge of the Weapon's field of view
                             If relativeDirection < (i.Sweep.Maximum - i.Sweep.Minimum) Then 'This enemy is the closest enemy within the field of view
                                 Dim turnOffset As Double = enemyDirections(e) - i.Offset - i.Sweep.Current 'How far the Weapon needs to turn to face the enemy
-                                Dim turnRight As Boolean = False 'A Boolean value indicating whether the Weapon should turn right
-                                If turnOffset < 0 Then 'Make sure it is positive
-                                    turnOffset = -turnOffset
-                                    turnRight = True
-                                End If
+                                Dim turnRight As Boolean = (Math.Sign(turnOffset) = -1) 'Get whether to turn left or right to face the enemy
+                                turnOffset = Math.Sign(turnOffset) * turnOffset 'Make sure turnOffset is positive
                                 If turnOffset < i.MountedWeapon.TurningSpeed Then 'The Weapon can turn to face the enemy
                                     i.Sweep.Current = enemyDirections(e) - i.Offset 'Turn to face the enemy
                                     i.MountedWeapon.Fire_Weapon(Server.GameWorld.Combat.Combatants(enemyIndexes(e)), Server.Normalise_Direction(enemyDirections(e) + ParentShip.Direction), enemyDistances(e)) 'Fire at the enemy
                                 ElseIf turnRight = False Then 'The enemy is to the left
-                                    i.Sweep.Current = i.Sweep.Current + i.MountedWeapon.TurningSpeed 'Turn left
+                                    Dim temp As Double = i.Sweep.Current + i.MountedWeapon.TurningSpeed 'Calculate how far to turn
+                                    If temp > i.Sweep.Maximum Then
+                                        i.Sweep.Current = i.Sweep.Maximum 'Set the turnDistance to the maximum
+                                    Else
+                                        i.Sweep.Current = temp 'Turn as far as possible
+                                    End If
                                 Else 'The enemy is to the right
-                                    i.Sweep.Current = i.Sweep.Current - i.MountedWeapon.TurningSpeed 'Turn right
+                                    Dim temp As Double = i.Sweep.Current - i.MountedWeapon.TurningSpeed 'Calculate how far to turn
+                                    If temp < i.Sweep.Minimum Then
+                                        i.Sweep.Current = i.Sweep.Minimum 'Set the turnDistance to the minimum
+                                    Else
+                                        i.Sweep.Current = temp 'Turn as far as possible
+                                    End If
                                 End If
                             End If
                         Next
+                    Else
+                        Dim a = 1
                     End If
                 End If
             Next

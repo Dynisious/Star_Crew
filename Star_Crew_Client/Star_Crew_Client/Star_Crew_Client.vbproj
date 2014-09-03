@@ -140,25 +140,7 @@
     <None Include="Graphics\FriendlyThunder.bmp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Graphics\NeutralStation.bmp" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Graphics\NormalSpace.bmp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Graphics\PirateFleet.bmp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Graphics\PirateScreamer.bmp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Graphics\PirateStation.bmp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Graphics\PirateThunder.bmp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Graphics\Warping.bmp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Audio\The Pounce Extended.wav" />

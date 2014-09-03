@@ -33,6 +33,14 @@
         Comms.Initialise_Communications() 'Initialise the network
 
         '-----Testing-----
+        GameWorld.ClientFleet = New Fleet(Star_Crew_Shared_Libraries.Shared_Values.Allegiances.Emperial_Forces) 'Create a new Fleet for the Client
+        Dim temp As New Fleet(Star_Crew_Shared_Libraries.Shared_Values.Allegiances.Pirate_Alliance)
+        For i As Integer = 1 To 20
+            GameWorld.ClientFleet.Add_Ship(New Screamer(GameWorld.ClientFleet))
+            temp.Add_Ship(New Screamer(temp))
+        Next
+        GameWorld.FocusedSector.Add_Fleet(GameWorld.ClientFleet)
+        GameWorld.FocusedSector.Add_Fleet(temp)
         '-----------------
 
         While Receive_Server_Commands() = True  'Continue to run the program
@@ -63,7 +71,7 @@
                     "/close:    Closes the Server" + Environment.NewLine +
                     "/clr:      Clears the console of text" + Environment.NewLine +
                     "/save:     Saves the current game" + Environment.NewLine +
-                    "/kick:     (e.g. /Kick h) kicks the connected Client at the specified station:" + Environment.NewLine +
+                    "/kick:     (e.g. /Kick b) kicks the connected Client at the specified station:" + Environment.NewLine +
                     "           'b', 's' and 'e'")
             Case ServerCommands.close.ToString()
                 val = False

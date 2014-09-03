@@ -4,7 +4,7 @@
     Public Sub New(ByRef nParent As Fleet, Optional ByRef nBridge As Helm = Nothing, Optional ByRef nBatteries As Battery = Nothing,
                    Optional ByRef nShielding As Shields = Nothing, Optional ByRef nEngineering As Engines = Nothing,
                    Optional ByRef weapon0 As Weapon = Nothing)
-        MyBase.New(nParent, 30, New Game_Library.StatDbl(0, 125, 125), 0.3, (Math.PI / 15), 1, Star_Crew_Shared_Libraries.Shared_Values.ShipTypes.Screamer)
+        MyBase.New(nParent, 30, New Game_Library.StatDbl(0, 125, 125), (Math.PI / 15), 1, Star_Crew_Shared_Libraries.Shared_Values.ShipTypes.Screamer)
         Mounts(0) = New WeaponMount(New Game_Library.StatDbl(-(Math.PI / 4), 0, (Math.PI / 4)), 0) 'Initialise the Ship's WeaponMount
         If nBridge Is Nothing Then nBridge = New Helm(Me, New Game_Library.StatInt(0, 50, 50), 8) 'Make sure nBridge is not nothing
         Bridge = nBridge 'Set the new Bridge

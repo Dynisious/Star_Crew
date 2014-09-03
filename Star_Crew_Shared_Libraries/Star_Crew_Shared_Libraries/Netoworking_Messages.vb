@@ -50,11 +50,13 @@
     Public Class ShipView 'The message sent to Clients when the Galaxy is in the Ship_To_Ship state
         Public Types() As Shared_Values.ShipTypes 'An array of Shared_Values.ShipTypes values representing what type of object needs to be displayed
         Public Positions() As System.Drawing.Point 'An array of Point objects representing the positions of the objects in the Combat Scenario
+        Public Directions() As Double 'An array of Double values representing the direction the objects in the Combat Scenario are facing
         Public Allegiancies() As Shared_Values.Allegiances 'An array of Shared_Values.Allegiances values indicating where the objects in the Combat Scenario are aligned
 
-        Public Sub New(ByRef nTypes() As Shared_Values.ShipTypes, ByRef nPositions() As System.Drawing.Point, ByRef nAllegiances() As Shared_Values.Allegiances) 'Creates a new ShipView object
+        Public Sub New(ByVal nTypes() As Shared_Values.ShipTypes, ByVal nPositions() As System.Drawing.Point, ByVal nDirections() As Double, ByVal nAllegiances() As Shared_Values.Allegiances) 'Creates a new ShipView object
             Types = nTypes
             Positions = nPositions
+            Directions = nDirections
             Allegiancies = nAllegiances
         End Sub
 

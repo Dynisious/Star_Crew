@@ -20,11 +20,11 @@
         Console.WriteLine("Server is now listening on {0} for connection requests", ServiceSocket.LocalEndpoint.ToString())
         Console.WriteLine("Network has been initialised")
 
+        Dim hasNetwork As Boolean = False 'A Boolean value indecating whether this thread has control over the network
         While LoopComms = True 'The Comms are running
-            Dim hasNetwork As Boolean = False 'A Boolean value indecating whether this thread has control over the network
             If ServiceSocket.Pending() = True Then 'Their pending connection requests
                 Server.UseNetwork.WaitOne() 'Wait until the comms have control of the network
-                hasNetwork = True 'The Comms have control of the network
+                hasNetwork = True 'The comms have the network
                 ClientList.Add(New ServerClient(ServiceSocket.AcceptSocket(), ClientList.Count)) 'Add a new Client to the list
             End If
             If ClientList.Count <> 0 Then 'There're connected Clients
@@ -165,6 +165,8 @@
             Remove_Client(0, Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Server_Closed_Exception, message) 'Remove the Client
         Next
         ClientList.Clear() 'Clear the list of Clients
+        If hasNetwork = True Then Server.UseNetwork.ReleaseMutex() 'Realease the Mutex
+        Server.UseNetwork.Close() 'Close the Mutex
         '----------------------------
     End Sub
 

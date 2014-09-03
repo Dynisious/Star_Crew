@@ -8,7 +8,6 @@
         End Get
     End Property
     Public Hull As Game_Library.StatDbl 'A StatDbl object representing the minimum, current and maximum values of the Ship's Hull
-    Public Acceleration As Double 'A Double value representing the acceleration of the Ship
     Public ReadOnly Property Speed As Double 'The Ship's current speed
         Get
             Return (Engineering.Throttle.Current * (Engineering.Integrity.Current / Engineering.Integrity.Maximum)) 'Calculate the Speed of the Ship
@@ -50,11 +49,10 @@
         End Get
     End Property
 
-    Public Sub New(ByRef nParent As Fleet, ByVal nMinDistance As Integer, ByVal nHull As Game_Library.StatDbl, ByVal nAccleration As Double, ByVal nTurnSpeed As Double, ByVal nMountLength As Integer, ByVal nType As Star_Crew_Shared_Libraries.Shared_Values.ShipTypes)
+    Public Sub New(ByRef nParent As Fleet, ByVal nMinDistance As Integer, ByVal nHull As Game_Library.StatDbl, ByVal nTurnSpeed As Double, ByVal nMountLength As Integer, ByVal nType As Star_Crew_Shared_Libraries.Shared_Values.ShipTypes)
         ParentFleet = nParent 'Set the new Parent
         _MinimumDistance = nMinDistance 'Set the new minimum distance
         Hull = nHull 'Set the new hull
-        Acceleration = nAccleration 'Set the new acceleration
         TurnSpeed = nTurnSpeed 'Set the new turnspeed
         ReDim _Mounts(nMountLength - 1) 'Set the number of WeaponMounts
         _Type = nType 'Set the type of Ship it is
@@ -83,9 +81,11 @@
                     End If
                     For Each i As WeaponMount In Mounts
                         If i.MountedWeapon IsNot Nothing Then 'There's a mounted Weapon
-                            i.MountedWeapon.Integrity.Current = i.MountedWeapon.Integrity.Current - IncomingDamage
-                            If i.MountedWeapon.Integrity.Current < 0 Then
+                            Dim temp As Integer = i.MountedWeapon.Integrity.Current - IncomingDamage
+                            If temp < 0 Then
                                 i.MountedWeapon.Integrity.Current = 0
+                            Else
+                                i.MountedWeapon.Integrity.Current = temp
                             End If
                             Dim percentage As Double = (i.MountedWeapon.Integrity.Current / i.MountedWeapon.Integrity.Maximum) 'The percentage of the Weapons integrity
                             i.MountedWeapon.Damage.Current = i.MountedWeapon.Damage.Maximum * percentage 'Set the damage relative to the integrity of the Ship

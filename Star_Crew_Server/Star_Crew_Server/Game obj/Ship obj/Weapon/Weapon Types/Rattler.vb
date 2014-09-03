@@ -6,7 +6,7 @@
         Range = New Game_Library.StatInt(0, 70, 70)
         Ammunition = New Game_Library.StatInt(0, 25, 25)
         Ready = New Game_Library.StatInt(0, 3, 3)
-        Damage = New Game_Library.StatDbl(0, 10, 10)
+        Damage = New Game_Library.StatDbl(0, 7, 7)
         Integrity = New Game_Library.StatInt(0, 30, 30)
     End Sub
 

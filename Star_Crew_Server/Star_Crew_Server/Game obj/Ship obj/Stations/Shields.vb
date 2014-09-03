@@ -26,9 +26,11 @@
             Dim shieldPercentage As Double = ((impactDirection - (Sweep / 2)) / Sweep) 'The percentage of the Shield's power that can be used to block damage
             If shieldPercentage < 0 Then shieldPercentage = -shieldPercentage 'Make sure it's positive
             Dim shieldPower As Double = Shield.Current * shieldPercentage 'Calculate how much power can be used to deflect the damage
-            Shield.Current = Shield.Current - Damage 'Take damage to the Shield
-            If Shield.Current < Shield.Minimum Then 'The shields are bellow the minimum
-                Shield.Current = Shield.Minimum
+            Dim temp As Double = Shield.Current - Damage 'Take damage to the Shield
+            If temp < Shield.Minimum Then 'The shields are bellow the minimum
+                Shield.Current = Shield.Minimum 'Set the Shields to the minimum
+            Else 'The shield will be within the bounds
+                Shield.Current = temp 'Set the Shield
             End If
             Damage = Damage - shieldPower 'Remove the Shield's power from the damage
             If Damage < 0 Then 'Set damage to 0

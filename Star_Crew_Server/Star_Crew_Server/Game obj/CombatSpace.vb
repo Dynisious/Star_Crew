@@ -136,6 +136,7 @@
     End Sub
 
     Public Sub Generate_Scenario(ByRef Fleets As List(Of Fleet)) 'Passes in a List of Fleet objects for the Clients to combat Ship to Ship and sets the game's Galaxy object to update the combat scenario instead of the Sectors
+        Console.WriteLine(Environment.NewLine + "Server : Ship to Ship combat initialised.") 'Write to the Console
         EngagedFleets.Clear() 'Clear the list
         EngagedFleets.AddRange(Fleets) 'Adds the Fleets to the scenario
         EngagedFleets.RemoveAt(Server.GameWorld.ClientFleet.index) 'Remove the Client's Fleet

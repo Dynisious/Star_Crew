@@ -29,8 +29,8 @@
         _acceleration = Integer.MaxValue 'Clear the acceleration
         speed.Maximum = Double.MaxValue 'Clear the maximum speed
         For Each i As Ship In shipList 'Loop through all the Ships
-            If i.Acceleration < acceleration Then 'This is the Slowest Ship
-                _acceleration = i.Acceleration 'Set the acceleration to the slowest acceleration
+            If i.Engineering.Acceleration < acceleration Then 'This is the Slowest Ship
+                _acceleration = i.Engineering.Acceleration 'Set the acceleration to the slowest acceleration
             End If
             If i.Engineering.Throttle.Maximum < speed.Maximum Then 'This Ship has a lower maximum speed
                 speed.Maximum = i.Engineering.Throttle.Maximum 'Set the maximum speed

@@ -5,7 +5,7 @@
     Public UseNetwork As System.Threading.Mutex 'A Mutex object used to synchronise the use of the network
 
     Sub Main()
-        Console.Write("-----Star Crew Client-----")
+        Console.WriteLine("-----Star Crew Client-----")
         Console.WriteLine("Initialising Objects...")
         Randomize() 'Set the random sequense of numbers
         Dim newMutex As Boolean 'Necessary for creating a new Mutex

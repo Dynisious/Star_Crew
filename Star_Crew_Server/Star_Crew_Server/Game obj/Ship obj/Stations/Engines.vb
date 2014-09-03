@@ -5,12 +5,19 @@
     '-----Power Costs-----
     Public ShieldsCost As Double 'A Double value representing how much power the Shields need
     Public WeaponsCosts(-1) As Double 'An array of Double values representing how much power each Weapon needs
+    Private _Acceleration As Double 'The actual value of Acceleration
+    Public ReadOnly Property Acceleration As Double 'A Double value representing the acceleration of the Ship
+        Get
+            Return _Acceleration
+        End Get
+    End Property
     '---------------------
 
-    Public Sub New(ByRef nParent As Ship, ByVal nIntegrity As Game_Library.StatInt, ByVal nRepairCost As Double, ByVal nGeneration As Game_Library.StatDbl, ByVal nThrottle As Game_Library.StatDbl)
+    Public Sub New(ByRef nParent As Ship, ByVal nIntegrity As Game_Library.StatInt, ByVal nRepairCost As Double, ByVal nGeneration As Game_Library.StatDbl, ByVal nThrottle As Game_Library.StatDbl, ByVal nAcceleration As Double)
         MyBase.New(nParent, nIntegrity, nRepairCost)
         Generation = nGeneration
         Throttle = nThrottle
+        _Acceleration = nAcceleration
     End Sub
 
     Protected Overrides Sub Finalise_Destroy() 'Removes all references to the Engines object

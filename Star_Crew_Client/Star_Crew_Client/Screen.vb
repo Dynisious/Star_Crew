@@ -26,6 +26,8 @@
             .Cursor = Windows.Forms.Cursors.Hand, .Text = "Exit"} 'A Button object that when Clicked closes the program
 
         Public Shared Sub Layout(ByRef scr As Screen) 'Sets the Screen to display the menu screen
+            Dim g As System.Drawing.Graphics = scr.CreateGraphics() 'Gets the graphics object for the Screen
+            g.Clear(Drawing.Color.Black) 'Clear the screen to black
             scr.Controls.Clear() 'Clear the old list of Controls
             scr.Controls.Add(btnHost) 'Add btnHost
             scr.Controls.Add(btnJoin) 'Add btnJoin
@@ -89,6 +91,11 @@
             drpStationSelector.SelectedIndex = 0
         End Sub
         Public Shared Sub Layout(ByRef scr As Screen) 'Set's the Screen to display the join screen
+            If Client_Console.CommsThread IsNot Nothing Then 'There's a Connector from the last session
+                Client_Console.Client.LoopComms = False 'Make sure the comms are not looping
+                Client_Console.Client = Nothing 'Clear Client
+                Client_Console.CommsThread.Join(300) 'Wait for the Client to close
+            End If
             scr.Controls.Clear() 'Clear's the old display
             scr.Controls.Add(drpStationSelector) 'Add drpStationSelector
             scr.Controls.Add(txtIP) 'Add txtIP
@@ -121,7 +128,7 @@
                 Else
                     Try
                         Client_Console.Client = New Connector(nStation, txtIP.Text, Star_Crew_Shared_Libraries.Shared_Values.Values.ServicePort,
-                                                              drpStationSelector.SelectedText) 'Create a new Connector and connect to the Server
+                                                              drpStationSelector.SelectedText, False) 'Create a new Connector and connect to the Server
                     Catch ex As Exception 'An exception occoured and the connection failed
                         Client_Console.Client = Nothing 'Clear Client to equal nothing
                         Beep() 'Make a tone to alert the User
@@ -142,6 +149,29 @@
         End Sub
         Private Shared Sub btnConnect_MouseLeave() Handles btnConnect.MouseLeave 'Handles the mouse moving out of btnConnect
             btnConnect.ForeColor = Drawing.Color.DarkTurquoise 'Change the fore colour
+        End Sub
+
+        Private Shared Sub btnMenu_Click() Handles btnMenu.Click 'Handles btnMenu being Clicked
+            MenuScreen.Layout(Client_Console.OutputScreen) 'Go to the menu screen
+        End Sub
+        Private Shared Sub btnMenu_MouseEnter() Handles btnMenu.MouseEnter 'Handles the mouse moving into btnMenu
+            btnMenu.ForeColor = Drawing.Color.Turquoise 'Change the fore colour
+        End Sub
+        Private Shared Sub btnMenu_MouseLeave() Handles btnMenu.MouseLeave 'Handles the mouse moving out of btnMenu
+            btnMenu.ForeColor = Drawing.Color.DarkTurquoise 'Change the fore colour
+        End Sub
+
+    End Class
+    Public Class GameScreen 'Objects displayed when the Client is in game
+        Private Shared WithEvents btnMenu As New System.Windows.Forms.Button With {
+            .Size = New System.Drawing.Size(200, 45), .Location = New System.Drawing.Point(980, 635),
+            .Text = "Main Menu", .FlatStyle = Windows.Forms.FlatStyle.Flat, .ForeColor = Drawing.Color.DarkTurquoise,
+            .BackColor = Drawing.Color.Transparent, .Font = New System.Drawing.Font(
+                New System.Drawing.Font("Consolas", 18, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel), Drawing.FontStyle.Underline)}
+
+        Public Shared Sub Layout(ByRef scr As Screen, ByVal Hosting As Boolean)
+            scr.Controls.Clear() 'Clears the Screen of objects
+            scr.Controls.Add(btnMenu) 'Add btnMenu to the Screen
         End Sub
 
         Private Shared Sub btnMenu_Click() Handles btnMenu.Click 'Handles btnMenu being Clicked
