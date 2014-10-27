@@ -1,20 +1,35 @@
 ﻿Public MustInherit Class Ship 'Object that combats other Ships
-    Inherits Game_Library.Entity
-    Public ParentFleet As Fleet 'A reference to the Fleet object that the Ship is a part of
-    Protected _MinimumDistance As Integer 'The actual value of MinimumDistance
-    Public ReadOnly Property MinimumDistance As Integer 'An Integer value representing the distance this Ship wants to keep from other Ships
+    Inherits Game_Library.Game_Objects.Entity
+    Private ReadOnly HitboxXDistance As Integer = 20 'The maximum distance in the x direction from the center of the Ship to the edge of the hitbox
+    Private ReadOnly HitboxYDistance As Integer = 20 'The maximum distance in the y direction from the center of the Ship to the edge of the hitbox
+    Private ReadOnly HitboxMaxDistance As Integer = Math.Sqrt((HitboxXDistance ^ 2) + (HitboxYDistance ^ 2)) 'The maximum distance from the center of the Ship to the edge of the hitbox
+    Private ReadOnly HitboxAngles() As Double = {
+        Math.Atan2(HitboxYDistance, HitboxXDistance),
+        Math.Atan2(HitboxYDistance, -HitboxXDistance)} 'An array of two radian angles indecating the direction of the top two corners of the hitbox
+    Private _Hull As New Game_Library.Game_Objects.StatDbl(0, 100, 100, True) 'The actual value of Hull
+    Public ReadOnly Property Hull As Game_Library.Game_Objects.StatDbl 'A StatDbl object representing the minimum, current and maximum values of the Ship's Hull
         Get
-            Return _MinimumDistance
+            Return _Hull
         End Get
     End Property
-    Public Hull As Game_Library.StatDbl 'A StatDbl object representing the minimum, current and maximum values of the Ship's Hull
+    Public Throttle As New Game_Library.Game_Objects.StatDbl(0, 0, 15, True) 'A StatDbl object representing the throttle of the Ship
+    Private _Acceleration As Double = 0.5 'The actual value of Acceleration
+    Public ReadOnly Property Acceleration As Double 'A Double value that controls how quickely the throttle changes
+        Get
+            Return _Acceleration
+        End Get
+    End Property
     Public ReadOnly Property Speed As Double 'The Ship's current speed
         Get
-            Return (Engineering.Throttle.Current * (Engineering.Integrity.Current / Engineering.Integrity.Maximum)) 'Calculate the Speed of the Ship
+            Return Throttle.Current 'Calculate the Speed of the Ship
         End Get
     End Property
-    Private _TurnSpeed As Double 'The actual value of TurnSpeed
-    Public TurnSpeed As Double 'The radians that the Ship can rotate per update
+    Private _TurnSpeed As Double = Math.PI / 15 'The actual value of TurnSpeed
+    Public ReadOnly Property TurnSpeed As Double 'The radians that the Ship can rotate per update
+        Get
+            Return _TurnSpeed 'Calculate the Turnspeed
+        End Get
+    End Property
     Private _Direction As Double 'The actual value of Direction
     Public Property Direction As Double 'The Direction of the Ship in world space in radians
         Get
@@ -24,126 +39,64 @@
             _Direction = Server.Normalise_Direction(value)
         End Set
     End Property
-    Public FleetIndex As Integer = -1 'The index of the Ship in it's parent Fleet
-    Public CombatIndex As Integer = -1 'The index of the Ship in the game's CombatSpace's list of Ships
-    Public Firing As Boolean = False 'A Boolean value indicating whether the Ship fired this Update
-    Public Hit As Boolean = False 'A Boolean value indicating whether the Ship has been hit this Update
-    Public InCombat As Boolean = False 'A Boolean value indicating whether the Ship is actively in Ship to Ship combat
-    Public Bridge As Helm 'A Helm object responsible for piloting the Ship
-    Public Batteries As Battery 'A Battery object responsible for aiming and firing the Ships weapons
-    Public Shielding As Shields 'A Shield object responsible for powering the Ship's Shields
-    Public Engineering As Engines 'An Engines object responsible for routing power through the Ship
-    Public target As Integer = -1 'An Integer value representing the CombatIndex of the Ship this Ship is targeting
-    Public targetDirection As Double = -1 'A Double value representing the direction of the target in world space
-    Public targetDistance As Integer = -1 'An Integer value representing the distance of the target from the Ship
-    Private _Mounts(-1) As WeaponMount 'The actual value of WeaponMount
-    Public ReadOnly Property Mounts As WeaponMount() 'An array of WeaponMount objects where Weapons can be fitted
+    Protected _Gun As Weapon 'The actual value of Mounts
+    Public ReadOnly Property Gun As Weapon 'A Weapon objects for the Ship
         Get
-            Return _Mounts
+            Return _Gun
         End Get
     End Property
-    Protected _Type As Star_Crew_Shared_Libraries.Shared_Values.ShipTypes 'The actual value of Type
-    Public ReadOnly Property Type As Star_Crew_Shared_Libraries.Shared_Values.ShipTypes 'A ShipTypes value indicating what type of Ship this one is
-        Get
-            Return _Type
-        End Get
-    End Property
+    Public CombatIndex As Integer = -1 'An Integer value indicating the Ship's index in the CombatSpace's list
+    Public Name As String = "Unnamed Ship" 'The name of the Ship
+    Public firing As Boolean = False 'A Boolean value indicating whether the Ship is firing
 
-    Public Sub New(ByRef nParent As Fleet, ByVal nMinDistance As Integer, ByVal nHull As Game_Library.StatDbl, ByVal nTurnSpeed As Double, ByVal nMountLength As Integer, ByVal nType As Star_Crew_Shared_Libraries.Shared_Values.ShipTypes)
-        ParentFleet = nParent 'Set the new Parent
-        _MinimumDistance = nMinDistance 'Set the new minimum distance
-        Hull = nHull 'Set the new hull
-        TurnSpeed = nTurnSpeed 'Set the new turnspeed
-        ReDim _Mounts(nMountLength - 1) 'Set the number of WeaponMounts
-        _Type = nType 'Set the type of Ship it is
-    End Sub
-
-    Public Sub Take_Damage(ByVal IncomingVector As Double, ByVal IncomingDamage As Double, ByVal Type As Weapon.DamageTypes) 'Calculates how much damage is done to the Ship
-        IncomingDamage = Shielding.Deflect_Damage(IncomingVector, IncomingDamage, Type) 'Pass the damage through the Shield
-        Hull.Current = Hull.Current - IncomingDamage 'Take the remaining damage away from the hull
-        If Hull.Current <= 0 Then 'Destroy the Ship
-            Destroy()
-        ElseIf IncomingDamage <> 0 Then 'Do damage to the ShipStations
-            Dim hitStation As Star_Crew_Shared_Libraries.Shared_Values.StationTypes = Int(Server.Normalise_Direction(IncomingVector + (5 * Math.PI / 4)) / (Math.PI / 2)) 'Which Station got hit
-            If hitStation = Star_Crew_Shared_Libraries.Shared_Values.StationTypes.max Then hitStation = hitStation - 1
-            Select Case hitStation
-                Case Star_Crew_Shared_Libraries.Shared_Values.StationTypes.Helm
-                    Bridge.Integrity.Current = Bridge.Integrity.Current - IncomingDamage
-                    If Bridge.Integrity.Current <= 0 Then
-                        Bridge.Integrity.Current = 0
-                        Bridge.Powered = False
-                    End If
-                Case Star_Crew_Shared_Libraries.Shared_Values.StationTypes.Battery
-                    Batteries.Integrity.Current = Batteries.Integrity.Current - IncomingDamage
-                    If Batteries.Integrity.Current <= 0 Then
-                        Batteries.Integrity.Current = 0
-                        Batteries.Powered = False
-                    End If
-                    For Each i As WeaponMount In Mounts
-                        If i.MountedWeapon IsNot Nothing Then 'There's a mounted Weapon
-                            Dim temp As Integer = i.MountedWeapon.Integrity.Current - IncomingDamage
-                            If temp < 0 Then
-                                i.MountedWeapon.Integrity.Current = 0
-                            Else
-                                i.MountedWeapon.Integrity.Current = temp
-                            End If
-                            Dim percentage As Double = (i.MountedWeapon.Integrity.Current / i.MountedWeapon.Integrity.Maximum) 'The percentage of the Weapons integrity
-                            i.MountedWeapon.Damage.Current = i.MountedWeapon.Damage.Maximum * percentage 'Set the damage relative to the integrity of the Ship
-                            If i.MountedWeapon.Damage.Current < i.MountedWeapon.Damage.Minimum Then 'Set the damage to the minimum
-                                i.MountedWeapon.Damage.Current = i.MountedWeapon.Damage.Minimum
-                            End If
-                            i.MountedWeapon.Range.Current = i.MountedWeapon.Range.Maximum * percentage 'Set the range relative to the integrity of the Ship
-                            If i.MountedWeapon.Range.Current < i.MountedWeapon.Range.Minimum Then 'Set the range to the minimum
-                                i.MountedWeapon.Range.Current = i.MountedWeapon.Range.Minimum
-                            End If
-                        End If
-                    Next
-                Case Star_Crew_Shared_Libraries.Shared_Values.StationTypes.Shields
-                    Shielding.Integrity.Current = Shielding.Integrity.Current - IncomingDamage
-                    If Shielding.Integrity.Current <= 0 Then
-                        Shielding.Integrity.Current = 0
-                        Shielding.Powered = False
-                    End If
-                Case Star_Crew_Shared_Libraries.Shared_Values.StationTypes.Engines
-                    Engineering.Integrity.Current = Engineering.Integrity.Current - IncomingDamage
-                    If Engineering.Integrity.Current <= 0 Then
-                        Engineering.Integrity.Current = 0
-                        Engineering.Powered = False
-                        Batteries.Powered = False
-                        Shielding.Powered = False
-                        Bridge.Powered = False
-                    End If
-            End Select
+    Public Sub Take_Damage(ByVal incomingDamage As Double)
+        Hull.Current -= incomingDamage
+        If Hull.Current = 0 Then
+            Dead = True
         End If
     End Sub
 
-    Public Overrides Sub Destroy() 'Removes all references to and within the Ship
-        Dead = True 'The Ship is dead
-        If InCombat = True Then 'The Ship must remove itself from the CombatSpace's list
-            Server.GameWorld.Combat.Remove_Ship(CombatIndex) 'Remove the Ship
-            If CombatIndex = Server.GameWorld.Combat.ClientShip.CombatIndex Then 'This is the ClientShip
-                Server.GameWorld.Combat.Recentre() 'Set a new ClientShip
-            End If
-            InCombat = False
-        End If
-        ParentFleet.Remove_Ship(FleetIndex) 'Remove the Ship from the Fleet
-        ParentFleet = Nothing 'Clear the reference
-        Bridge.Destroy() 'Destroy Bridge
-        Batteries.Destroy() 'Destroy Batteries
-        Shielding.Destroy() 'Destroy Shielding
-        Engineering.Destroy() 'Destroy Engineering
-        For Each i As WeaponMount In Mounts
-            i.MountedWeapon.Destroy() 'Destroy the Weapon
+    Public Overrides Sub Destroy()
+        _Hull = Nothing
+        Throttle = Nothing
+        Name = "Wreckage"
+        If Gun IsNot Nothing Then Gun.Destroy()
+        _Gun = Nothing
+    End Sub
+
+    Public Function Get_Collision_Radia(ByVal objectDirection As Double) As Integer 'Returns the distance of the edge of the collision box in the direction of the calling object
+        objectDirection += Math.PI - Direction 'Get the direction of the calling object in object space
+        Dim xCoord As Integer = Math.Cos(objectDirection) * HitboxMaxDistance 'Get the xCoord of edge of the hit box if it was a circle
+        If xCoord < 0 Then xCoord = -xCoord 'Make sure the coord is positive
+        If xCoord > HitboxXDistance Then xCoord = HitboxXDistance 'Make sure the xCoord is on the actual hitbox
+        Dim yCoord As Integer = Math.Sin(objectDirection) * HitboxMaxDistance 'Get the xCoord of edge of the hit box if it was a circle
+        If yCoord < 0 Then yCoord = -yCoord 'Make sure the coord is positive
+        If yCoord > HitboxYDistance Then yCoord = HitboxYDistance 'Make sure the xCoord is on the actual hitbox
+        Return Math.Sqrt((xCoord ^ 2) + (yCoord ^ 2)) 'Return the distance to the edge of the hitbox in the direction of the calling object
+    End Function
+
+    Public Function Get_FOV_Cord(ByVal objectDirection As Double) As Integer
+        objectDirection -= objectDirection 'convert the direction into an object space angle
+        Dim angles() = {
+            Server.Normalise_Direction(objectDirection + Server.QuarterCircle - HitboxAngles(0)),
+            Server.Normalise_Direction(objectDirection + Server.QuarterCircle - HitboxAngles(1))}
+        For i As Integer = 0 To 1 'Loop through both angles
+            If angles(i) > Math.PI Then angles(i) = (FullCircle - angles(i)) 'Make sure the angle is the smaller part
         Next
-        ReDim _Mounts(-1) 'Clear the array
-    End Sub
+        Dim cord As Integer 'An integer value representing the FOV Cord
+        If angles(0) < angles(1) Then 'Use the larger angle
+            cord = Math.Cos(angles(1)) * HitboxMaxDistance 'Return half of the FOV cord
+        Else
+            cord = Math.Cos(angles(0)) * HitboxMaxDistance 'Return half the FOV cord
+        End If
+        Return If((cord > 0), cord, -cord) 'Return the positive cord
+    End Function
 
     Public Overrides Sub Update() 'Updates the Ship
-        Firing = False 'Reset the indicator of whether the Ship is firing
-        Hit = False 'Reset the indicator of whether the Ship has been hit
-        target = -1 'Clear the selected target
+        firing = False 'The Ship has not fired this update
         X = X + (Speed * Math.Cos(Direction)) 'Update the Ship's X position
         Y = Y + (Speed * Math.Sin(Direction)) 'Update the Ship's Y position
+        If Gun IsNot Nothing Then Gun.Update() 'Update the gun
     End Sub
 
 End Class

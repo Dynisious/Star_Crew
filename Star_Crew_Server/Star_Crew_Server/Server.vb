@@ -1,46 +1,55 @@
 ﻿Module Server 'Runs the Game and allows Clients to connect and interact
-    Public GameWorld As Galaxy 'The Galaxy object that encompasses the game
-    Public Comms As Communications 'A Communications object that handles networking for the Server
-    Public UseNetwork As System.Threading.Mutex 'A Mutex object used to synchronise the use of the network
-    Public CommsThread As System.Threading.Thread 'A System.Threading.Mutex object that allows either the game or the communications to be in control during an interaction
-    Private ReadOnly saveAddress As String = "Star_Crew_Save.save" 'A string value representing the address of the games save file
+    Public Combat As New CombatSpace 'A CombatSpace object to store all connected Ship's
+    Public Comms As New Communications 'A Communications object that receives new messages and stores the Server Clients
+    Private ReadOnly workingDirectory As String = "C:\Users\" + Environment.UserName + "\AppData\Roaming\Star Crew Server"
+    Private ReadOnly saveAddress As String = "Star Crew Save.save" 'A String value representing the address of the game's save file
+    Private ReadOnly errorLog As String = "Error Log.log" 'A String value representing the address of the game's error log
+    Public ReadOnly QuarterCircle As Double = (Math.PI / 2) 'A Double value representing a quarter of a Circle
+    Public ReadOnly FullCircle As Double = (2 * Math.PI) 'A Double value representing a full Circle
 
     Public Sub Main() 'The initialising code of the application
         Console.WriteLine("-----Star Crew Game Server-----" + Environment.NewLine +
                           "Type /help for console commands (not case sensitive)" + Environment.NewLine)
         Console.Title = "Star Crew Server Console"
         Console.WriteLine("Initialising Objects...")
-        Randomize() 'Set the random sequense of numbers
-        Dim newMutex As Boolean 'Necessary for creating a new Mutex
-        Dim mutexSecurity As New System.Security.AccessControl.MutexSecurity 'The security object for the Mutex
-        Dim user As String = Environment.UserDomainName + "\" + Environment.UserName 'The name of the current user
-        Dim rule As New System.Security.AccessControl.MutexAccessRule(
-            user, System.Security.AccessControl.MutexRights.Modify Or
-            System.Security.AccessControl.MutexRights.Synchronize,
-            System.Security.AccessControl.AccessControlType.Allow) 'The security rule for the Mutex
-        mutexSecurity.AddAccessRule(rule) 'Add the rule to the Security
-        UseNetwork = New System.Threading.Mutex(False, "UseNetwork", newMutex, mutexSecurity) 'Create a new Mutex to control access to the network
-        Console.WriteLine("Objects have been Initialised")
-        Console.WriteLine("Initialising Game...")
-        If System.IO.File.Exists(saveAddress) = True Then 'There's a previous game
-            GameWorld = Game_Library.Serialisation.LoadFromFile(saveAddress) 'Load the previous game
-        Else 'Create a new Game
-            GameWorld = New Galaxy 'Start the new game
-        End If
-        GameWorld.GalaxyTick.Start() 'Starts the game updating
-        Console.WriteLine("Game has been initialised")
-        Comms = New Communications 'Create a new communications object
-        Comms.Initialise_Communications() 'Initialise the network
+        Try
+            Randomize() 'Set the random sequense of numbers
+            Console.WriteLine("Checking Directories exist...")
+            If FileIO.FileSystem.DirectoryExists(workingDirectory) = False Then
+                Console.WriteLine("The Working Directory does not exist. It will be created now.")
+                FileIO.FileSystem.CreateDirectory(workingDirectory) 'Create the working directory
+            End If
+            Console.WriteLine("Setting working directory...")
+            FileIO.FileSystem.CurrentDirectory = workingDirectory 'Set the working directory of the game
+            Console.WriteLine("Clearing last error log...")
+            FileIO.FileSystem.WriteAllText(errorLog, "This error log contains all of the errors that occoured during the last Server session", False) 'Clear the error logs
+            Console.WriteLine("Initialising mutexes...")
+            Dim newMutex As Boolean 'Necessary for creating a new Mutex
+            Dim mutexSecurity As New System.Security.AccessControl.MutexSecurity 'The security object for the Mutex
+            Dim user As String = Environment.UserDomainName + "\" + Environment.UserName 'The name of the current user
+            Dim rule As New System.Security.AccessControl.MutexAccessRule(
+                user, System.Security.AccessControl.MutexRights.Modify Or
+                System.Security.AccessControl.MutexRights.Synchronize,
+                System.Security.AccessControl.AccessControlType.Allow) 'The security rule for the Mutex
+            mutexSecurity.AddAccessRule(rule) 'Add the rule to the Security
+            Comms.interactWithClients = New System.Threading.Mutex(False, Nothing, newMutex, mutexSecurity) 'Create a new Mutex to control access to the network
+            Console.WriteLine("Objects have been Initialised")
+            Console.WriteLine("Initialising Game...")
+            Console.WriteLine("Game has been initialised")
+            Server.Comms.Initialise_Communications() 'Initialise the network
+        Catch ex As Exception
+            Write_To_Error_Log("ERROR : There was an error while initialising the Server." +
+                               Environment.NewLine + ex.ToString())
+        End Try
 
         '-----Testing-----
-        GameWorld.ClientFleet = New Fleet(Star_Crew_Shared_Libraries.Shared_Values.Allegiances.Emperial_Forces) 'Create a new Fleet for the Client
-        Dim temp As New Fleet(Star_Crew_Shared_Libraries.Shared_Values.Allegiances.Pirate_Alliance)
-        For i As Integer = 1 To 20
-            GameWorld.ClientFleet.Add_Ship(New Screamer(GameWorld.ClientFleet))
-            temp.Add_Ship(New Screamer(temp))
+        Combat.Ticker.Start()
+        For i As Integer = 1 To 5
+            Combat.ShipList.Add(New AIShip)
         Next
-        GameWorld.FocusedSector.Add_Fleet(GameWorld.ClientFleet)
-        GameWorld.FocusedSector.Add_Fleet(temp)
+        Combat.ShipList.Add(New AIShip)
+        Combat.ShipList(5).X = 80
+        Combat.ShipList(5).Y = 0
         '-----------------
 
         While Receive_Server_Commands() = True  'Continue to run the program
@@ -49,8 +58,7 @@
     End Sub
 
     Public Sub Finalise_Server() 'Closes the Server objects
-        GameWorld.GalaxyTick.Stop() 'Stops the Galaxy from Updating
-        Comms.Finalise() 'Closes the Communications
+        Comms.Close_Communications()
     End Sub
 
     Public Enum ServerCommands 'An enumorator of console commands for the Server
@@ -63,7 +71,6 @@
     Public Function Receive_Server_Commands() As Boolean 'Runs console commands for the Server
         Dim command As String = Mid(LCase(Console.ReadLine()), 2) + " " 'Get the entered command
         Dim lastSpace As Integer = command.IndexOf(" ")
-        Dim val As Boolean = True 'The value to return
         Select Case Left(command, lastSpace) 'Gets the command
             Case ServerCommands.help.ToString()
                 Console.WriteLine(Environment.NewLine +
@@ -74,60 +81,33 @@
                     "/kick:     (e.g. /Kick b) kicks the connected Client at the specified station:" + Environment.NewLine +
                     "           'b', 's' and 'e'")
             Case ServerCommands.close.ToString()
-                val = False
+                Return False
+                Exit Function
             Case ServerCommands.clr.ToString()
                 Console.Clear()
             Case ServerCommands.save.ToString()
-                Game_Library.Serialisation.SaveToFile(saveAddress, System.IO.FileMode.OpenOrCreate, GameWorld)
+
             Case ServerCommands.kick.ToString()
-                If lastSpace + 1 <> command.Length Then 'There's a character there
-                    Dim station As Star_Crew_Shared_Libraries.Shared_Values.StationTypes 'The station to be kicked
-                    Select Case Mid(command, lastSpace + 2, 1)
-                        Case "h" 'Trying to kick helm
-                            Console.WriteLine("Helm cannot be kicked")
-                            Return True
-                            Exit Function 'Exit the function
-                        Case "b"
-                            station = Star_Crew_Shared_Libraries.Shared_Values.StationTypes.Battery
-                        Case "s"
-                            station = Star_Crew_Shared_Libraries.Shared_Values.StationTypes.Shields
-                        Case "e"
-                            station = Star_Crew_Shared_Libraries.Shared_Values.StationTypes.Engines
-                        Case Else
-                            Console.WriteLine("Please enter either 'b' 's' 'e'")
-                            Return True
-                            Exit Function
-                    End Select
-                    For Each i As ServerClient In Comms.ClientList 'Loop through all connected Clients
-                        If i.Station = station Then 'This is the Client
-                            UseNetwork.WaitOne() 'Wait till the network is clear
-                            Comms.Remove_Client(i.Index, Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Client_Kicked_Exception,
-                                                ("Server : The " + i.Name + " Client at " + i.RemoteEndPoint.ToString() + " was kicked.")) 'Kick the Client
-                            UseNetwork.ReleaseMutex() 'Clear the network
-                            Return True
-                            Exit Function
-                        End If
-                    Next
-                    Console.WriteLine("There is no Client connected to {0}", station.ToString()) 'Write to the Server
-                Else
-                    Console.WriteLine("Please specify a station with either 'b', 's' or 'e' e.g. /kick b")
-                End If
+
             Case Else 'It was an invalid command
                 Console.WriteLine("INVALID COMMAND : Check spelling and try again")
+                Return True
         End Select
-        Console.WriteLine()
-        Return val
+        Return False
     End Function
 
     Public Function Normalise_Direction(ByVal nDirection As Double) As Double 'Returns a radian between the range of 0-2*Pi
-        nDirection = nDirection Mod (2 * Math.PI) 'Get the remaineder when the direction is divided by 2*Pi
-        If nDirection < 0 Then nDirection = nDirection + (2 * Math.PI) 'Put the direction within 0 to 2*Pi
+        nDirection = nDirection Mod FullCircle 'Get the remaineder when the direction is divided by 2*Pi
+        If nDirection < 0 Then nDirection = nDirection + FullCircle 'Put the direction within 0 to 2*Pi
         Return nDirection 'Return the Normalised direction
     End Function
 
-    Public Sub Game_Over() 'Ends the game because the Clients have been defeated
-        Console.WriteLine("GAME OVER!!!")
-        GameWorld.GalaxyTick.Stop()
+    Public Sub Write_To_Error_Log(ByVal text As String) 'Write an error to the error log
+        FileIO.FileSystem.WriteAllText(errorLog, (Environment.NewLine + text), True) 'Write the error
+    End Sub
+
+    Public Sub End_Game(ByVal Message As String) 'Ends the game
+        If Message <> "" Then Console.WriteLine(Message) 'Write the message to the console
     End Sub
 
 End Module

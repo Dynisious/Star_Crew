@@ -1,0 +1,20 @@
+#This file is a tutorial on how to create/edit ship types, syntax in these files are as follows:
+"#" A hash indicates the start of a comment which is ignored when the file is loaded by the application.
+";" #A semicolin indicates the end of a value asignment or comment.
+"=" An equals sign sets the value of a property.
+"[Stat name,minimum,initial value,maximum]" Square brackets indicate a stat which has a value which must stay within a pair of upper and lower bounds.
+"(xCoord,yCoord)" Brackets indicate a cartesian coordinate.
+"{val1,val2,val3,val...}" Curly Brackets indicate an array of values.
+
+It is advised to use a copy of this file as a template for creating new ship types.
+Capitalisation is not regestered by the application so do not reuse names.
+
+#Editing this file is not advised!!! doing so may harm the functioning of the application.;
+
+tracking_distance=40; #The tracking distance is the distance the AI will try to keep it's target inside;
+warning_box_min=(-20,-20);
+warning_box_max=(20,20); #The warning box is a rectangle drawn around the Ship which causes the AI to evade colisions with other Ships;
+
+hull=[0,0,0]; #The hull is a stat which represents the Ship's 'health'. The Ship is destroyed when the hull hits 0;
+turning_speed=0.2093333333333333; #The turning speed is how many radians the Ship can rotate in an update (0.1 seconds);
+Type_Name="Unnamed Ship"; #The name of the Ship Type;

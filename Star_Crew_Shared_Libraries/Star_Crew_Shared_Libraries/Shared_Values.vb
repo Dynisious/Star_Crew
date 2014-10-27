@@ -17,16 +17,5 @@
         nill
         max
     End Enum
-    Public Enum StationTypes 'The different types of Stations on a Ship
-        Helm
-        Battery
-        Shields
-        Engines
-        max
-    End Enum
-    Public Enum ShipTypes 'An enumerator of the different types of Ships
-        Screamer
-        Thunder
-    End Enum
 
 End Namespace

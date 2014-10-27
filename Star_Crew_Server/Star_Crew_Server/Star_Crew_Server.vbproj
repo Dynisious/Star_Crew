@@ -50,8 +50,8 @@
     <OptionInfer>On</OptionInfer>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Game Library">
-      <HintPath>..\..\..\Game_Library\Game Library\bin\Debug\Game Library.dll</HintPath>
+    <Reference Include="Game_Library">
+      <HintPath>..\..\..\Game_Library\Game_Library\bin\Debug\Game_Library.dll</HintPath>
     </Reference>
     <Reference Include="Star_Crew_Shared_Libraries">
       <HintPath>..\..\Star_Crew_Shared_Libraries\Star_Crew_Shared_Libraries\bin\Debug\Star_Crew_Shared_Libraries.dll</HintPath>
@@ -77,19 +77,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Communications.vb" />
-    <Compile Include="Game obj\Ship obj\Ship Types\Screamer.vb" />
-    <Compile Include="Game obj\Ship obj\Stations\Battery.vb" />
     <Compile Include="Game obj\CombatSpace.vb" />
-    <Compile Include="Game obj\Ship obj\Stations\Engine Types\Knife Edge.vb" />
-    <Compile Include="Game obj\Ship obj\Stations\Engines.vb" />
-    <Compile Include="Game obj\Sector obj\Fleet obj\Fleet.vb" />
-    <Compile Include="Game obj\Galaxy.vb" />
-    <Compile Include="Game obj\Ship obj\Stations\Helm.vb" />
-    <Compile Include="Game obj\Sector obj\Fleet obj\Item.vb" />
-    <Compile Include="Game obj\Sector obj\Planet.vb" />
-    <Compile Include="Game obj\Sector obj\Sector.vb" />
-    <Compile Include="Game obj\Ship obj\Stations\Shield Types\Bunter.vb" />
-    <Compile Include="Game obj\Ship obj\Weapon\Weapon Types\Rattler.vb" />
+    <Compile Include="Game obj\Ship obj\AIShip.vb" />
+    <Compile Include="Game obj\Ship obj\PlayerShip.vb" />
+    <Compile Include="Game obj\Ship obj\Weapons\Rattler.vb" />
+    <Compile Include="Game obj\Ship obj\Weapons\Weapon.vb" />
     <Compile Include="Server.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
@@ -106,13 +98,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <Compile Include="Game obj\Ship obj\Stations\Shields.vb" />
     <Compile Include="Game obj\Ship obj\Ship.vb" />
-    <Compile Include="Game obj\Sector obj\Fleet obj\Shipment.vb" />
-    <Compile Include="Game obj\Ship obj\Stations\ShipStation.vb" />
-    <Compile Include="Game obj\Sector obj\SpaceStation.vb" />
-    <Compile Include="Game obj\Ship obj\Weapon\Weapon.vb" />
-    <Compile Include="Game obj\Ship obj\Weapon\WeaponMount.vb" />
     <Compile Include="ServerClient.vb" />
   </ItemGroup>
   <ItemGroup>
@@ -134,7 +120,9 @@
       <LastGenOutput>Settings.Designer.vb</LastGenOutput>
     </None>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Game obj\Ship obj\Ship Types\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
