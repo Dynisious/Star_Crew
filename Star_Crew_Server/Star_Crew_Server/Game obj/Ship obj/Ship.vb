@@ -6,14 +6,14 @@
     Private ReadOnly HitboxAngles() As Double = {
         Math.Atan2(HitboxYDistance, HitboxXDistance),
         Math.Atan2(HitboxYDistance, -HitboxXDistance)} 'An array of two radian angles indecating the direction of the top two corners of the hitbox
-    Private _Hull As New Game_Library.Game_Objects.StatDbl(0, 100, 100, True) 'The actual value of Hull
+    Protected _Hull As New Game_Library.Game_Objects.StatDbl(0, 100, 100, True) 'The actual value of Hull
     Public ReadOnly Property Hull As Game_Library.Game_Objects.StatDbl 'A StatDbl object representing the minimum, current and maximum values of the Ship's Hull
         Get
             Return _Hull
         End Get
     End Property
     Public Throttle As New Game_Library.Game_Objects.StatDbl(0, 0, 15, True) 'A StatDbl object representing the throttle of the Ship
-    Private _Acceleration As Double = 0.5 'The actual value of Acceleration
+    Protected _Acceleration As Double = 0.5 'The actual value of Acceleration
     Public ReadOnly Property Acceleration As Double 'A Double value that controls how quickely the throttle changes
         Get
             Return _Acceleration
@@ -24,13 +24,13 @@
             Return Throttle.Current 'Calculate the Speed of the Ship
         End Get
     End Property
-    Private _TurnSpeed As Double = Math.PI / 15 'The actual value of TurnSpeed
+    Protected _TurnSpeed As Double = Math.PI / 15 'The actual value of TurnSpeed
     Public ReadOnly Property TurnSpeed As Double 'The radians that the Ship can rotate per update
         Get
             Return _TurnSpeed 'Calculate the Turnspeed
         End Get
     End Property
-    Private _Direction As Double 'The actual value of Direction
+    Protected _Direction As Double 'The actual value of Direction
     Public Property Direction As Double 'The Direction of the Ship in world space in radians
         Get
             Return _Direction

@@ -60,6 +60,7 @@
         End Sub
         Private Shared Sub btnHost_MouseLeave() Handles btnHost.MouseLeave 'Changes btnHost's colour when the mouse leaves it
             btnHost.ForeColor = Drawing.Color.DarkTurquoise 'Change the ForeColour
+            Client_Console.OutputScreen.ActiveControl = Nothing
         End Sub
 
         Private Shared Sub btnJoin_Click() Handles btnJoin.Click 'Joins an existing Server
@@ -71,6 +72,7 @@
         End Sub
         Private Shared Sub btnJoin_MouseLeave() Handles btnJoin.MouseLeave 'Changes btnJoin's colour when the mouse leaves it
             btnHost.ForeColor = Drawing.Color.DarkTurquoise 'Change the ForeColour
+            Client_Console.OutputScreen.ActiveControl = Nothing
         End Sub
 
         Private Shared Sub btnSettings_Click() Handles btnSettings.Click 'Opens the Settings screen
@@ -82,6 +84,7 @@
         End Sub
         Private Shared Sub btnSettings_MouseLeave() Handles btnSettings.MouseLeave 'Changes btnJoin's colour when the mouse leaves it
             btnSettings.ForeColor = Drawing.Color.DarkTurquoise 'Change the ForeColour
+            Client_Console.OutputScreen.ActiveControl = Nothing
         End Sub
 
         Private Shared Sub btnExit_Click() Handles btnExit.Click 'Closes the program
@@ -93,11 +96,12 @@
         End Sub
         Private Shared Sub btnExit_MouseLeave() Handles btnExit.MouseLeave 'Changes btnExit's colour when the mouse leaves it
             btnHost.ForeColor = Drawing.Color.DarkTurquoise 'Change the ForeColour
+            Client_Console.OutputScreen.ActiveControl = Nothing
         End Sub
 
     End Class
     Private Class JoinScreen 'Objects displayed when the Client is going to join an existing game
-        Private Shared txtIP As New System.Windows.Forms.TextBox With {
+        Private Shared WithEvents txtIP As New System.Windows.Forms.TextBox With {
             .Size = New System.Drawing.Size(125, 40), .Location = New System.Drawing.Point(537, 250),
             .Text = "Input IP", .Font = New System.Drawing.Font("Consolas", 14, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel),
             .ForeColor = Drawing.Color.DarkTurquoise, .BackColor = Drawing.Color.LightGray}
@@ -123,7 +127,15 @@
             scr.Controls.Add(txtIP) 'Add txtIP
             scr.Controls.Add(btnConnect) 'Add btnConnect
             scr.Controls.Add(btnMenu) 'Add btnMeny
+            txtIP.SelectAll()
+        End Sub
+
+        Private Shared Sub txtIP_Enter(ByVal sender As Object, ByVal e As System.Windows.Forms.KeyEventArgs) Handles txtIP.KeyDown 'Handles the enter key being clicked
+            If e.KeyCode = Windows.Forms.Keys.Enter Then btnConnect.PerformClick() 'Click the button
+        End Sub
+        Private Shared Sub txtIP_MouseClick() Handles txtIP.MouseClick 'Handles mousing over txtIP
             txtIP.Focus()
+            txtIP.SelectAll()
         End Sub
 
         Private Shared Sub btnConnect_Click() Handles btnConnect.Click 'Handles btnConnect being Clicked
@@ -165,6 +177,7 @@
         End Sub
         Private Shared Sub btnConnect_MouseLeave() Handles btnConnect.MouseLeave 'Handles the mouse moving out of btnConnect
             btnConnect.ForeColor = Drawing.Color.DarkTurquoise 'Change the fore colour
+            Client_Console.OutputScreen.ActiveControl = Nothing
         End Sub
 
         Private Shared Sub btnMenu_Click() Handles btnMenu.Click 'Handles btnMenu being Clicked
@@ -176,6 +189,7 @@
         End Sub
         Private Shared Sub btnMenu_MouseLeave() Handles btnMenu.MouseLeave 'Handles the mouse moving out of btnMenu
             btnMenu.ForeColor = Drawing.Color.DarkTurquoise 'Change the fore colour
+            Client_Console.OutputScreen.ActiveControl = Nothing
         End Sub
 
     End Class
@@ -195,6 +209,7 @@
             scr.Controls.Clear() 'Clears the Screen of objects
             scr.Controls.Add(btnMenu) 'Add btnMenu to the Screen
             scr.Controls.Add(lblHull) 'Add lblHull to the Screen
+            scr.ActiveControl = Nothing 'Clear the active control
         End Sub
 
         Private Shared Sub btnMenu_Click() Handles btnMenu.Click 'Handles btnMenu being Clicked
@@ -206,7 +221,7 @@
         End Sub
         Private Shared Sub btnMenu_MouseLeave() Handles btnMenu.MouseLeave 'Handles the mouse moving out of btnMenu
             btnMenu.ForeColor = Drawing.Color.DarkTurquoise 'Change the fore colour
-            Client_Console.OutputScreen.Focus()
+            Client_Console.OutputScreen.ActiveControl = Nothing
         End Sub
 
         Public Shared Sub lblHull_Set_Text(ByVal text As String)
@@ -276,6 +291,7 @@
         End Sub
         Private Shared Sub btnMenu_MouseLeave() Handles btnMenu.MouseLeave 'Handles the mouse moving out of btnMenu
             btnMenu.ForeColor = Drawing.Color.DarkTurquoise 'Change the fore colour
+            Client_Console.OutputScreen.ActiveControl = Nothing
         End Sub
 
         Private Shared Sub txtShipName_TextChanged() Handles txtShipName.TextChanged

@@ -4,11 +4,16 @@
     Public Craft As Ship 'The Ship that this Client controls
     Private messageToClient() As Byte 'An array of Bytes which represent the message to be sent to this Client
     Private messageReadyToSend As Boolean = False 'A Boolean value indicating whether the ServerClient's message is ready to send
-    Public commsRunning As Boolean = True 'A Boolean value that keeps the comms running as long as it is true
+    Public clientComms As Boolean = True 'A Boolean value that keeps the comms running as long as it is true
     Private ClientThread As New System.Threading.Thread(AddressOf Run_Comms)
     Private disconnectReason As Star_Crew_Shared_Libraries.Networking_Messages.General_Headers = -1 'The reason for the ServerClient to disconnect
     Private disconnectMessage As String = "" 'The message to display while the Server Client disconnects
-    Private Disconnecting As Boolean = False 'A Boolean value indicating whether the Client is disconnecting
+    Private _Disconnecting As Boolean = False 'A Boolean value indicating whether the Client is disconnecting
+    Public ReadOnly Property Disconnecting As Boolean
+        Get
+            Return _Disconnecting
+        End Get
+    End Property
     Private _throttleUp As Boolean = False 'The actual value of throttleUp
     Public ReadOnly Property throttleUp As Boolean 'A Boolean value indicating whether the throttle needs to increase
         Get
@@ -62,7 +67,7 @@
     End Sub
 
     Private Sub Run_Comms() 'Handles the receiving and sending of messages for the ServerClient
-        Do Until Disconnecting = True 'Loop until the comms closes
+        Do Until clientComms = False Or Connected = False 'Loop until the comms closes
             '-----Send a message to the Client-----
             If Disconnecting = False Then 'Proceed
                 If messageReadyToSend = True Then 'Send the message
@@ -73,12 +78,12 @@
                     Catch ex As Net.Sockets.SocketException
                         Server.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an error while trying to send to the '" + Name +
                                                   "'. They will now be disconnected." + Environment.NewLine + ex.ToString())
-                        Disconnecting = True 'Let the loop close
+                        _Disconnecting = True 'Let the loop close
                     Catch ex As Exception
                         Server.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an unexpected and unhandled exception while trying to send to the '" +
                                                   Name + "'. The Comms will now close" + Environment.NewLine + ex.ToString())
-                        Disconnecting = True  'Let the loop close
-                        Server.Comms.loopComms = False 'Close the comms
+                        _Disconnecting = True  'Let the loop close
+                        Server.Comms.ClosingComms = False 'Close the Server comms
                     End Try
 
                     '-----Receive a message from the Client-----
@@ -88,10 +93,10 @@
                             Select Case message(0)
                                 Case Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Bad_Message_Exception
                                     disconnectMessage = "The Client received a bad message from the Server"
-                                    Disconnecting = True
+                                    _Disconnecting = True
                                 Case Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Client_Disconnecting
                                     disconnectMessage = "The Client is disconnecting from the Server"
-                                    Disconnecting = True
+                                    _Disconnecting = True
                                 Case Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Throttle_Up
                                     _throttleUp = message(1) 'Receive the boolean
                                 Case Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Throttle_Down
@@ -107,17 +112,17 @@
                     Catch ex As Net.Sockets.SocketException
                         Server.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an error while trying to receive a message from the '" +
                                                   Name + "'. They will now be disconnected." + Environment.NewLine + ex.ToString())
-                        Disconnecting = True 'Let the loop close
+                        _Disconnecting = True 'Let the loop close
                     Catch ex As Exception
                         Server.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an unexpected and unhandled exception while trying to receive a message from the '" +
                                                   Name + "'. The Comms will now close." + Environment.NewLine + ex.ToString())
-                        Disconnecting = True 'Let the loop close
-                        Server.Comms.loopComms = False 'Close the communications
+                        _Disconnecting = True 'Let the loop close
+                        Server.Comms.ClosingComms = True  'Close the communications
                     End Try
                 End If
                 '-------------------------------------------
             Else 'Disconnect
-                commsRunning = False
+                clientComms = False
                 If disconnectReason <> -1 Then 'There is a cause to be sent
                     If Connected = True Then 'The Client is still connected
                         Try
@@ -128,7 +133,7 @@
                         Catch ex As Exception
                             Server.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an unexpected and unhandled exception while trying to send the reason for the disconnect to the Client." +
                                                       Environment.NewLine + ex.ToString())
-                            Server.Comms.loopComms = False
+                            Server.Comms.ClosingComms = True
                         End Try
                     Else 'The Client is disconnected
                         Server.Write_To_Error_Log(Environment.NewLine + "ERROR : The Client disconnected before the Server could send '" +
@@ -142,10 +147,8 @@
         Finalise_Client()
     End Sub
 
-    Public Sub Disconnect_Client(ByVal reason As Star_Crew_Shared_Libraries.Networking_Messages.General_Headers, ByVal Message As String)
-        disconnectReason = reason
-        disconnectMessage = Message
-        Disconnecting = True
+    Public Sub Disconnect_Client()
+        _Disconnecting = True
     End Sub
 
     Private Sub Finalise_Client() 'Disconnects the ServerClient from the Client and finalises the ServerClient
@@ -154,17 +157,15 @@
                           If((disconnectMessage <> ""), (" because " + disconnectMessage), "") + ".")
         Dim endPoint As String = Server.Comms.clientList(Index).RemoteEndPoint.ToString() 'Gets a string representing the remote end point of the Socket
         Server.Comms.interactWithClients.WaitOne() 'Wait until the Client has control of clientList
-        Server.Comms.clientList.RemoveAt(Index) 'Remove the Client
         If Index <> Server.Comms.clientList.Count Then 'There are Client's who's index has changed
             For i As Integer = Index To Server.Comms.clientList.Count - 1 'Loop through those Clients
                 Server.Comms.clientList(i).Index = i 'Set the new index
             Next
         End If
-        Server.Comms.interactWithClients.ReleaseMutex()
         Index = -1 'Clear the index
         If disconnectReason <> -1 Then Disconnect(False) 'Disconnect the socket
         Close() 'Close the socket
-        Disconnecting = False
+        _Disconnecting = False
         Console.WriteLine("Server : '" + endPoint + "' was disconnected.") 'Write to the Console
     End Sub
 
@@ -182,7 +183,9 @@
             messageToClient = Game_Library.Serialisation.ToBytes({positions, directions, allegiances, Craft.Speed, Craft.CombatIndex, Craft.Gun.Range, Craft.firing, Craft.Hull.Current, Craft.Hull.Maximum}) 'Convert the message into Bytes
             messageReadyToSend = True
         ElseIf Disconnecting = False Then 'The craft is dead and the Client needs to disconnect
-            Disconnect_Client(Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Client_Kicked_Exception, ("The Client died and was therefore kicked from the server"))
+            Server.Comms.closing.Add(Me) 'Add this ServerClient to the list of closing clients
+            disconnectReason = Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Client_Kicked_Exception 'Set the disconnect reason for the message
+            disconnectMessage = ("The Client died and was therefore kicked from the server") 'Set the disconnect message for the Client
         End If
     End Sub
 
