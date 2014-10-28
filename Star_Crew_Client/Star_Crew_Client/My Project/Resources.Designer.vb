@@ -109,41 +109,5 @@ Namespace My.Resources
                 Return CType(obj,System.Drawing.Bitmap)
             End Get
         End Property
-        
-        '''<summary>
-        '''  Looks up a localized resource of type System.IO.UnmanagedMemoryStream similar to System.IO.MemoryStream.
-        '''</summary>
-        Friend ReadOnly Property The_Adventure_Begins_Extended() As System.IO.UnmanagedMemoryStream
-            Get
-                Return ResourceManager.GetStream("The_Adventure_Begins_Extended", resourceCulture)
-            End Get
-        End Property
-        
-        '''<summary>
-        '''  Looks up a localized resource of type System.IO.UnmanagedMemoryStream similar to System.IO.MemoryStream.
-        '''</summary>
-        Friend ReadOnly Property The_Pounce_Extended() As System.IO.UnmanagedMemoryStream
-            Get
-                Return ResourceManager.GetStream("The_Pounce_Extended", resourceCulture)
-            End Get
-        End Property
-        
-        '''<summary>
-        '''  Looks up a localized resource of type System.IO.UnmanagedMemoryStream similar to System.IO.MemoryStream.
-        '''</summary>
-        Friend ReadOnly Property Timeless_Voyage_Extended() As System.IO.UnmanagedMemoryStream
-            Get
-                Return ResourceManager.GetStream("Timeless_Voyage_Extended", resourceCulture)
-            End Get
-        End Property
-        
-        '''<summary>
-        '''  Looks up a localized resource of type System.IO.UnmanagedMemoryStream similar to System.IO.MemoryStream.
-        '''</summary>
-        Friend ReadOnly Property Warp_Audio() As System.IO.UnmanagedMemoryStream
-            Get
-                Return ResourceManager.GetStream("Warp_Audio", resourceCulture)
-            End Get
-        End Property
     End Module
 End Namespace
