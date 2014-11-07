@@ -204,7 +204,7 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
                                 End If
                             Case Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes.Ship
                                 Dim craftBmp As New Bitmap(CType(If((allegiances(i) = 1), My.Resources.FriendlyScreamer.Clone(),
-                                                                    My.Resources.FriendlyFleet.Clone()), Image)) 'Create a Bitmap to draw
+                                                                    My.Resources.PirateThunder.Clone()), Image)) 'Create a Bitmap to draw
                                 craftBmp.MakeTransparent() 'Clear the white space from the image
                                 Dim crossLength As Integer = Math.Sqrt((craftBmp.Width ^ 2) + (craftBmp.Height ^ 2)) 'Calculate the cross length of the bitmap to draw
                                 Dim hlfCrossLength As Integer = crossLength / 2 'Get half of crossLength

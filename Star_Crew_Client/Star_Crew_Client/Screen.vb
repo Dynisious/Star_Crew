@@ -346,41 +346,56 @@
                         If Client_Console.Client.Disconnecting = False Then
                             While Client_Console.Client.messageToSend = True 'Loop
                             End While
-                            Client_Console.Client.sendHeader = Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Throttle_Up 'Set message header
-                            Client_Console.Client.sendBoolean = True 'Set message
-                            Client_Console.Client.messageToSend = True 'Set the message to send
+                            If Client_Console.Client.sendHeader <> Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Throttle_Up Or
+                                Client_Console.Client.sendBoolean = False Then 'This wont be a repeat message
+                                Client_Console.Client.sendHeader = Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Throttle_Up 'Set message header
+                                Client_Console.Client.sendBoolean = True 'Set message
+                                Client_Console.Client.messageToSend = True 'Set the message to send
+                            End If
                         End If
                     Case Client_Console.settingElements(2)
                         If Client_Console.Client.Disconnecting = False Then
                             While Client_Console.Client.messageToSend = True 'Loop
                             End While
-                            Client_Console.Client.sendHeader = Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Throttle_Down 'Set message header
-                            Client_Console.Client.sendBoolean = True 'Set the message
-                            Client_Console.Client.messageToSend = True 'Set the message to send
+                            If Client_Console.Client.sendHeader <> Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Throttle_Down Or
+                                Client_Console.Client.sendBoolean = False Then 'This wont be a repeat message
+                                Client_Console.Client.sendHeader = Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Throttle_Down 'Set message header
+                                Client_Console.Client.sendBoolean = True 'Set the message
+                                Client_Console.Client.messageToSend = True 'Set the message to send
+                            End If
                         End If
                     Case Client_Console.settingElements(3)
                         If Client_Console.Client.Disconnecting = False Then
                             While Client_Console.Client.messageToSend = True 'Loop
                             End While
-                            Client_Console.Client.sendHeader = Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Turn_Left 'Set message header
-                            Client_Console.Client.sendBoolean = True 'Set the message
-                            Client_Console.Client.messageToSend = True 'Set the message to send
+                            If Client_Console.Client.sendHeader <> Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Turn_Left Or
+                                Client_Console.Client.sendBoolean = False Then 'This wont be a repeat message
+                                Client_Console.Client.sendHeader = Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Turn_Left 'Set message header
+                                Client_Console.Client.sendBoolean = True 'Set the message
+                                Client_Console.Client.messageToSend = True 'Set the message to send
+                            End If
                         End If
                     Case Client_Console.settingElements(4)
                         If Client_Console.Client.Disconnecting = False Then
                             While Client_Console.Client.messageToSend = True 'Loop
                             End While
-                            Client_Console.Client.sendHeader = Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Turn_Right 'Set message header
-                            Client_Console.Client.sendBoolean = True 'Set message
-                            Client_Console.Client.messageToSend = True 'Set the message to send
+                            If Client_Console.Client.sendHeader <> Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Turn_Right Or
+                                Client_Console.Client.sendBoolean = False Then 'This wont be a repeat message
+                                Client_Console.Client.sendHeader = Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Turn_Right 'Set message header
+                                Client_Console.Client.sendBoolean = True 'Set message
+                                Client_Console.Client.messageToSend = True 'Set the message to send
+                            End If
                         End If
                     Case Client_Console.settingElements(5)
                         If Client_Console.Client.Disconnecting = False Then
                             While Client_Console.Client.messageToSend = True 'Loop
                             End While
-                            Client_Console.Client.sendHeader = Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Fire_Weapons 'Set message header
-                            Client_Console.Client.sendBoolean = True 'Set message
-                            Client_Console.Client.messageToSend = True 'Set the message to send
+                            If Client_Console.Client.sendHeader <> Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Fire_Weapons Or
+                                Client_Console.Client.sendBoolean = False Then 'This wont be a repeat message
+                                Client_Console.Client.sendHeader = Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Fire_Weapons 'Set message header
+                                Client_Console.Client.sendBoolean = True 'Set message
+                                Client_Console.Client.messageToSend = True 'Set the message to send
+                            End If
                         End If
                 End Select
             End If
