@@ -3,8 +3,9 @@
     Private Client As ServerClient 'A reference to the ServerClient object in control of the Ship
 
     Public Sub New(ByRef nClient As ServerClient)
-        MyBase.New(Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes.Ship, True, New Game_Library.Game_Objects.StatDbl(0, 100, 100, True),
-                   New Game_Library.Game_Objects.StatDbl(0, 0, 15, True), 0.5, (Math.PI / 15))
+        MyBase.New(Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes.Ship, True, True, 5, True,
+                   New Game_Library.Game_Objects.StatDbl(0, 100, 100, True),
+                   New Game_Library.Game_Objects.StatDbl(5, 5, 20, True), 1, (Math.PI / 15), 20, 20)
         Client = nClient
         _Primary = New Rattler(Me)
     End Sub

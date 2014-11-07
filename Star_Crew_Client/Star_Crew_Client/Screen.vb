@@ -104,7 +104,7 @@
         Private Shared WithEvents txtIP As New System.Windows.Forms.TextBox With {
             .Size = New System.Drawing.Size(125, 40), .Location = New System.Drawing.Point(537, 250),
             .Text = "Input IP", .Font = New System.Drawing.Font("Consolas", 14, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel),
-            .ForeColor = Drawing.Color.DarkTurquoise, .BackColor = Drawing.Color.LightGray}
+            .ForeColor = Drawing.Color.FromArgb(55, 22, 95, 95), .BackColor = Drawing.Color.LightGray}
         Private Shared WithEvents btnConnect As New System.Windows.Forms.Button With {
             .Size = New System.Drawing.Size(150, 45), .Location = New System.Drawing.Point(525, 300),
             .Text = "Connect", .FlatStyle = Windows.Forms.FlatStyle.Flat, .ForeColor = Drawing.Color.DarkTurquoise,
@@ -200,8 +200,18 @@
             .BackColor = Drawing.Color.Transparent, .Font = New System.Drawing.Font(
                 New System.Drawing.Font("Consolas", 18, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel), Drawing.FontStyle.Underline)}
         Public Shared lblHull As New System.Windows.Forms.Label With {
-            .Size = New System.Drawing.Size(150, 45), .Location = New System.Drawing.Point(25, 660),
+            .Size = New System.Drawing.Size(300, 45), .Location = New System.Drawing.Point(875, 5),
             .Text = "HULL: 0/0", .FlatStyle = Windows.Forms.FlatStyle.Flat, .ForeColor = Drawing.Color.DarkTurquoise,
+            .BackColor = Drawing.Color.Transparent, .Font = New System.Drawing.Font(
+                "Consolas", 18, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel)}
+        Public Shared lblThrottle As New System.Windows.Forms.Label With {
+            .Size = New System.Drawing.Size(300, 45), .Location = New System.Drawing.Point(875, 60),
+            .Text = "THROTTLE: 0/0", .FlatStyle = Windows.Forms.FlatStyle.Flat, .ForeColor = Drawing.Color.DarkTurquoise,
+            .BackColor = Drawing.Color.Transparent, .Font = New System.Drawing.Font(
+                "Consolas", 18, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel)}
+        Public Shared lblAmmunition As New System.Windows.Forms.Label With {
+            .Size = New System.Drawing.Size(300, 45), .Location = New System.Drawing.Point(875, 115),
+            .Text = "AMMUNITION: 0/0", .FlatStyle = Windows.Forms.FlatStyle.Flat, .ForeColor = Drawing.Color.DarkTurquoise,
             .BackColor = Drawing.Color.Transparent, .Font = New System.Drawing.Font(
                 "Consolas", 18, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel)}
 
@@ -209,6 +219,8 @@
             scr.Controls.Clear() 'Clears the Screen of objects
             scr.Controls.Add(btnMenu) 'Add btnMenu to the Screen
             scr.Controls.Add(lblHull) 'Add lblHull to the Screen
+            scr.Controls.Add(lblThrottle) 'Add lblThrottle to the Screen
+            scr.Controls.Add(lblAmmunition) 'Add lblAmmunition to the Screen
             scr.ActiveControl = Nothing 'Clear the active control
         End Sub
 
@@ -227,6 +239,12 @@
         Public Shared Sub lblHull_Set_Text(ByVal text As String)
             lblHull.Text = text
         End Sub
+        Public Shared Sub lblThrottle_Set_Text(ByVal text As String)
+            lblThrottle.Text = text
+        End Sub
+        Public Shared Sub lblAmmunition_Set_Text(ByVal text As String)
+            lblAmmunition.Text = text
+        End Sub
 
     End Class
     Public Class SettingsScreen
@@ -237,27 +255,27 @@
         Public Shared WithEvents txtShipName As New System.Windows.Forms.TextBox With {
             .Size = New System.Drawing.Size(225, 40), .Location = New System.Drawing.Point(10, 8),
             .Text = "SETTINGS ERROR", .Font = New System.Drawing.Font("Consolas", 14, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel),
-            .ForeColor = Drawing.Color.DarkTurquoise, .BackColor = Drawing.Color.LightGray}
+            .ForeColor = Drawing.Color.FromArgb(55, 22, 95, 95), .BackColor = Drawing.Color.LightGray}
         Public Shared WithEvents txtThrottleUp As New System.Windows.Forms.TextBox With {
             .Size = New System.Drawing.Size(225, 40), .Location = New System.Drawing.Point(10, 58),
             .Text = "SETTINGS ERROR", .Font = New System.Drawing.Font("Consolas", 14, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel),
-            .ForeColor = Drawing.Color.DarkTurquoise, .BackColor = Drawing.Color.LightGray}
+            .ForeColor = Drawing.Color.FromArgb(55, 22, 95, 95), .BackColor = Drawing.Color.LightGray}
         Public Shared WithEvents txtThrottleDown As New System.Windows.Forms.TextBox With {
             .Size = New System.Drawing.Size(225, 40), .Location = New System.Drawing.Point(10, 108),
             .Text = "SETTINGS ERROR", .Font = New System.Drawing.Font("Consolas", 14, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel),
-            .ForeColor = Drawing.Color.DarkTurquoise, .BackColor = Drawing.Color.LightGray}
+            .ForeColor = Drawing.Color.FromArgb(55, 22, 95, 95), .BackColor = Drawing.Color.LightGray}
         Public Shared WithEvents txtTurnLeft As New System.Windows.Forms.TextBox With {
             .Size = New System.Drawing.Size(225, 40), .Location = New System.Drawing.Point(10, 158),
             .Text = "SETTINGS ERROR", .Font = New System.Drawing.Font("Consolas", 14, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel),
-            .ForeColor = Drawing.Color.DarkTurquoise, .BackColor = Drawing.Color.LightGray}
+            .ForeColor = Drawing.Color.FromArgb(55, 22, 95, 95), .BackColor = Drawing.Color.LightGray}
         Public Shared WithEvents txtTurnRight As New System.Windows.Forms.TextBox With {
             .Size = New System.Drawing.Size(225, 40), .Location = New System.Drawing.Point(254, 8),
             .Text = "SETTINGS ERROR", .Font = New System.Drawing.Font("Consolas", 14, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel),
-            .ForeColor = Drawing.Color.DarkTurquoise, .BackColor = Drawing.Color.LightGray}
+            .ForeColor = Drawing.Color.FromArgb(55, 22, 95, 95), .BackColor = Drawing.Color.LightGray}
         Public Shared WithEvents txtFireWeapon As New System.Windows.Forms.TextBox With {
             .Size = New System.Drawing.Size(225, 40), .Location = New System.Drawing.Point(254, 58),
             .Text = "SETTINGS ERROR", .Font = New System.Drawing.Font("Consolas", 14, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel),
-            .ForeColor = Drawing.Color.DarkTurquoise, .BackColor = Drawing.Color.LightGray}
+            .ForeColor = Drawing.Color.FromArgb(55, 22, 95, 95), .BackColor = Drawing.Color.LightGray}
         Private Shared WithEvents btnMenu As New System.Windows.Forms.Button With {
             .Location = New System.Drawing.Point(1025, 623), .ForeColor = Drawing.Color.DarkTurquoise,
             .BackColor = Drawing.Color.Transparent,

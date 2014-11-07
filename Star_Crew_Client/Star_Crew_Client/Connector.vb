@@ -146,7 +146,7 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
         End Try
     End Sub
 
-    Private Delegate Sub Cross_Thread_Text_Setting(ByVal text As String)
+    Private Delegate Sub Text_Setting(ByVal text As String)
     Private Sub Display_Ship_To_Ship() Handles ticker.Elapsed 'Used to display Ship to Ship combat
         Try
             If waitingForMessage = False Then 'Check that the message is up to date
@@ -155,34 +155,47 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
                 Dim allegiances() As Star_Crew_Shared_Libraries.Shared_Values.Allegiances = receivedElements(2) 'Get the Array of Allegiances values representing the objects' allegiances
                 Dim types() As Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes = receivedElements(3) 'Get the array of ObjectTypes values representing the objects' types
                 Dim hits() As Boolean = receivedElements(4) 'Get the Array of Boolean values representing the objects' hit states
-                Dim clientSpeed As Double = receivedElements(5) 'Get the Speed of the Client
-                Dim clientIndex As Integer = receivedElements(6) 'Get the index of the Client
-                Dim clientFiring As Boolean = receivedElements(7) 'Get the Client's firing state
-                Dim clientHull As New Point(receivedElements(8), receivedElements(9)) 'Get the Client's hull
-                Dim clientAmmunition As New Point(receivedElements(10), receivedElements(11)) 'Get the Client's ammunition
+                Dim clientSpeed As New PointF(receivedElements(5), receivedElements(6)) 'Get the Speed of the Client
+                Dim clientIndex As Integer = receivedElements(7) 'Get the index of the Client
+                Dim clientFiring As Boolean = receivedElements(8) 'Get the Client's firing state
+                Dim clientHull As New Point(receivedElements(9), receivedElements(10)) 'Get the Client's hull
+                Dim clientAmmunition As New Point(receivedElements(11), receivedElements(12)) 'Get the Client's ammunition
                 waitingForMessage = True 'The message can now be updated
 
+                '-----Translate Positions-----
+                Dim xOffset As Integer = (50 * Math.Cos(directions(clientIndex) + Math.PI)) 'Get the x offset of the client
+                Dim yOffset As Integer = (50 * Math.Sin(directions(clientIndex) + Math.PI)) 'Get the y offset of the client
+                For i As Integer = 0 To UBound(positions) 'Loop through all positions
+                    positions(i).X += xOffset 'Translate the x coord
+                    positions(i).Y += yOffset 'Translate the y coord
+                Next
+                '-----------------------------
+
                 '-----Render Objects-----
-                Dim d As New Cross_Thread_Text_Setting(AddressOf Screen.GameScreen.lblHull_Set_Text) 'Create a delegate
+                Dim d As New Text_Setting(AddressOf Screen.GameScreen.lblHull_Set_Text) 'Create a delegate
                 Screen.GameScreen.lblHull.Invoke(d, {"HULL: " + (clientHull.X).ToString() + "/" + (clientHull.Y).ToString()}) 'Write the text to lblHull
+                d = New Text_Setting(AddressOf Screen.GameScreen.lblThrottle_Set_Text) 'Create a delegate
+                Screen.GameScreen.lblThrottle.Invoke(d, {"THROTTLE: " + FormatNumber(clientSpeed.X, 2).ToString() + "/" + FormatNumber(clientSpeed.Y, 2).ToString()}) 'Write the text to lblThrottle
+                d = New Text_Setting(AddressOf Screen.GameScreen.lblAmmunition_Set_Text) 'Create a delegate
+                Screen.GameScreen.lblAmmunition.Invoke(d, {"AMMUNITION: " + (clientAmmunition.X).ToString() + "/" + (clientAmmunition.Y).ToString()}) 'Write the text to lblAmmunition
                 Dim img As Bitmap = My.Resources.NormalSpace.Clone() 'Create a Bitmap to be drawn on
                 Dim imgG As Drawing.Graphics = Graphics.FromImage(img) 'Create a graphics object from img
                 For i As Integer = 0 To UBound(Stars) 'Loop through every star
-                    Stars(i).X += (Math.Cos(directions(clientIndex) + Math.PI) * clientSpeed) 'Move the star
+                    Stars(i).X += (Math.Cos(directions(clientIndex) + Math.PI) * clientSpeed.X) 'Move the star
                     If Stars(i).X < 0 Then
                         Stars(i).X = displayBoxSideLength
                     ElseIf Stars(i).X > displayBoxSideLength Then
                         Stars(i).X = 0
                     End If
 
-                    Stars(i).Y += (Math.Sin(directions(clientIndex) + Math.PI) * clientSpeed) 'Move the star
+                    Stars(i).Y += (Math.Sin(directions(clientIndex) + Math.PI) * clientSpeed.X) 'Move the star
                     If Stars(i).Y < 0 Then
                         Stars(i).Y = displayBoxSideLength
                     ElseIf Stars(i).Y > displayBoxSideLength Then
                         Stars(i).Y = 0
                     End If
 
-                    imgG.FillEllipse(Brushes.White, Stars(i).X, Stars(i).Y, 7, 7)
+                    imgG.FillEllipse(Brushes.White, Stars(i).X + xOffset, Stars(i).Y + yOffset, 7, 7) 'Draw Star
                 Next
                 For i As Integer = 0 To positions.Length - 1 'Loop through all values
                     Dim distance As Integer = Math.Sqrt((positions(i).X ^ 2) + (positions(i).Y ^ 2)) 'Get the distance of the object from the Client's craft

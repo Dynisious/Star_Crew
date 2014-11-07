@@ -14,9 +14,29 @@
                 Next
             End If
 
+            '-----Update Ships-----
             For Each i As Ship In ShipList 'Loop through all Ships
                 i.Update() 'Update the Ship
             Next
+            '----------------------
+
+            '-----Collisions-----
+            Dim collisions As New List(Of Ship) 'a List of Ship objects that can collide
+            For Each i As Ship In ShipList 'Loop through all Ships
+                If i.Physics Then collisions.Add(ShipList(i.CombatIndex)) 'Add the Ship to collisions
+            Next
+            For i As Integer = 0 To (collisions.Count - 2) 'Loop through all the collision indexes but the last one
+                For e As Integer = (i + 1) To (collisions.Count - 1) 'Loop through all the collision indexes that haven't collided with this one yet that aren't itself
+                    Dim objX As Integer = (collisions(e).X - collisions(i).X) 'Get the x coord of the e index relative to the i index
+                    Dim objY As Integer = (collisions(e).Y - collisions(i).Y) 'Get the y coord of the e index relative to the i index
+                    Dim objDirection As Double = Math.Atan2(objY, objX) 'Get the direction in world space of the e index relative to the i index
+                    If Math.Sqrt((objX ^ 2) + (objY ^ 2)) < (ShipList(i).Get_Collision_Radia(objDirection) + ShipList(e).Get_Collision_Radia(objDirection)) Then 'The two objects collide
+                        ShipList(i).Collide(ShipList(e).CollideDamage, objDirection, ShipList(e).CauseDeflect) 'Collide i index with e index
+                        ShipList(e).Collide(ShipList(i).CollideDamage, (objDirection + Math.PI), ShipList(i).CauseDeflect) 'Collide e index with i index
+                    End If
+                Next
+            Next
+            '--------------------
 
             '-----Destroy Dead-----
             Dim destroying As New List(Of Ship) With {.Capacity = ShipList.Count}
@@ -24,22 +44,13 @@
                 If ShipList(i).Dead = True Then destroying.Add(ShipList(i))
             Next
             For Each i As Ship In destroying 'Loop through all the Ship's
-                If ReferenceEquals((i.CombatIndex), Server.Comms.clientList(0).Craft) Then
-                    Dim a = 1
-                End If
                 ShipList.RemoveAt(i.CombatIndex) 'Remove the Ship
                 If i.CombatIndex <> ShipList.Count Then
                     For index As Integer = i.CombatIndex To ShipList.Count - 1 'Loops through to the end of the list
                         ShipList(index).CombatIndex = index 'Set the new Combat index
                     Next
                 End If
-                If ReferenceEquals(i, Server.Comms.clientList(0).Craft) Then
-                    Dim a = 1
-                End If
                 i.CombatIndex = -1 'Clear the index
-                If i.Dead = False Then
-                    Dim a = 1
-                End If
             Next
             For Each i As Ship In destroying 'Loop through all the Ship's that are destroying
                 i.Destroy() 'Destroy the Ship

@@ -198,16 +198,11 @@
                     types(i) = objects(i).Type
                     hits(i) = objects(i).hit 'Set the object's hit state
                 Next
-                If Craft.Dead = True Then
-                    Dim a = 1
-                End If
-                If Craft.CombatIndex = -1 Then
-                    Dim a = 1
-                End If
                 allegiances(Craft.CombatIndex) = 1 'Set the craft's allegiance
-                messageToClient = Game_Library.Serialisation.ToBytes({positions, directions, allegiances, types, hits, Craft.Speed,
-                                                                      Craft.CombatIndex, Craft.firing, Craft.Hull.Current, Craft.Hull.Maximum,
-                                                                      Craft.Primary.Ammunition.Current, Craft.Primary.Ammunition.Maximum}) 'Convert the message into Bytes
+                messageToClient = Game_Library.Serialisation.ToBytes({positions, directions, allegiances, types, hits, Craft.Throttle.Current,
+                                                                      Craft.Throttle.Maximum, Craft.CombatIndex, Craft.firing, Craft.Hull.Current,
+                                                                      Craft.Hull.Maximum, Craft.Primary.Ammunition.Current,
+                                                                      Craft.Primary.Ammunition.Maximum}) 'Convert the message into Bytes
                 messageReadyToSend = True
             End If
         ElseIf Disconnecting = False Then 'The craft is dead and the Client needs to disconnect

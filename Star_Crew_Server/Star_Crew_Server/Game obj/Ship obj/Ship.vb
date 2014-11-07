@@ -1,11 +1,9 @@
 ﻿Public MustInherit Class Ship 'Object that combats other Ships
     Inherits Game_Library.Game_Objects.Entity
-    Public ReadOnly HitboxXDistance As Integer = 20 'The maximum distance in the x direction from the center of the Ship to the edge of the hitbox
-    Public ReadOnly HitboxYDistance As Integer = 20 'The maximum distance in the y direction from the center of the Ship to the edge of the hitbox
-    Private ReadOnly HitboxMaxDistance As Integer = Math.Sqrt((HitboxXDistance ^ 2) + (HitboxYDistance ^ 2)) 'The maximum distance from the center of the Ship to the edge of the hitbox
-    Private ReadOnly HitboxAngles() As Double = {
-        Math.Atan2(HitboxYDistance, HitboxXDistance),
-        Math.Atan2(HitboxYDistance, -HitboxXDistance)} 'An array of two radian angles indecating the direction of the top two corners of the hitbox
+    Public ReadOnly HitboxXDistance As Integer 'The maximum distance in the x direction from the center of the Ship to the edge of the hitbox
+    Public ReadOnly HitboxYDistance As Integer 'The maximum distance in the y direction from the center of the Ship to the edge of the hitbox
+    Private ReadOnly HitboxMaxDistance As Integer 'The maximum distance from the center of the Ship to the edge of the hitbox
+    Private ReadOnly HitboxAngles() As Double 'An array of two radian angles indecating the direction of the top two corners of the hitbox
     Protected _Hull As Game_Library.Game_Objects.StatDbl 'The actual value of Hull
     Public ReadOnly Property Hull As Game_Library.Game_Objects.StatDbl 'A StatDbl object representing the minimum, current and maximum values of the Ship's Hull
         Get
@@ -54,10 +52,28 @@
     Public Name As String = "Unnamed Ship" 'The name of the Ship
     Public firing As Boolean = False 'A Boolean value indicating whether the Ship is firing
     Public hit As Boolean = False 'A Boolean value indicating whether the Ship is firing
-    Protected _Trackable As Boolean = Trackable 'The actual value of Trackable
+    Protected _Trackable As Boolean 'The actual value of Trackable
     Public ReadOnly Property Trackable As Boolean 'A Boolean value indicating whether the ship can be tracked by other Ships
         Get
             Return _Trackable
+        End Get
+    End Property
+    Protected _Physics As Boolean 'The actual value of Physics
+    Public ReadOnly Property Physics As Boolean 'A Boolean value indicating whether the Ship is affected by physics
+        Get
+            Return _Physics
+        End Get
+    End Property
+    Protected _CollideDamage As Integer 'The actual value of CollideDamage
+    Public ReadOnly Property CollideDamage As Integer 'An Integer value indicating how much damage is done when another Ship collides into this one
+        Get
+            Return _CollideDamage
+        End Get
+    End Property
+    Private _CauseDeflect As Boolean 'The actual value of CauseDeflect
+    Public ReadOnly Property CauseDeflect As Boolean 'A Boolean value indicating whether the Ship causes a deflection when hit
+        Get
+            Return _CauseDeflect
         End Get
     End Property
     Private _Type As Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes 'The actual value of Type
@@ -68,14 +84,24 @@
     End Property
 
     Public Sub New(ByVal nType As Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes, ByVal nTrackable As Boolean,
+                   ByVal nPhysics As Boolean, ByVal nCollideDamage As Integer, ByVal nCauseDeflect As Boolean,
                    ByVal nHull As Game_Library.Game_Objects.StatDbl, ByVal nThrottle As Game_Library.Game_Objects.StatDbl,
-                   ByVal nAcceleration As Double, ByVal nTurnSpeed As Double)
+                   ByVal nAcceleration As Double, ByVal nTurnSpeed As Double, ByVal nHitBoxXDistance As Integer,
+                   ByVal nHitBoxYDistance As Integer)
         _Type = nType
         _Trackable = nTrackable
+        _Physics = nPhysics
+        _CollideDamage = nCollideDamage
+        _CauseDeflect = nCauseDeflect
         _Hull = nHull
         _Throttle = nThrottle
         _Acceleration = nAcceleration
         _TurnSpeed = nTurnSpeed
+        HitboxXDistance = nHitBoxXDistance
+        HitboxYDistance = nHitBoxYDistance
+        HitboxMaxDistance = Math.Sqrt((HitboxXDistance ^ 2) + (HitboxYDistance ^ 2))
+        HitboxAngles = {Math.Atan2(HitboxYDistance, HitboxXDistance),
+                        Math.Atan2(HitboxYDistance, -HitboxXDistance)}
     End Sub
 
     Public Sub Take_Damage(ByVal incomingDamage As Double)
@@ -106,6 +132,15 @@
         If yCoord > HitboxYDistance Then yCoord = HitboxYDistance 'Make sure the xCoord is on the actual hitbox
         Return Math.Sqrt((xCoord ^ 2) + (yCoord ^ 2)) 'Return the distance to the edge of the hitbox in the direction of the calling object
     End Function
+
+    Public Overridable Sub Collide(ByVal impactDamage As Integer, ByVal impactDirection As Double, ByVal deflect As Boolean) 'Handles the Ship colliding with another Ship
+        Take_Damage(impactDamage) 'Take the damage
+
+        If deflect Then 'Deflect from the collision
+            X -= Speed * Math.Cos(impactDirection) 'Move the Ship along the x axis
+            Y -= Speed * Math.Sin(impactDirection) 'Move the Ship along the y axis
+        End If
+    End Sub
 
     Public Overrides Sub Update() 'Updates the Ship
         firing = False 'The Ship has not fired this update

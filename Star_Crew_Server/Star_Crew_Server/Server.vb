@@ -45,7 +45,7 @@
 
         '-----Testing-----
         Combat.Ticker.Start()
-        For i As Integer = 0 To 4
+        For i As Integer = 0 To 9
             Combat.adding.Add(New AIShip)
         Next
         '-----------------
