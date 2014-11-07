@@ -2,12 +2,10 @@
     Inherits Ship
 
     Public Sub New()
-        Throttle.Current = Throttle.Maximum * 0.8
+        MyBase.New(Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes.Ship, True, New Game_Library.Game_Objects.StatDbl(0, 10, 10, True),
+                   New Game_Library.Game_Objects.StatDbl(0, 15, 15, True), 0.5, (Math.PI / 20))
         X = Int(Rnd() * 2000) - 1000
         Y = Int(Rnd() * 2000) - 1000
-        _Hull.Set_Bounds(0, 10)
-        _Hull.Current = 10
-        _TurnSpeed = Math.PI / 30
     End Sub
 
     Public Overrides Sub Update()

@@ -17,5 +17,9 @@
         nill
         max
     End Enum
+    Public Enum ObjectTypes 'The different Types of objects in the game
+        Ship
+        Projectile
+    End Enum
 
 End Namespace

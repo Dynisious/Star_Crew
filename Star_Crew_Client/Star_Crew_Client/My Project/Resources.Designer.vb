@@ -83,26 +83,6 @@ Namespace My.Resources
         '''<summary>
         '''  Looks up a localized resource of type System.Drawing.Bitmap.
         '''</summary>
-        Friend ReadOnly Property FriendlyStation() As System.Drawing.Bitmap
-            Get
-                Dim obj As Object = ResourceManager.GetObject("FriendlyStation", resourceCulture)
-                Return CType(obj,System.Drawing.Bitmap)
-            End Get
-        End Property
-        
-        '''<summary>
-        '''  Looks up a localized resource of type System.Drawing.Bitmap.
-        '''</summary>
-        Friend ReadOnly Property FriendlyThunder() As System.Drawing.Bitmap
-            Get
-                Dim obj As Object = ResourceManager.GetObject("FriendlyThunder", resourceCulture)
-                Return CType(obj,System.Drawing.Bitmap)
-            End Get
-        End Property
-        
-        '''<summary>
-        '''  Looks up a localized resource of type System.Drawing.Bitmap.
-        '''</summary>
         Friend ReadOnly Property NormalSpace() As System.Drawing.Bitmap
             Get
                 Dim obj As Object = ResourceManager.GetObject("NormalSpace", resourceCulture)

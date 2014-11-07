@@ -39,11 +39,11 @@
             FileIO.FileSystem.WriteAllText(SettingFile,
                                            ("If a mistake is made while editing this file the settings will return to default." + Environment.NewLine +
                                             settingNames(0) + settingElements(0) + ";" + Environment.NewLine +
-                                            settingNames(1) + CStr(settingElements(1)) + ";" + Environment.NewLine +
-                                            settingNames(2) + CStr(settingElements(2)) + ";" + Environment.NewLine +
-                                            settingNames(3) + CStr(settingElements(3)) + ";" + Environment.NewLine +
-                                            settingNames(4) + CStr(settingElements(4)) + ";" + Environment.NewLine +
-                                            settingNames(5) + CStr(settingElements(5)) + ";"), False)
+                                            settingNames(1) + settingElements(1).ToString() + ";" + Environment.NewLine +
+                                            settingNames(2) + settingElements(2).ToString() + ";" + Environment.NewLine +
+                                            settingNames(3) + settingElements(3).ToString() + ";" + Environment.NewLine +
+                                            settingNames(4) + settingElements(4).ToString() + ";" + Environment.NewLine +
+                                            settingNames(5) + settingElements(5).ToString() + ";"), False)
         Else 'Load settings from file
             Console.WriteLine("Loading Settings...")
             Try
@@ -84,11 +84,11 @@
         FileIO.FileSystem.WriteAllText(SettingFile, (
                                        "If a mistake is made while editing this file the settings will return to default." + Environment.NewLine +
                                        settingNames(0) + settingElements(0) + ";" + Environment.NewLine +
-                                       settingNames(1) + CStr(settingElements(1)) + ";" + Environment.NewLine +
-                                       settingNames(2) + CStr(settingElements(2)) + ";" + Environment.NewLine +
-                                       settingNames(3) + CStr(settingElements(3)) + ";" + Environment.NewLine +
-                                       settingNames(4) + CStr(settingElements(4)) + ";" + Environment.NewLine +
-                                       settingNames(5) + CStr(settingElements(5)) + ";"), False)
+                                       settingNames(1) + settingElements(1).ToString() + ";" + Environment.NewLine +
+                                       settingNames(2) + settingElements(2).ToString() + ";" + Environment.NewLine +
+                                       settingNames(3) + settingElements(3).ToString() + ";" + Environment.NewLine +
+                                       settingNames(4) + settingElements(4).ToString() + ";" + Environment.NewLine +
+                                       settingNames(5) + settingElements(5).ToString() + ";"), False)
     End Sub
 
     Sub Write_To_Error_Log(ByVal text As String)

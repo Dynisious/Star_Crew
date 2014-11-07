@@ -343,35 +343,45 @@
             If Client_Console.Client.Connected = True Then
                 Select Case e.KeyCode
                     Case Client_Console.settingElements(1)
-                        While Client_Console.Client.messageToSend = True 'Loop
-                        End While
-                        Client_Console.Client.sendBuff = Game_Library.Serialisation.ToBytes(
-                            {Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Throttle_Up, True}) 'Generate message
-                        Client_Console.Client.messageToSend = True 'Set the message to send
+                        If Client_Console.Client.Disconnecting = False Then
+                            While Client_Console.Client.messageToSend = True 'Loop
+                            End While
+                            Client_Console.Client.sendHeader = Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Throttle_Up 'Set message header
+                            Client_Console.Client.sendBoolean = True 'Set message
+                            Client_Console.Client.messageToSend = True 'Set the message to send
+                        End If
                     Case Client_Console.settingElements(2)
-                        While Client_Console.Client.messageToSend = True 'Loop
-                        End While
-                        Client_Console.Client.sendBuff = Game_Library.Serialisation.ToBytes(
-                            {Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Throttle_Down, True}) 'Generate message
-                        Client_Console.Client.messageToSend = True 'Set the message to send
+                        If Client_Console.Client.Disconnecting = False Then
+                            While Client_Console.Client.messageToSend = True 'Loop
+                            End While
+                            Client_Console.Client.sendHeader = Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Throttle_Down 'Set message header
+                            Client_Console.Client.sendBoolean = True 'Set the message
+                            Client_Console.Client.messageToSend = True 'Set the message to send
+                        End If
                     Case Client_Console.settingElements(3)
-                        While Client_Console.Client.messageToSend = True 'Loop
-                        End While
-                        Client_Console.Client.sendBuff = Game_Library.Serialisation.ToBytes(
-                            {Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Turn_Left, True}) 'Generate message
-                        Client_Console.Client.messageToSend = True 'Set the message to send
+                        If Client_Console.Client.Disconnecting = False Then
+                            While Client_Console.Client.messageToSend = True 'Loop
+                            End While
+                            Client_Console.Client.sendHeader = Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Turn_Left 'Set message header
+                            Client_Console.Client.sendBoolean = True 'Set the message
+                            Client_Console.Client.messageToSend = True 'Set the message to send
+                        End If
                     Case Client_Console.settingElements(4)
-                        While Client_Console.Client.messageToSend = True 'Loop
-                        End While
-                        Client_Console.Client.sendBuff = Game_Library.Serialisation.ToBytes(
-                            {Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Turn_Right, True}) 'Generate message
-                        Client_Console.Client.messageToSend = True 'Set the message to send
+                        If Client_Console.Client.Disconnecting = False Then
+                            While Client_Console.Client.messageToSend = True 'Loop
+                            End While
+                            Client_Console.Client.sendHeader = Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Turn_Right 'Set message header
+                            Client_Console.Client.sendBoolean = True 'Set message
+                            Client_Console.Client.messageToSend = True 'Set the message to send
+                        End If
                     Case Client_Console.settingElements(5)
-                        While Client_Console.Client.messageToSend = True 'Loop
-                        End While
-                        Client_Console.Client.sendBuff = Game_Library.Serialisation.ToBytes(
-                            {Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Fire_Weapons, True}) 'Generate message
-                        Client_Console.Client.messageToSend = True 'Set the message to send
+                        If Client_Console.Client.Disconnecting = False Then
+                            While Client_Console.Client.messageToSend = True 'Loop
+                            End While
+                            Client_Console.Client.sendHeader = Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Fire_Weapons 'Set message header
+                            Client_Console.Client.sendBoolean = True 'Set message
+                            Client_Console.Client.messageToSend = True 'Set the message to send
+                        End If
                 End Select
             End If
         End If
@@ -381,35 +391,45 @@
             If Client_Console.Client.Connected = True Then
                 Select Case e.KeyCode
                     Case Client_Console.settingElements(1)
-                        While Client_Console.Client.messageToSend = True 'Loop
-                        End While
-                        Client_Console.Client.sendBuff = Game_Library.Serialisation.ToBytes(
-                            {Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Throttle_Up, False}) 'Generate message
-                        Client_Console.Client.messageToSend = True 'Set the message to send
+                        If Client_Console.Client.Disconnecting = False Then
+                            While Client_Console.Client.messageToSend = True 'Loop
+                            End While
+                            Client_Console.Client.sendHeader = Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Throttle_Up 'Set message header
+                            Client_Console.Client.sendBoolean = False 'Set message
+                            Client_Console.Client.messageToSend = True 'Set the message to send
+                        End If
                     Case Client_Console.settingElements(2)
-                        While Client_Console.Client.messageToSend = True 'Loop
-                        End While
-                        Client_Console.Client.sendBuff = Game_Library.Serialisation.ToBytes(
-                            {Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Throttle_Down, False}) 'Generate message
-                        Client_Console.Client.messageToSend = True 'Set the message to send
+                        If Client_Console.Client.Disconnecting = False Then
+                            While Client_Console.Client.messageToSend = True 'Loop
+                            End While
+                            Client_Console.Client.sendHeader = Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Throttle_Down 'Set message header
+                            Client_Console.Client.sendBoolean = False 'Set the message
+                            Client_Console.Client.messageToSend = True 'Set the message to send
+                        End If
                     Case Client_Console.settingElements(3)
-                        While Client_Console.Client.messageToSend = True 'Loop
-                        End While
-                        Client_Console.Client.sendBuff = Game_Library.Serialisation.ToBytes(
-                            {Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Turn_Left, False}) 'Generate message
-                        Client_Console.Client.messageToSend = True 'Set the message to send
+                        If Client_Console.Client.Disconnecting = False Then
+                            While Client_Console.Client.messageToSend = True 'Loop
+                            End While
+                            Client_Console.Client.sendHeader = Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Turn_Left 'Set message header
+                            Client_Console.Client.sendBoolean = False 'Set message
+                            Client_Console.Client.messageToSend = True 'Set the message to send
+                        End If
                     Case Client_Console.settingElements(4)
-                        While Client_Console.Client.messageToSend = True 'Loop
-                        End While
-                        Client_Console.Client.sendBuff = Game_Library.Serialisation.ToBytes(
-                            {Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Turn_Right, False}) 'Generate message
-                        Client_Console.Client.messageToSend = True 'Set the message to send
+                        If Client_Console.Client.Disconnecting = False Then
+                            While Client_Console.Client.messageToSend = True 'Loop
+                            End While
+                            Client_Console.Client.sendHeader = Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Turn_Right 'Set message header
+                            Client_Console.Client.sendBoolean = False 'Set message
+                            Client_Console.Client.messageToSend = True 'Set the message to send
+                        End If
                     Case Client_Console.settingElements(5)
-                        While Client_Console.Client.messageToSend = True 'Loop
-                        End While
-                        Client_Console.Client.sendBuff = Game_Library.Serialisation.ToBytes(
-                            {Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Fire_Weapons, False}) 'Generate message
-                        Client_Console.Client.messageToSend = True 'Set the message to send
+                        If Client_Console.Client.Disconnecting = False Then
+                            While Client_Console.Client.messageToSend = True 'Loop
+                            End While
+                            Client_Console.Client.sendHeader = Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Fire_Weapons 'Set message header
+                            Client_Console.Client.sendBoolean = False 'Set message
+                            Client_Console.Client.messageToSend = True 'Set the message to send
+                        End If
                 End Select
             End If
         End If

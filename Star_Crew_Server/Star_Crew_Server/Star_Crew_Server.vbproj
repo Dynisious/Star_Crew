@@ -76,10 +76,11 @@
     <Import Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Communications.vb" />
+    <Compile Include="Networking\Communications.vb" />
     <Compile Include="Game obj\CombatSpace.vb" />
     <Compile Include="Game obj\Ship obj\AIShip.vb" />
     <Compile Include="Game obj\Ship obj\PlayerShip.vb" />
+    <Compile Include="Game obj\Ship obj\Projectile.vb" />
     <Compile Include="Game obj\Ship obj\Weapons\Rattler.vb" />
     <Compile Include="Game obj\Ship obj\Weapons\Weapon.vb" />
     <Compile Include="Server.vb" />
@@ -99,7 +100,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
     <Compile Include="Game obj\Ship obj\Ship.vb" />
-    <Compile Include="ServerClient.vb" />
+    <Compile Include="Networking\ServerClient.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="My Project\Resources.resx">

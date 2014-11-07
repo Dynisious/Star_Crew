@@ -38,23 +38,20 @@
             Console.WriteLine("Game has been initialised")
             Server.Comms.Initialise_Communications() 'Initialise the network
         Catch ex As Exception
-            Write_To_Error_Log("ERROR : There was an error while initialising the Server." +
+            Write_To_Error_Log("ERROR : There was an error while initialising the Server. Server will now Close." +
                                Environment.NewLine + ex.ToString())
+            End
         End Try
 
         '-----Testing-----
         Combat.Ticker.Start()
-        For i As Integer = 1 To 5
-            Combat.ShipList.Add(New AIShip)
+        For i As Integer = 0 To 4
+            Combat.adding.Add(New AIShip)
         Next
-        Combat.ShipList.Add(New AIShip)
-        Combat.ShipList(5).X = 80
-        Combat.ShipList(5).Y = 0
         '-----------------
 
         While Receive_Server_Commands() = True  'Continue to run the program
         End While
-        Finalise_Server() 'Close the Server objects
     End Sub
 
     Public Sub Finalise_Server() 'Closes the Server objects
@@ -81,8 +78,7 @@
                     "/kick:     (e.g. /Kick b) kicks the connected Client at the specified station:" + Environment.NewLine +
                     "           'b', 's' and 'e'")
             Case ServerCommands.close.ToString()
-                Return False
-                Exit Function
+                End
             Case ServerCommands.clr.ToString()
                 Console.Clear()
             Case ServerCommands.save.ToString()

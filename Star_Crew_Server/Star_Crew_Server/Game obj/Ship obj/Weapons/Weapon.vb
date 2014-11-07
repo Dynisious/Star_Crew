@@ -5,12 +5,6 @@
             Return _Parent
         End Get
     End Property
-    Private _Range As Integer 'The actual value of Range
-    Public ReadOnly Property Range As Integer 'An Integer value that represents the range of the Weapon
-        Get
-            Return _Range
-        End Get
-    End Property
     Private _Damage As Double 'The actual value of Damage
     Public ReadOnly Property Damage As Double 'A Double value which represents the damage the Weapon does
         Get
@@ -30,9 +24,8 @@
         End Get
     End Property
 
-    Public Sub New(ByRef nParent As Ship, ByVal nRange As Integer, ByVal nDamage As Double, ByVal nAmmunition As Game_Library.Game_Objects.StatInt, ByVal nReload As Integer)
+    Public Sub New(ByRef nParent As Ship, ByVal nDamage As Double, ByVal nAmmunition As Game_Library.Game_Objects.StatInt, ByVal nReload As Integer)
         _Parent = nParent
-        _Range = nRange
         _Damage = nDamage
         _Ammunition = nAmmunition
         _Reload = New Game_Library.Game_Objects.StatInt(0, 0, nReload, True)
@@ -44,16 +37,16 @@
         _Reload = Nothing
     End Sub
 
-    Public Sub Fire(ByVal nTargets As Ship()) 'Fires the Weapon
+    Public Sub Fire() 'Fires the Weapon
         If Ammunition.Current <> 0 And Reload.Current = 0 Then 'The Weapon is able to fire
             Ammunition.Current -= 1 'Remove one ammunition
             Reload.Current = Reload.Maximum 'Start the cooldown
-            Do_Damage(nTargets) 'Do Damage
+            Fire_Weapon() 'Do Damage
             Parent.firing = True 'Set firing to true
         End If
     End Sub
 
-    Public MustOverride Sub Do_Damage(ByVal targets As Ship()) 'Calculates doing damage to the target
+    Protected MustOverride Sub Fire_Weapon() 'Calculates doing damage to the target
 
     Public Sub Update() 'Updates the Weapon
         Reload.Current -= 1 'Step down the cooldown by 1
