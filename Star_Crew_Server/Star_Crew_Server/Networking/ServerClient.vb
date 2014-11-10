@@ -8,6 +8,7 @@
     Private disconnectMessage As String = "" 'The message to display while the Server Client disconnects
     Public Disconnecting As Boolean = False 'A Boolean value indicating whether the Client is disconnecting
     Public runClient As Boolean = True 'Keeps the Client open
+    Private Ping As Integer 'How many seconds it takes a message to travel from the Client to the Server at the time of connection
     Private ClientThread As New System.Threading.Thread(AddressOf Run_Comms) 'A Thread object to run the comms for the Client
     Private _throttleUp As Boolean = False 'The actual value of throttleUp
     Public ReadOnly Property throttleUp As Boolean 'A Boolean value indicating whether the throttle needs to increase
@@ -46,11 +47,16 @@
         successfulConnection = False 'The connection is not yet successful
         Try
             Name = Text.ASCIIEncoding.ASCII.GetString(Receive_ByteArray(Net.Sockets.SocketFlags.None)) 'Get the name of the Ship
+            Ping = (New TimeSpan(Date.UtcNow.Ticks).TotalSeconds -
+                                   BitConverter.ToDouble(Receive_ByteArray(Net.Sockets.SocketFlags.None), 0)) 'Set Ping
+            Dim temp As String = ("Server : The '" + Name + "' has been connected. Ping: " + CStr(Ping) + "sec")
+            Console.WriteLine(temp) 'Write that the Client is connected and the seconds for the ping
+            Server.Write_To_Error_Log(Environment.NewLine + temp) 'Write that the Client is connected and the seconds for the ping
+            Send(BitConverter.GetBytes(ping), Net.Sockets.SocketFlags.None) 'Send the ping to the Client
             successfulConnection = True 'The connection was successful
-            ClientThread.Start()
             Craft = New PlayerShip(Me)
             Server.Combat.adding.Add(Craft)
-            Console.WriteLine("Server : The '" + Name + "' has been connected.")
+            ClientThread.Start()
         Catch ex As Net.Sockets.SocketException
             Server.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an error while connecting a new Client." +
                                       Environment.NewLine + ex.ToString())

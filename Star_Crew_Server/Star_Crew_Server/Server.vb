@@ -87,9 +87,8 @@
 
             Case Else 'It was an invalid command
                 Console.WriteLine("INVALID COMMAND : Check spelling and try again")
-                Return True
         End Select
-        Return False
+        Return True
     End Function
 
     Public Function Normalise_Direction(ByVal nDirection As Double) As Double 'Returns a radian between the range of 0-2*Pi

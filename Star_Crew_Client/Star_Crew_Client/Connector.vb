@@ -14,6 +14,7 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
     Private disconnectMessage As String = ""
     Public Disconnecting As Boolean = False
     Public loopComms As Boolean = True
+    Private Ping As Integer 'An Integer value indicating how many seconds it took the connection request to go from the Client to the Server
     Private Stars() As Point = {New Point(Int(Rnd() * displayBoxSideLength), Int(Rnd() * displayBoxSideLength)),
                                 New Point(Int(Rnd() * displayBoxSideLength), Int(Rnd() * displayBoxSideLength)),
                                 New Point(Int(Rnd() * displayBoxSideLength), Int(Rnd() * displayBoxSideLength)),
@@ -32,9 +33,15 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
         Dim buff() As Byte = System.Text.ASCIIEncoding.ASCII.GetBytes(Name) 'Get an array of Bytes to represent the Client's name
         Send(BitConverter.GetBytes(buff.Length), Net.Sockets.SocketFlags.None) 'Send an Integer representing the number of Bytes to be received
         Send(buff, Net.Sockets.SocketFlags.None) 'Send the array of Bytes representing the Clients name
+        buff = BitConverter.GetBytes(New TimeSpan(Date.UtcNow.Ticks).TotalSeconds) 'Get an array of Bytes representing the seconds since midnight UTC time
+        Send(BitConverter.GetBytes(buff.Length), Net.Sockets.SocketFlags.None) 'Send an Integer representing the number of Bytes to be received
+        Send(buff, Net.Sockets.SocketFlags.None) 'Send the seconds since midnight in UTC time
+        Ping = Receive_Header(Net.Sockets.SocketFlags.None) 'Set Ping
+        Dim temp As String = (Environment.NewLine + "Client : Connected to " + CStr(nIP) + ":" + CStr(nPort) + " Ping: " + CStr(Ping) + "sec")
+        Console.WriteLine(temp) 'Write that the Client has connected and the ping
+        Client_Console.Write_To_Error_Log(temp) 'Write that the Client has connected and the ping
         Client_Console.CommsThread = New System.Threading.Thread(AddressOf Run_Comms)
         Client_Console.CommsThread.Start()
-        Console.WriteLine(Environment.NewLine + "Client : Connected to {0}:{1}", nIP, nPort)
         Screen.GameScreen.Layout(Client_Console.OutputScreen, hosting)
     End Sub
 
