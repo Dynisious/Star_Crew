@@ -46,7 +46,16 @@
         MyBase.New(nSocket, 300, -1, "Unnamed Client", index)
         Console.WriteLine(Environment.NewLine + "Server : Connecting a new Client at '" + RemoteEndPoint.ToString() + "'...")
         successfulConnection = False 'The connection is not yet successful
-        Name = Text.ASCIIEncoding.ASCII.GetString(Receive_ByteArray(Net.Sockets.SocketFlags.None)) 'Get the name of the Ship
+        Try
+            Name = Text.ASCIIEncoding.ASCII.GetString(Receive_ByteArray(Net.Sockets.SocketFlags.None)) 'Get the name of the Ship
+        Catch ex As Net.Sockets.SocketException
+            Server.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an exception while connecting a client at '" +
+                                      RemoteEndPoint.ToString() + Environment.NewLine + ex.ToString())
+        Catch ex As Exception
+            Server.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an unexpected and unhandled exception while connecting a client at '" +
+                                      RemoteEndPoint.ToString() + ". Server will now close." + Environment.NewLine + ex.ToString())
+            End
+        End Try
         sendingSemaphore = New System.Threading.Semaphore(0, 1) 'Create a new Semaphore for the sending thread
         accessSendList = New System.Threading.Mutex(False) 'Create a new Mutex for synchronising access to SendList
         waitToClose = New System.Threading.Mutex(False) 'Create a new Mutex for stopping the Socket from closing until all sends are completed
