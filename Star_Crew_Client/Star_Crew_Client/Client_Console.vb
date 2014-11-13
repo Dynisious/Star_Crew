@@ -1,16 +1,23 @@
 ﻿Module Client_Console 'Used to output messages to the console for error handling etc for the Client
     Public WithEvents OutputScreen As New Screen 'A Screen object used as the GUI for the Client
     Public Client As Connector 'A Connector object used to connect to a Server
-    Public CommsThread As System.Threading.Thread 'A Thread object used to run the communications
     Private ReadOnly WorkingDirectory As String = "C:\Users\" + Environment.UserName + "\AppData\Roaming\Star Crew Client"
     Private ReadOnly ErrorLog As String = "Error Log.log" 'A String value representing the address of the game's error log
     Private ReadOnly SettingFile As String = "Settings.txt" 'A String value representing the address of the game's settings file
+    Public Enum Settings 'An enumerator of Settings
+        Ship_Name 'The Name of the Ship
+        Throttle_Up 'The Key to throttle up the Ship
+        Throttle_Down 'The Key to throttle down the Ship
+        Turn_Right 'The Key to turn the Ship right
+        Turn_Left 'The Key to turn the Ship left
+        Fire_Weapon 'The Key to fire the Ship's Weapon
+    End Enum
     Private ReadOnly settingNames() As String = {
         "Ship Name:",
         "Throttle Up:",
         "Throttle Down:",
-        "Turn Left:",
         "Turn Right:",
+        "Turn Left:",
         "Fire Weapon:"}
     Public settingElements() As Object = {
         "VTC Unnamed Ship",
@@ -36,30 +43,24 @@
         Console.WriteLine("Checking Settings exist...")
         If FileIO.FileSystem.FileExists(SettingFile) = False Then 'The settings file does not exist
             Console.WriteLine("The Settings file does not exist. It will be created now.")
-            FileIO.FileSystem.WriteAllText(SettingFile,
-                                           ("If a mistake is made while editing this file the settings will return to default." + Environment.NewLine +
-                                            settingNames(0) + settingElements(0) + ";" + Environment.NewLine +
-                                            settingNames(1) + settingElements(1).ToString() + ";" + Environment.NewLine +
-                                            settingNames(2) + settingElements(2).ToString() + ";" + Environment.NewLine +
-                                            settingNames(3) + settingElements(3).ToString() + ";" + Environment.NewLine +
-                                            settingNames(4) + settingElements(4).ToString() + ";" + Environment.NewLine +
-                                            settingNames(5) + settingElements(5).ToString() + ";"), False)
+            Save_Settings()
         Else 'Load settings from file
             Console.WriteLine("Loading Settings...")
             Try
                 Dim text As String = FileIO.FileSystem.ReadAllText(SettingFile) 'Get the text for the settings
                 Dim index As Integer = text.IndexOf(settingNames(0)) + settingNames(0).Length 'Get the starting index of the setting
+                Dim converter As New System.Windows.Forms.KeysConverter
                 settingElements(0) = text.Substring(index, (text.IndexOf(";", index) - index)) 'Set the setting
                 index = text.IndexOf(settingNames(1)) + settingNames(1).Length 'Get the starting index of the setting
-                settingElements(1) = CInt(text.Substring(index, (text.IndexOf(";", index) - index))) 'Set the setting
+                settingElements(1) = converter.ConvertFromString(text.Substring(index, (text.IndexOf(";", index) - index))) 'Set the setting
                 index = text.IndexOf(settingNames(2)) + settingNames(2).Length 'Get the starting index of the setting
-                settingElements(2) = CInt(text.Substring(index, (text.IndexOf(";", index) - index))) 'Set the setting
+                settingElements(2) = converter.ConvertFromString(text.Substring(index, (text.IndexOf(";", index) - index))) 'Set the setting
                 index = text.IndexOf(settingNames(3)) + settingNames(3).Length 'Get the starting index of the setting
-                settingElements(3) = CInt(text.Substring(index, (text.IndexOf(";", index) - index))) 'Set the setting
+                settingElements(3) = converter.ConvertFromString(text.Substring(index, (text.IndexOf(";", index) - index))) 'Set the setting
                 index = text.IndexOf(settingNames(4)) + settingNames(4).Length 'Get the starting index of the setting
-                settingElements(4) = CInt(text.Substring(index, (text.IndexOf(";", index) - index))) 'Set the setting
+                settingElements(4) = converter.ConvertFromString(text.Substring(index, (text.IndexOf(";", index) - index))) 'Set the setting
                 index = text.IndexOf(settingNames(5)) + settingNames(5).Length 'Get the starting index of the setting
-                settingElements(5) = CInt(text.Substring(index, (text.IndexOf(";", index) - index))) 'Set the setting
+                settingElements(5) = converter.ConvertFromString(text.Substring(index, (text.IndexOf(";", index) - index))) 'Set the setting
             Catch ex As Exception
                 Console.WriteLine("ERROR : There was an error while loading user settings. Some settings may not have been loaded.")
                 Write_To_Error_Log(Environment.NewLine + "ERROR : There was an error while loading user settings. Some settings may not have been loaded." +
@@ -81,14 +82,15 @@
     End Sub
 
     Sub Save_Settings()
+        Dim converter As New System.Windows.Forms.KeysConverter
         FileIO.FileSystem.WriteAllText(SettingFile, (
                                        "If a mistake is made while editing this file the settings will return to default." + Environment.NewLine +
-                                       settingNames(0) + settingElements(0) + ";" + Environment.NewLine +
-                                       settingNames(1) + settingElements(1).ToString() + ";" + Environment.NewLine +
-                                       settingNames(2) + settingElements(2).ToString() + ";" + Environment.NewLine +
-                                       settingNames(3) + settingElements(3).ToString() + ";" + Environment.NewLine +
-                                       settingNames(4) + settingElements(4).ToString() + ";" + Environment.NewLine +
-                                       settingNames(5) + settingElements(5).ToString() + ";"), False)
+                                       settingNames(0) + converter.ConvertToString(settingElements(0)) + ";" + Environment.NewLine +
+                                       settingNames(1) + converter.ConvertToString(settingElements(1)) + ";" + Environment.NewLine +
+                                       settingNames(2) + converter.ConvertToString(settingElements(2)) + ";" + Environment.NewLine +
+                                       settingNames(3) + converter.ConvertToString(settingElements(3)) + ";" + Environment.NewLine +
+                                       settingNames(4) + converter.ConvertToString(settingElements(4)) + ";" + Environment.NewLine +
+                                       settingNames(5) + converter.ConvertToString(settingElements(5)) + ";"), False)
     End Sub
 
     Sub Write_To_Error_Log(ByVal text As String)

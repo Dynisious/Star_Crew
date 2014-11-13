@@ -5,16 +5,18 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
     Private ReadOnly displayBoxCenter As Integer = displayBoxSideLength / 2 'The coord of the center of the display box
     Private ReadOnly displayBoxMargin As Integer = (Client_Console.OutputScreen.Height - displayBoxSideLength) / 2 'The margin from the left and top sides of the display form that displayBox is located
     Private receivedElements() As Object 'An Array of objects to store the received message elements
-    Private waitingForMessage As Boolean = True 'A Boolean value indecating whether the Client is waiting for an updated message
-    Public sendHeader As Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header 'A Header to send to the Server specifying what control is being changed
-    Public sendBoolean As Boolean 'A Boolean value to send to the Server specifying the state of the control
-    Public messageToSend As Boolean = False 'A Boolean value indicating whether the Client is waiting to send a message
+    Private waitingForMessage As Boolean = True 'A Boolean value indicating whether the Client is waiting for a new message
+    Public receivingAlive As Boolean = True 'Keeps the receiving thread open
+    Public sendingAlive As Boolean = True 'Keeps the sending thread open
+    Private receiveThread As System.Threading.Thread 'A Thread object used to receive messages from the Client
+    Private sendThread As System.Threading.Thread 'A Thread object used to send messages to the Client
+    Private sendingSemaphore As System.Threading.Semaphore 'A Semaphore object used to block the sendThread until data is ready
+    Private accessSendList As System.Threading.Mutex 'A Mutex object used to synchronise access to SendList
+    Private sendList As New List(Of Byte()) 'A List object of Bytes to be sent
+    Private errorList As New List(Of String) 'A List of strings that represent the error messages for the messages to be sent
+    Private waitToClose As System.Threading.Mutex 'A Semaphore object used to block the receiveThread from closing until the SendThread is closed
+    Private disconnecting As Boolean = False 'A Boolean value indicating whether the Client should continue sending or close for a disconnect
     Private WithEvents ticker As New Timers.Timer With {.Interval = 25, .AutoReset = True, .Enabled = True} 'Create a timer object to update the Screen
-    Private disconnectReason As Star_Crew_Shared_Libraries.Networking_Messages.General_Headers = -1
-    Private disconnectMessage As String = ""
-    Public Disconnecting As Boolean = False
-    Public loopComms As Boolean = True
-    Private Ping As Integer 'An Integer value indicating how many seconds it took the connection request to go from the Client to the Server
     Private Stars() As Point = {New Point(Int(Rnd() * displayBoxSideLength), Int(Rnd() * displayBoxSideLength)),
                                 New Point(Int(Rnd() * displayBoxSideLength), Int(Rnd() * displayBoxSideLength)),
                                 New Point(Int(Rnd() * displayBoxSideLength), Int(Rnd() * displayBoxSideLength)),
@@ -27,127 +29,138 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
                                 New Point(Int(Rnd() * displayBoxSideLength), Int(Rnd() * displayBoxSideLength)),
                                 New Point(Int(Rnd() * displayBoxSideLength), Int(Rnd() * displayBoxSideLength)),
                                 New Point(Int(Rnd() * displayBoxSideLength), Int(Rnd() * displayBoxSideLength))}
+    Private speedScale As Integer = 2 'A Scaler for how fast the starts move beneath the Ship
+    Public values(4) As Boolean 'An array of Boolean values indicating which keys are down and which aren't
 
-    Public Sub New(ByVal nIP As String, ByVal nPort As Integer, ByVal hosting As Boolean)
-        MyBase.New(nIP, nPort, 300, 300, Client_Console.settingElements(0)) 'Attempts to connect to a Server and Set's the name etc of the Client
+    Public Sub New(ByVal nIP As String, ByVal nPort As Integer)
+        MyBase.New(nIP, nPort, 300, -1, Client_Console.settingElements(0)) 'Attempts to connect to a Server and Set's the name etc of the Client
         Dim buff() As Byte = System.Text.ASCIIEncoding.ASCII.GetBytes(Name) 'Get an array of Bytes to represent the Client's name
         Send(BitConverter.GetBytes(buff.Length), Net.Sockets.SocketFlags.None) 'Send an Integer representing the number of Bytes to be received
         Send(buff, Net.Sockets.SocketFlags.None) 'Send the array of Bytes representing the Clients name
-        buff = BitConverter.GetBytes(New TimeSpan(Date.UtcNow.Ticks).TotalSeconds) 'Get an array of Bytes representing the seconds since midnight UTC time
-        Send(BitConverter.GetBytes(buff.Length), Net.Sockets.SocketFlags.None) 'Send an Integer representing the number of Bytes to be received
-        Send(buff, Net.Sockets.SocketFlags.None) 'Send the seconds since midnight in UTC time
-        Ping = Receive_Header(Net.Sockets.SocketFlags.None) 'Set Ping
-        Dim temp As String = (Environment.NewLine + "Client : Connected to " + CStr(nIP) + ":" + CStr(nPort) + " Ping: " + CStr(Ping) + "sec")
+        sendingSemaphore = New System.Threading.Semaphore(0, 1) 'Create a new Semaphore for the sending thread
+        accessSendList = New System.Threading.Mutex(False) 'Create a new Mutex for synchronising access to SendList
+        waitToClose = New System.Threading.Mutex(False) 'Create a new Mutex for stopping the Socket from closing until all sends are completed
+        sendThread = New System.Threading.Thread(AddressOf Sending) 'Create a new Thread for sending messages
+        sendThread.Start()
+        receiveThread = New System.Threading.Thread(AddressOf Receiving) 'Create a new Thread for receiving messages
+        receiveThread.Start() 'Start the thread
+        Dim temp As String = (Environment.NewLine + "Client : Connected to " + CStr(nIP) + ":" + CStr(nPort))
         Console.WriteLine(temp) 'Write that the Client has connected and the ping
         Client_Console.Write_To_Error_Log(temp) 'Write that the Client has connected and the ping
-        Client_Console.CommsThread = New System.Threading.Thread(AddressOf Run_Comms)
-        Client_Console.CommsThread.Start()
-        Screen.GameScreen.Layout(Client_Console.OutputScreen, hosting)
+        Screen.GameScreen.Layout(Client_Console.OutputScreen)
     End Sub
 
-    Public Sub Run_Comms() 'Handles the sending and receiving of messages
+    Public Sub Send_Message(ByVal messages()() As Byte, ByVal errorMessages() As String)
         Try
-            Dim emptyIterations As Integer 'An Integer value that counts the iterations without a message from the client
-            Dim iterationThreshold As Integer = 1000 'An Integer value that defines how many iterations can pass with no data before disconnect
-            Do Until loopComms = False Or Connected = False
-                If emptyIterations = iterationThreshold Then 'The Client has been waiting too long
-                    loopComms = False 'Close the comms
-                    Client_Console.Write_To_Error_Log(Environment.NewLine + "ERROR : The Client passed the iteration threshold without data being received.")
-                    If disconnectMessage <> "" Then 'Add another reason to the list
-                        disconnectMessage = ("The Client passed the iteration threshold without data being received, " + disconnectMessage)
-                    Else 'Set the reason
-                        disconnectMessage = ("The Client passed the iteration threshold without data being received")
-                    End If
-                End If
-                emptyIterations += 1 'Add one iteration
+            accessSendList.WaitOne()
+            If sendList.Count = 0 Then sendingSemaphore.Release() 'Release the semaphore so that the sendThread starts sending
+            sendList.AddRange(messages) 'Add the messages to the list
+            errorList.AddRange(errorMessages) 'Add the error messages to the List
+            accessSendList.ReleaseMutex()
+        Catch ex As Exception
+            Client_Console.Write_To_Error_Log("ERROR : There was an error while calling Send_Message(). Client will now close." +
+                                              Environment.NewLine + ex.ToString())
+            End
+        End Try
+    End Sub
+    Private Sub Sending() 'Sends each of the elements in data
+        Try
+            waitToClose.WaitOne() 'Hold the mutex until the Send thread is closed
+            Do
+                sendingSemaphore.WaitOne()
+                Do
+                    Console.WriteLine("Sending")
+                    accessSendList.WaitOne()
+                    Try
+                        Send(sendList(0), Net.Sockets.SocketFlags.None) 'Send the message
+                        sendList.RemoveAt(0)
+                        errorList.RemoveAt(0)
+                    Catch ex As Exception
+                        Client_Console.Write_To_Error_Log(Environment.NewLine + errorList(0) + Environment.NewLine + ex.ToString()) 'Write to the error log
+                        End
+                    End Try
+                    accessSendList.ReleaseMutex()
+                Loop Until sendList.Count = 0 Or disconnecting 'Loop while there's messages to send
+            Loop While sendingAlive 'Loop while the sending is alive
+            waitToClose.ReleaseMutex() 'The Send thread is closed
+        Catch ex As Net.Sockets.SocketException
+            Client_Console.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an error while sending a message to the Server. Client will now disconnect." +
+                                              Environment.NewLine + ex.ToString())
+            sendingAlive = False
+            receivingAlive = False
+            disconnecting = True
+            Screen.MenuScreen.Layout(Client_Console.OutputScreen)
+        Catch ex As Exception
+            Client_Console.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an unexpected and unhandled error while sending a message to the Server. Client will now close." +
+                                              Environment.NewLine + ex.ToString())
+            End
+        End Try
+        Client_Console.OutputScreen.sendKeys = False 'Stop sending keys
+    End Sub
 
-                '-----Receive Message from Server-----
-                Try
-                    If Available <> 0 Then 'There is data to receive
-                        emptyIterations = 0 'Clear the empty iterations
-                        Dim receivedHeader As Integer = Receive_Header(Net.Sockets.SocketFlags.None) 'Receive a message header from the Server
-                        If receivedHeader = Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Bad_Message_Exception Then 'The Server received a bad message from the Client
-                            Disconnecting = True
-                            disconnectMessage = "The Server received a bad message from the Client"
-                        ElseIf receivedHeader = Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Client_Kicked_Exception Then 'The Client has been kicked from the Server
-                            Disconnecting = True
-                            disconnectMessage = "The Server kicked the Client"
-                        ElseIf receivedHeader = Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Server_Closed_Exception Then 'The Server Closed
-                            Disconnecting = True
-                            Disconnecting = "The Server closed while the Client was still connected"
-                        ElseIf receivedHeader = Star_Crew_Shared_Libraries.Networking_Messages.Server_Message_Header.Ship_To_Ship Then 'The Server is sending a Ship_To_Ship message
-                            If waitingForMessage = True Then 'The Client is waiting for a new message from the Client
+    Private Sub Receiving() 'Receives messages
+        Try
+            While receivingAlive 'Loop while comms are open
+                If Available <> 0 Then 'Theres data to receive
+                    Select Case Receive_Header(Net.Sockets.SocketFlags.None) 'Decide what to do with the received header
+                        Case Star_Crew_Shared_Libraries.Networking_Messages.Server_Message_Header.Ship_To_Ship
+                            If waitingForMessage Then
                                 receivedElements = Game_Library.Serialisation.FromBytes(Receive_ByteArray(Net.Sockets.SocketFlags.None)) 'Receive the message
                                 waitingForMessage = False
-                            Else 'Clear the receive buffer
-                                Receive_ByteArray(Net.Sockets.SocketFlags.None) 'Clear the buffer by receiving the message
+                            Else
+                                Receive_ByteArray(Net.Sockets.SocketFlags.None) 'Receive to clear the buffer
                             End If
-
-                            '-----Disconnect or Send a message back if necessary-----
-                            Try
-                                If Disconnecting = True Then 'Disconnect
-                                    loopComms = False
-                                    '-----Send the disconnect reason to the Server if there is one-----
-                                    If disconnectReason <> -1 Then 'There's a reason to send
-                                        Try
-                                            Send(BitConverter.GetBytes(True), Net.Sockets.SocketFlags.None) 'Send true to the Server
-                                            Send(BitConverter.GetBytes(disconnectReason), Net.Sockets.SocketFlags.None) 'Send the disconnect reason to the Server
-                                        Catch ex As Net.Sockets.SocketException
-                                            Client_Console.Write_To_Error_Log(Environment.NewLine + "There was an error while sending the disconnect reason to the Server." +
-                                                                              Environment.NewLine + ex.ToString())
-                                        Catch ex As Exception
-                                            Client_Console.Write_To_Error_Log(Environment.NewLine + "There was an unexpected and unhandled error while sending the disconnect reason to the Server. Client will now close." +
-                                                                              Environment.NewLine + ex.ToString())
-                                            End
-                                        End Try
-                                    Else
-                                        Send(BitConverter.GetBytes(False), Net.Sockets.SocketFlags.None) 'Send false to the Server
-                                    End If
-                                    '------------------------------------------------------------------
-                                ElseIf messageToSend = True Then 'There is a message pending to send
-                                    Send(BitConverter.GetBytes(True), Net.Sockets.SocketFlags.None) 'Send true to the Server
-                                    Send(BitConverter.GetBytes(sendHeader), Net.Sockets.SocketFlags.None) 'Send the message header to the Server
-                                    Send(BitConverter.GetBytes(sendBoolean), Net.Sockets.SocketFlags.None) 'Send the boolean to the Server
-                                    messageToSend = False
-                                Else 'There is nothing to send
-                                    Send(BitConverter.GetBytes(False), Net.Sockets.SocketFlags.None) 'Send false to the Server
-                                End If
-                            Catch ex As Net.Sockets.SocketException
-                                Client_Console.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an error while sending a message to the Server. Client will now disconnect." +
-                                                                  Environment.NewLine + ex.ToString())
-                                Disconnecting = True
-                                disconnectMessage = "The Client encountered an error while sending to the Server"
-                            Catch ex As Exception
-                                Client_Console.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an unexpected and unhandled error while sending a message to the Server. Client will now close." +
-                                                                  Environment.NewLine + ex.ToString())
-                                End
-                            End Try
-                            '--------------------------------------------------------
-                        Else 'The Client received an unknown header from the Server
-                            Disconnecting = True
-                            disconnectReason = Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Bad_Message_Exception
-                            disconnectMessage = "The Server sent a bad message header"
-                        End If
-                    End If
-                Catch ex As Net.Sockets.SocketException
-                    Client_Console.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an error while receiving a message from the Server. Client will now disconnect." +
-                                                      Environment.NewLine + ex.ToString())
-                    disconnectMessage = If((disconnectMessage = ""),
-                                           ("There was an error while receiving a message from the Server, " + disconnectMessage),
-                                           "There was an error while receiving a message from the Server")
-                Catch ex As Exception
-                    Client_Console.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an unexpected and unhandled error while receiving a message from the Server. Client will now close." +
-                                                      Environment.NewLine + ex.ToString())
-                    End
-                End Try
-                '-------------------------------------
-
-                System.Threading.Thread.Sleep(10) 'Wait for 10 milliseconds
-            Loop
-
-            Finalise_Client()
+                        Case Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Bad_Message_Exception
+                            receivingAlive = False 'Close the Client
+                            sendingAlive = False 'Close the Client
+                            disconnecting = True
+                            Client_Console.Write_To_Error_Log(Environment.NewLine + "Client : The Server receieved a bad message from the Client.")
+                        Case Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Server_Closed_Exception
+                            receivingAlive = False 'Close the Client
+                            sendingAlive = False 'Close the Client
+                            disconnecting = True
+                            Client_Console.Write_To_Error_Log(Environment.NewLine + "Client : The Server closed before disconnecting from the Client.")
+                        Case Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Client_Kicked_Exception
+                            receivingAlive = False 'Close the Client
+                            sendingAlive = False 'Close the Client
+                            disconnecting = True
+                            Client_Console.Write_To_Error_Log(Environment.NewLine + "Client : The the Client was kicked from the Server.")
+                        Case Else
+                            Client_Console.Write_To_Error_Log(Environment.NewLine + "ERROR : The Server sent an unknown message header. Client will now disconnect.")
+                            Send_Message({BitConverter.GetBytes(Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Bad_Message_Exception)},
+                                         {"ERROR : There was an error sending the Bad_Message_Exception to the Server. Client will now close."})
+                            sendingAlive = False
+                            receivingAlive = False
+                    End Select
+                End If
+            End While
+        Catch ex As Net.Sockets.SocketException
+            Client_Console.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an error while receiving a message to the Server. Client will now disconnect." +
+                                              Environment.NewLine + ex.ToString())
+            sendingAlive = False
+            receivingAlive = False
+            disconnecting = True
         Catch ex As Exception
-            Client_Console.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an error while executing the Client's comms. Client will now close." +
+            Client_Console.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an unexpected and unhandled error while receiving a message from the " + Name + ". The Server will now close." +
+                                      Environment.NewLine + ex.ToString())
+            End
+        End Try
+
+        Finalise_Client()
+    End Sub
+
+    Private Sub Finalise_Client()
+        Try
+            waitToClose.WaitOne() 'Wait till the send thread is done before closing
+            Client_Console.Client = Nothing
+            If Client_Console.OutputScreen.Server IsNot Nothing Then
+                If Client_Console.OutputScreen.Server.HasExited = False Then Client_Console.OutputScreen.Server.CloseMainWindow() 'Make Sure the Server is not left open
+            End If
+            Screen.MenuScreen.Layout(Client_Console.OutputScreen)
+            Close()
+            waitToClose.ReleaseMutex()
+        Catch ex As Exception
+            Client_Console.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an error while closing the connection to the Server. The Server will now close." +
                                               Environment.NewLine + ex.ToString())
             End
         End Try
@@ -156,7 +169,7 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
     Private Delegate Sub Text_Setting(ByVal text As String)
     Private Sub Display_Ship_To_Ship() Handles ticker.Elapsed 'Used to display Ship to Ship combat
         Try
-            If waitingForMessage = False Then 'Check that the message is up to date
+            If Not waitingForMessage Then 'Check that the message is up to date
                 Dim positions() As Point = receivedElements(0) 'Get the Array of Point objects representing the objects' locations
                 Dim directions() As Double = receivedElements(1) 'Get the Array of Double values representing the objects' directions
                 Dim allegiances() As Star_Crew_Shared_Libraries.Shared_Values.Allegiances = receivedElements(2) 'Get the Array of Allegiances values representing the objects' allegiances
@@ -170,8 +183,8 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
                 waitingForMessage = True 'The message can now be updated
 
                 '-----Translate Positions-----
-                Dim xOffset As Integer = (50 * Math.Cos(directions(clientIndex) + Math.PI)) 'Get the x offset of the client
-                Dim yOffset As Integer = (50 * Math.Sin(directions(clientIndex) + Math.PI)) 'Get the y offset of the client
+                Dim xOffset As Integer = (75 * Math.Cos(directions(clientIndex) + Math.PI)) 'Get the x offset of the client
+                Dim yOffset As Integer = (75 * Math.Sin(directions(clientIndex) + Math.PI)) 'Get the y offset of the client
                 For i As Integer = 0 To UBound(positions) 'Loop through all positions
                     positions(i).X += xOffset 'Translate the x coord
                     positions(i).Y += yOffset 'Translate the y coord
@@ -179,23 +192,28 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
                 '-----------------------------
 
                 '-----Render Objects-----
+                '-----Render Text-----
                 Dim d As New Text_Setting(AddressOf Screen.GameScreen.lblHull_Set_Text) 'Create a delegate
                 Screen.GameScreen.lblHull.Invoke(d, {"HULL: " + (clientHull.X).ToString() + "/" + (clientHull.Y).ToString()}) 'Write the text to lblHull
                 d = New Text_Setting(AddressOf Screen.GameScreen.lblThrottle_Set_Text) 'Create a delegate
                 Screen.GameScreen.lblThrottle.Invoke(d, {"THROTTLE: " + FormatNumber(clientSpeed.X, 2).ToString() + "/" + FormatNumber(clientSpeed.Y, 2).ToString()}) 'Write the text to lblThrottle
                 d = New Text_Setting(AddressOf Screen.GameScreen.lblAmmunition_Set_Text) 'Create a delegate
                 Screen.GameScreen.lblAmmunition.Invoke(d, {"AMMUNITION: " + (clientAmmunition.X).ToString() + "/" + (clientAmmunition.Y).ToString()}) 'Write the text to lblAmmunition
+                '---------------------
+
                 Dim img As Bitmap = My.Resources.NormalSpace.Clone() 'Create a Bitmap to be drawn on
                 Dim imgG As Drawing.Graphics = Graphics.FromImage(img) 'Create a graphics object from img
+
+                '-----Draw Stars-----
                 For i As Integer = 0 To UBound(Stars) 'Loop through every star
-                    Stars(i).X += (Math.Cos(directions(clientIndex) + Math.PI) * clientSpeed.X) 'Move the star
+                    Stars(i).X += (Math.Cos(directions(clientIndex) + Math.PI) * clientSpeed.X * speedScale) 'Move the star
                     If Stars(i).X < 0 Then
                         Stars(i).X = displayBoxSideLength
                     ElseIf Stars(i).X > displayBoxSideLength Then
                         Stars(i).X = 0
                     End If
 
-                    Stars(i).Y += (Math.Sin(directions(clientIndex) + Math.PI) * clientSpeed.X) 'Move the star
+                    Stars(i).Y += (Math.Sin(directions(clientIndex) + Math.PI) * clientSpeed.X * speedScale) 'Move the star
                     If Stars(i).Y < 0 Then
                         Stars(i).Y = displayBoxSideLength
                     ElseIf Stars(i).Y > displayBoxSideLength Then
@@ -204,6 +222,8 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
 
                     imgG.FillEllipse(Brushes.White, Stars(i).X + xOffset, Stars(i).Y + yOffset, 7, 7) 'Draw Star
                 Next
+                '--------------------
+                '-----Draw Objects-----
                 For i As Integer = 0 To positions.Length - 1 'Loop through all values
                     Dim distance As Integer = Math.Sqrt((positions(i).X ^ 2) + (positions(i).Y ^ 2)) 'Get the distance of the object from the Client's craft
                     If distance > 200 And types(i) <> Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes.Projectile Then 'Draw them on the edge of the circle
@@ -241,8 +261,11 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
                         End Select
                     End If
                 Next
+                '----------------------
+                '-----Draw Images-----
                 imgG.DrawRectangle(New Pen(Brushes.White, 2), 0, 0, displayBoxSideLength, displayBoxSideLength) 'Draw a border
                 Client_Console.OutputScreen.CreateGraphics.DrawImage(img, New Point(displayBoxMargin, displayBoxMargin)) 'Draw the image onto the Screen
+                '---------------------
                 '------------------------
 
                 waitingForMessage = True
@@ -252,30 +275,6 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
                                               Environment.NewLine + ex.ToString())
             End
         End Try
-    End Sub
-
-    Public Sub Disconnect_Client(ByVal reason As Star_Crew_Shared_Libraries.Networking_Messages.General_Headers, ByVal message As String)
-        disconnectReason = reason
-        disconnectMessage = message
-        Disconnecting = True
-        While Disconnecting = True
-        End While
-    End Sub
-
-    Private Sub Finalise_Client() 'Disconnects the Client from a Server
-        Console.WriteLine(Environment.NewLine + "Client : Disconnecting from the '" + Name + "'" +
-                          If((disconnectMessage <> ""), (" because " + disconnectMessage), "") + ".")
-        messageToSend = False
-        If Connected = True Then 'Disconnect
-            Dim endPoint As String = RemoteEndPoint.ToString() 'Gets a string representing the remote end point of the Socket
-            If disconnectReason <> -1 Then Disconnect(False) 'Disconnect the socket
-            Close() 'Close the socket
-            Client_Console.Client = Nothing 'Remove the Client
-            Console.WriteLine("Client : " + endPoint + " was disconnected from the '" + Name + "'.") 'Write to the Console
-        End If
-        Client_Console.Client = Nothing 'Clear Client
-        Client_Console.CommsThread = Nothing 'Clear the Thead object
-        Disconnecting = False
     End Sub
 
 End Class

@@ -55,7 +55,9 @@
     End Sub
 
     Public Sub Finalise_Server() 'Closes the Server objects
-        Comms.Close_Communications()
+        Comms.serverComms = False
+        Comms.CommsThread.Join(5000)
+        End
     End Sub
 
     Public Enum ServerCommands 'An enumorator of console commands for the Server
@@ -78,7 +80,7 @@
                     "/kick:     (e.g. /Kick b) kicks the connected Client at the specified station:" + Environment.NewLine +
                     "           'b', 's' and 'e'")
             Case ServerCommands.close.ToString()
-                End
+                Finalise_Server()
             Case ServerCommands.clr.ToString()
                 Console.Clear()
             Case ServerCommands.save.ToString()

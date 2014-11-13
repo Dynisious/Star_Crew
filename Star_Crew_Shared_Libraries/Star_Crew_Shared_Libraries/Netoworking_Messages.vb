@@ -1,7 +1,5 @@
 ﻿Namespace Networking_Messages 'A Namespace of Classes that are sent/received to/from connected Clients
     Public Enum General_Headers 'An enumerator of messages that can be sent/received to/from the Client
-        Client_Connection_Successful 'This is sent to the Client when they succesfully connect to the Server
-        Station_Already_Manned_Exception 'This is sent to the Client when they try to connect to a Station that is already manned
         Server_Closed_Exception 'This is sent to the Client when the Server they're connected to closes
         Client_Kicked_Exception 'This is sent to the Client when they get kicked from the Server
         Bad_Message_Exception 'This is sent to/from the Client to/from the Server to specify that a message received was not valid

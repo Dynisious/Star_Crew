@@ -1,6 +1,7 @@
 ﻿Public Class Screen 'The object used as a GUI for the Client
     Public Server As System.Diagnostics.Process 'The Server that the Client hosts
-    Private Class MenuScreen 'Objects displayed on the menu screen
+    Public sendKeys As Boolean = False 'A Boolean value indicating whether the Client should send keystrokes to the Server
+    Public Class MenuScreen 'Objects displayed on the menu screen
         Private Shared WithEvents btnHost As New System.Windows.Forms.Button With {
             .Location = New System.Drawing.Point(400, 48), .ForeColor = Drawing.Color.DarkTurquoise,
             .BackColor = Drawing.Color.Transparent,
@@ -33,6 +34,14 @@
             .Size = New System.Drawing.Size(400, 80), .FlatStyle = Windows.Forms.FlatStyle.Flat,
             .TextAlign = Drawing.ContentAlignment.MiddleCenter, .BackgroundImageLayout = Windows.Forms.ImageLayout.Center,
             .Cursor = Windows.Forms.Cursors.Hand, .Text = "Exit"} 'A Button object that when Clicked closes the program
+        Private Shared WithEvents btnBackToGame As New System.Windows.Forms.Button With {
+            .Location = New System.Drawing.Point(1025, 623), .ForeColor = Drawing.Color.DarkTurquoise,
+            .BackColor = Drawing.Color.Transparent,
+            .Font = New System.Drawing.Font(New System.Drawing.Font("Consolas", 16, System.Drawing.FontStyle.Bold,
+                                            System.Drawing.GraphicsUnit.Pixel), System.Drawing.FontStyle.Underline),
+            .Size = New System.Drawing.Size(150, 27), .FlatStyle = Windows.Forms.FlatStyle.Flat,
+            .TextAlign = Drawing.ContentAlignment.MiddleCenter, .BackgroundImageLayout = Windows.Forms.ImageLayout.Center,
+            .Cursor = Windows.Forms.Cursors.Hand, .Text = "Resume Game"} 'A Button object that when Clicked returns to the GameScreen
 
         Public Shared Sub Layout(ByRef scr As Screen) 'Sets the Screen to display the menu screen
             Dim g As System.Drawing.Graphics = scr.CreateGraphics() 'Gets the graphics object for the Screen
@@ -42,17 +51,21 @@
             scr.Controls.Add(btnJoin) 'Add btnJoin
             scr.Controls.Add(btnSettings) 'Add btnSettings
             scr.Controls.Add(btnExit) 'Add btnExit
+            If Client_Console.Client IsNot Nothing Then scr.Controls.Add(btnBackToGame) 'Add btnBackToGame
         End Sub
 
         Private Shared Sub btnHost_Click() Handles btnHost.Click 'Hosts a new Server
-            If Client_Console.CommsThread IsNot Nothing Then 'There's a Connector from the last session
+            If Client_Console.Client IsNot Nothing Then 'There's a Connector from the last session
                 If Client_Console.OutputScreen.Server IsNot Nothing Then
                     If Client_Console.OutputScreen.Server.HasExited = False Then Client_Console.OutputScreen.Server.CloseMainWindow() 'Make Sure the Server is not left open
                 End If
-                Client_Console.Client.Disconnect_Client(Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Client_Disconnecting, "Client is disconnecting from the last session")
+                Client_Console.Client.Send_Message({BitConverter.GetBytes(Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Client_Disconnecting)},
+                                                   {"ERROR : There was an error sending the Client_Disconnecting message to the Server. Client will now close."})
+                Client_Console.Client.sendingAlive = False
+                Client_Console.Client.receivingAlive = False
             End If
             Client_Console.OutputScreen.Server = Process.Start("Server\Star_Crew_Server.exe")
-            Client_Console.Client = New Connector("127.0.0.1", Star_Crew_Shared_Libraries.Shared_Values.Values.ServicePort, True)
+            Client_Console.Client = New Connector("127.0.0.1", Star_Crew_Shared_Libraries.Shared_Values.Values.ServicePort)
         End Sub
         Private Shared Sub btnHost_MouseEnter() Handles btnHost.MouseEnter 'Changes btnHost's colour when it's moused over
             btnHost.ForeColor = Drawing.Color.Turquoise 'Change the ForeColour
@@ -65,6 +78,15 @@
 
         Private Shared Sub btnJoin_Click() Handles btnJoin.Click 'Joins an existing Server
             JoinScreen.Layout(Client_Console.OutputScreen) 'Go to the Join Screen
+            If Client_Console.Client IsNot Nothing Then 'There's a Connector from the last session
+                If Client_Console.OutputScreen.Server IsNot Nothing Then
+                    If Client_Console.OutputScreen.Server.HasExited = False Then Client_Console.OutputScreen.Server.CloseMainWindow() 'Make Sure the Server is not left open
+                End If
+                Client_Console.Client.Send_Message({BitConverter.GetBytes(Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Client_Disconnecting)},
+                                                   {"ERROR : There was an error sending the Client_Disconnecting message to the Server. Client will now close."})
+                Client_Console.Client.sendingAlive = False
+                Client_Console.Client.receivingAlive = False
+            End If
         End Sub
         Private Shared Sub btnJoin_MouseEnter() Handles btnJoin.MouseEnter 'Changes btnJoin's colour when it's moused over
             btnJoin.ForeColor = Drawing.Color.Turquoise 'Change the ForeColour
@@ -99,8 +121,12 @@
             Client_Console.OutputScreen.ActiveControl = Nothing
         End Sub
 
+        Private Shared Sub btnBackToGame_Click() Handles btnBackToGame.Click 'Opens the GameScreenLayout
+            GameScreen.Layout(Client_Console.OutputScreen)
+        End Sub
+
     End Class
-    Private Class JoinScreen 'Objects displayed when the Client is going to join an existing game
+    Public Class JoinScreen 'Objects displayed when the Client is going to join an existing game
         Private Shared WithEvents txtIP As New System.Windows.Forms.TextBox With {
             .Size = New System.Drawing.Size(125, 40), .Location = New System.Drawing.Point(537, 250),
             .Text = "Input IP", .Font = New System.Drawing.Font("Consolas", 14, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel),
@@ -117,12 +143,6 @@
                 New System.Drawing.Font("Consolas", 18, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel), Drawing.FontStyle.Underline)}
 
         Public Shared Sub Layout(ByRef scr As Screen) 'Set's the Screen to display the join screen
-            If Client_Console.CommsThread IsNot Nothing Then 'There's a Connector from the last session
-                If Client_Console.OutputScreen.Server IsNot Nothing Then
-                    If Client_Console.OutputScreen.Server.HasExited = False Then Client_Console.OutputScreen.Server.CloseMainWindow() 'Make Sure the Server is not left open
-                End If
-                Client_Console.Client.Disconnect_Client(Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Client_Disconnecting, "Client is disconnecting from the last session")
-            End If
             scr.Controls.Clear() 'Clear's the old display
             scr.Controls.Add(txtIP) 'Add txtIP
             scr.Controls.Add(btnConnect) 'Add btnConnect
@@ -149,7 +169,7 @@
             Next
             If count = 3 Then 'It's a valid IP
                 Try
-                    Client_Console.Client = New Connector(txtIP.Text, Star_Crew_Shared_Libraries.Shared_Values.Values.ServicePort, False) 'Create a new Connector and connect to the Server
+                    Client_Console.Client = New Connector(txtIP.Text, Star_Crew_Shared_Libraries.Shared_Values.Values.ServicePort) 'Create a new Connector and connect to the Server
                 Catch ex As System.Net.Sockets.SocketException
                     Console.WriteLine(Environment.NewLine + "ERROR : There was an error while connecting to the Server located at " +
                                       txtIP.Text + ":" + CStr(Star_Crew_Shared_Libraries.Shared_Values.Values.ServicePort) + ". Check address and try again.")
@@ -195,7 +215,7 @@
     End Class
     Public Class GameScreen 'Objects displayed when the Client is in game
         Private Shared WithEvents btnMenu As New System.Windows.Forms.Button With {
-            .Size = New System.Drawing.Size(200, 45), .Location = New System.Drawing.Point(980, 635),
+            .Size = New System.Drawing.Size(200, 45), .Location = New System.Drawing.Point(980, 635), .TabStop = False,
             .Text = "Main Menu", .FlatStyle = Windows.Forms.FlatStyle.Flat, .ForeColor = Drawing.Color.DarkTurquoise,
             .BackColor = Drawing.Color.Transparent, .Font = New System.Drawing.Font(
                 New System.Drawing.Font("Consolas", 18, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel), Drawing.FontStyle.Underline)}
@@ -215,17 +235,19 @@
             .BackColor = Drawing.Color.Transparent, .Font = New System.Drawing.Font(
                 "Consolas", 18, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel)}
 
-        Public Shared Sub Layout(ByRef scr As Screen, ByVal Hosting As Boolean)
+        Public Shared Sub Layout(ByRef scr As Screen)
             scr.Controls.Clear() 'Clears the Screen of objects
             scr.Controls.Add(btnMenu) 'Add btnMenu to the Screen
             scr.Controls.Add(lblHull) 'Add lblHull to the Screen
             scr.Controls.Add(lblThrottle) 'Add lblThrottle to the Screen
             scr.Controls.Add(lblAmmunition) 'Add lblAmmunition to the Screen
             scr.ActiveControl = Nothing 'Clear the active control
+            scr.sendKeys = True 'Send keystrokes to the Server
         End Sub
 
         Private Shared Sub btnMenu_Click() Handles btnMenu.Click 'Handles btnMenu being Clicked
             MenuScreen.Layout(Client_Console.OutputScreen) 'Go to the menu screen
+            Client_Console.OutputScreen.sendKeys = False 'Stop sending keys to the Server
         End Sub
         Private Shared Sub btnMenu_MouseEnter() Handles btnMenu.MouseEnter 'Handles the mouse moving into btnMenu
             btnMenu.ForeColor = Drawing.Color.Turquoise 'Change the fore colour
@@ -264,11 +286,11 @@
             .Size = New System.Drawing.Size(225, 40), .Location = New System.Drawing.Point(10, 108),
             .Text = "SETTINGS ERROR", .Font = New System.Drawing.Font("Consolas", 14, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel),
             .ForeColor = Drawing.Color.FromArgb(55, 22, 95, 95), .BackColor = Drawing.Color.LightGray}
-        Public Shared WithEvents txtTurnLeft As New System.Windows.Forms.TextBox With {
+        Public Shared WithEvents txtTurnRight As New System.Windows.Forms.TextBox With {
             .Size = New System.Drawing.Size(225, 40), .Location = New System.Drawing.Point(10, 158),
             .Text = "SETTINGS ERROR", .Font = New System.Drawing.Font("Consolas", 14, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel),
             .ForeColor = Drawing.Color.FromArgb(55, 22, 95, 95), .BackColor = Drawing.Color.LightGray}
-        Public Shared WithEvents txtTurnRight As New System.Windows.Forms.TextBox With {
+        Public Shared WithEvents txtTurnLeft As New System.Windows.Forms.TextBox With {
             .Size = New System.Drawing.Size(225, 40), .Location = New System.Drawing.Point(254, 8),
             .Text = "SETTINGS ERROR", .Font = New System.Drawing.Font("Consolas", 14, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel),
             .ForeColor = Drawing.Color.FromArgb(55, 22, 95, 95), .BackColor = Drawing.Color.LightGray}
@@ -333,11 +355,11 @@
         End Sub
         Private Shared Sub txtTurnLeft_KeyDown(ByVal sender As Object, ByVal e As System.Windows.Forms.KeyEventArgs) Handles txtTurnLeft.KeyUp
             txtTurnLeft.Text = "TURN LEFT: " + e.KeyCode.ToString()
-            Client_Console.settingElements(3) = e.KeyCode
+            Client_Console.settingElements(4) = e.KeyCode
         End Sub
         Private Shared Sub txtTurnRight_KeyDown(ByVal sender As Object, ByVal e As System.Windows.Forms.KeyEventArgs) Handles txtTurnRight.KeyUp
             txtTurnRight.Text = "TURN RIGHT: " + e.KeyCode.ToString()
-            Client_Console.settingElements(4) = e.KeyCode
+            Client_Console.settingElements(3) = e.KeyCode
         End Sub
         Private Shared Sub txtFireWeapon_KeyDown(ByVal sender As Object, ByVal e As System.Windows.Forms.KeyEventArgs) Handles txtFireWeapon.KeyUp
             txtFireWeapon.Text = "FIRE WEAPON: " + e.KeyCode.ToString()
@@ -357,114 +379,38 @@
     End Sub
 
     Private Sub Keys_Down(ByVal sender As Object, ByVal e As System.Windows.Forms.KeyEventArgs) Handles MyBase.KeyDown
-        If Client_Console.Client IsNot Nothing Then
-            If Client_Console.Client.Connected = True Then
-                Select Case e.KeyCode
-                    Case Client_Console.settingElements(1)
-                        If Client_Console.Client.Disconnecting = False Then
-                            While Client_Console.Client.messageToSend = True 'Loop
-                            End While
-                            If Client_Console.Client.sendHeader <> Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Throttle_Up Or
-                                Client_Console.Client.sendBoolean = False Then 'This wont be a repeat message
-                                Client_Console.Client.sendHeader = Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Throttle_Up 'Set message header
-                                Client_Console.Client.sendBoolean = True 'Set message
-                                Client_Console.Client.messageToSend = True 'Set the message to send
-                            End If
-                        End If
-                    Case Client_Console.settingElements(2)
-                        If Client_Console.Client.Disconnecting = False Then
-                            While Client_Console.Client.messageToSend = True 'Loop
-                            End While
-                            If Client_Console.Client.sendHeader <> Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Throttle_Down Or
-                                Client_Console.Client.sendBoolean = False Then 'This wont be a repeat message
-                                Client_Console.Client.sendHeader = Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Throttle_Down 'Set message header
-                                Client_Console.Client.sendBoolean = True 'Set the message
-                                Client_Console.Client.messageToSend = True 'Set the message to send
-                            End If
-                        End If
-                    Case Client_Console.settingElements(3)
-                        If Client_Console.Client.Disconnecting = False Then
-                            While Client_Console.Client.messageToSend = True 'Loop
-                            End While
-                            If Client_Console.Client.sendHeader <> Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Turn_Left Or
-                                Client_Console.Client.sendBoolean = False Then 'This wont be a repeat message
-                                Client_Console.Client.sendHeader = Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Turn_Left 'Set message header
-                                Client_Console.Client.sendBoolean = True 'Set the message
-                                Client_Console.Client.messageToSend = True 'Set the message to send
-                            End If
-                        End If
-                    Case Client_Console.settingElements(4)
-                        If Client_Console.Client.Disconnecting = False Then
-                            While Client_Console.Client.messageToSend = True 'Loop
-                            End While
-                            If Client_Console.Client.sendHeader <> Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Turn_Right Or
-                                Client_Console.Client.sendBoolean = False Then 'This wont be a repeat message
-                                Client_Console.Client.sendHeader = Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Turn_Right 'Set message header
-                                Client_Console.Client.sendBoolean = True 'Set message
-                                Client_Console.Client.messageToSend = True 'Set the message to send
-                            End If
-                        End If
-                    Case Client_Console.settingElements(5)
-                        If Client_Console.Client.Disconnecting = False Then
-                            While Client_Console.Client.messageToSend = True 'Loop
-                            End While
-                            If Client_Console.Client.sendHeader <> Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Fire_Weapons Or
-                                Client_Console.Client.sendBoolean = False Then 'This wont be a repeat message
-                                Client_Console.Client.sendHeader = Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Fire_Weapons 'Set message header
-                                Client_Console.Client.sendBoolean = True 'Set message
-                                Client_Console.Client.messageToSend = True 'Set the message to send
-                            End If
-                        End If
-                End Select
-            End If
+        If sendKeys Then
+            For i As Integer = 1 To Client_Console.settingElements.Length - 1 'Loop through all controls
+                If e.KeyCode = Client_Console.settingElements(i) Then 'The key has been found
+                    i -= 1 'Take one from i
+                    Dim shipControl As Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header =
+                        (Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.max + i) 'The header value for the message
+                    Dim temp As String = ("ERROR : There was an error while sending the " + shipControl.ToString() +
+                                          " KeyDown event to the Server. Client will now close.") 'The error message for if the send fails
+                    If Client_Console.Client.values(i) = False Then 'This will not be a repeat message
+                        Client_Console.Client.values(i) = True
+                        Client_Console.Client.Send_Message({BitConverter.GetBytes(shipControl), BitConverter.GetBytes(True)}, {temp, temp})
+                    End If
+                    Exit Sub 'The key has been handled
+                End If
+            Next
         End If
     End Sub
     Private Sub Keys_Up(ByVal sender As Object, ByVal e As System.Windows.Forms.KeyEventArgs) Handles Me.KeyUp
-        If Client_Console.Client IsNot Nothing Then
-            If Client_Console.Client.Connected = True Then
-                Select Case e.KeyCode
-                    Case Client_Console.settingElements(1)
-                        If Client_Console.Client.Disconnecting = False Then
-                            While Client_Console.Client.messageToSend = True 'Loop
-                            End While
-                            Client_Console.Client.sendHeader = Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Throttle_Up 'Set message header
-                            Client_Console.Client.sendBoolean = False 'Set message
-                            Client_Console.Client.messageToSend = True 'Set the message to send
-                        End If
-                    Case Client_Console.settingElements(2)
-                        If Client_Console.Client.Disconnecting = False Then
-                            While Client_Console.Client.messageToSend = True 'Loop
-                            End While
-                            Client_Console.Client.sendHeader = Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Throttle_Down 'Set message header
-                            Client_Console.Client.sendBoolean = False 'Set the message
-                            Client_Console.Client.messageToSend = True 'Set the message to send
-                        End If
-                    Case Client_Console.settingElements(3)
-                        If Client_Console.Client.Disconnecting = False Then
-                            While Client_Console.Client.messageToSend = True 'Loop
-                            End While
-                            Client_Console.Client.sendHeader = Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Turn_Left 'Set message header
-                            Client_Console.Client.sendBoolean = False 'Set message
-                            Client_Console.Client.messageToSend = True 'Set the message to send
-                        End If
-                    Case Client_Console.settingElements(4)
-                        If Client_Console.Client.Disconnecting = False Then
-                            While Client_Console.Client.messageToSend = True 'Loop
-                            End While
-                            Client_Console.Client.sendHeader = Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Turn_Right 'Set message header
-                            Client_Console.Client.sendBoolean = False 'Set message
-                            Client_Console.Client.messageToSend = True 'Set the message to send
-                        End If
-                    Case Client_Console.settingElements(5)
-                        If Client_Console.Client.Disconnecting = False Then
-                            While Client_Console.Client.messageToSend = True 'Loop
-                            End While
-                            Client_Console.Client.sendHeader = Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Fire_Weapons 'Set message header
-                            Client_Console.Client.sendBoolean = False 'Set message
-                            Client_Console.Client.messageToSend = True 'Set the message to send
-                        End If
-                End Select
-            End If
+        If sendKeys Then
+            For i As Integer = 1 To Client_Console.settingElements.Length - 1 'Loop through all controls
+                If e.KeyCode = Client_Console.settingElements(i) Then 'The key has been found
+                    i -= 1 'Take one from i
+                    Dim shipControl As Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header =
+                        (Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.max + i) 'The header value for the message
+                    Dim temp As String = ("ERROR : There was an error while sending the " + shipControl.ToString() +
+                                          " KeyUp event to the Server. Client will now close.") 'The error message for if the send fails
+                    Client_Console.Client.values(i) = False
+                    Client_Console.Client.Send_Message({BitConverter.GetBytes(shipControl),
+                                                        BitConverter.GetBytes(False)}, {temp, temp})
+                    Exit Sub 'The key has been handled
+                End If
+            Next
         End If
     End Sub
 
