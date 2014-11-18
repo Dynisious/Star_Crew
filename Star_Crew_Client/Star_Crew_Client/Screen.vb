@@ -291,11 +291,11 @@
             .Text = "SETTINGS ERROR", .Font = New System.Drawing.Font("Consolas", 14, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel),
             .ForeColor = Drawing.Color.FromArgb(55, 22, 95, 95), .BackColor = Drawing.Color.LightGray}
         Public Shared WithEvents txtTurnLeft As New System.Windows.Forms.TextBox With {
-            .Size = New System.Drawing.Size(225, 40), .Location = New System.Drawing.Point(254, 8),
+            .Size = New System.Drawing.Size(225, 40), .Location = New System.Drawing.Point(10, 208),
             .Text = "SETTINGS ERROR", .Font = New System.Drawing.Font("Consolas", 14, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel),
             .ForeColor = Drawing.Color.FromArgb(55, 22, 95, 95), .BackColor = Drawing.Color.LightGray}
         Public Shared WithEvents txtFireWeapon As New System.Windows.Forms.TextBox With {
-            .Size = New System.Drawing.Size(225, 40), .Location = New System.Drawing.Point(254, 58),
+            .Size = New System.Drawing.Size(225, 40), .Location = New System.Drawing.Point(10, 258),
             .Text = "SETTINGS ERROR", .Font = New System.Drawing.Font("Consolas", 14, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel),
             .ForeColor = Drawing.Color.FromArgb(55, 22, 95, 95), .BackColor = Drawing.Color.LightGray}
         Private Shared WithEvents btnMenu As New System.Windows.Forms.Button With {

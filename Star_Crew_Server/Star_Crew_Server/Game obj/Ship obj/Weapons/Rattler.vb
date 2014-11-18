@@ -2,7 +2,7 @@
     Inherits Weapon
 
     Public Sub New(ByRef nParent As Ship)
-        MyBase.New(nParent, 2, New Game_Library.Game_Objects.StatInt(-1, -1, -1, True), 2)
+        MyBase.New(nParent, 2, New Game_Library.Game_Objects.StatInt(-1, -1, -1, True), 4)
     End Sub
 
     Protected Overrides Sub Fire_Weapon()

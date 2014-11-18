@@ -1,5 +1,5 @@
 ﻿Public Class CombatSpace
-    Public WithEvents Ticker As New Timers.Timer With {.Interval = 100, .AutoReset = True, .Enabled = True}
+    Public WithEvents Ticker As New Timers.Timer With {.Interval = 50, .AutoReset = True, .Enabled = True}
     Public ShipList As New List(Of Ship) 'A List of Ship objects
     Public adding As New List(Of Ship) 'A List of Ship objects
 

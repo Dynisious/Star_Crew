@@ -152,6 +152,8 @@
                             receivingAlive = False
                     End Select
                 End If
+
+                System.Threading.Thread.Sleep(10)
             End While
         Catch ex As Net.Sockets.SocketException
             Server.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an error while receiving a message from the " +

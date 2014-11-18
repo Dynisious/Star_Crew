@@ -29,7 +29,6 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
                                 New Point(Int(Rnd() * displayBoxSideLength), Int(Rnd() * displayBoxSideLength)),
                                 New Point(Int(Rnd() * displayBoxSideLength), Int(Rnd() * displayBoxSideLength)),
                                 New Point(Int(Rnd() * displayBoxSideLength), Int(Rnd() * displayBoxSideLength))}
-    Private speedScale As Integer = 2 'A Scaler for how fast the starts move beneath the Ship
     Public values(4) As Boolean 'An array of Boolean values indicating which keys are down and which aren't
 
     Public Sub New(ByVal nIP As String, ByVal nPort As Integer)
@@ -69,7 +68,6 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
             Do
                 sendingSemaphore.WaitOne()
                 Do
-                    Console.WriteLine("Sending")
                     accessSendList.WaitOne()
                     Try
                         Send(sendList(0), Net.Sockets.SocketFlags.None) 'Send the message
@@ -99,15 +97,19 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
     End Sub
 
     Private Sub Receiving() 'Receives messages
+        Dim dropped As Integer
         Try
             While receivingAlive 'Loop while comms are open
                 If Available <> 0 Then 'Theres data to receive
                     Select Case Receive_Header(Net.Sockets.SocketFlags.None) 'Decide what to do with the received header
                         Case Star_Crew_Shared_Libraries.Networking_Messages.Server_Message_Header.Ship_To_Ship
                             If waitingForMessage Then
+                                If dropped <> 0 Then Console.WriteLine("Dropped: " + CStr(dropped))
                                 receivedElements = Game_Library.Serialisation.FromBytes(Receive_ByteArray(Net.Sockets.SocketFlags.None)) 'Receive the message
                                 waitingForMessage = False
+                                dropped = 0
                             Else
+                                dropped += 1
                                 Receive_ByteArray(Net.Sockets.SocketFlags.None) 'Receive to clear the buffer
                             End If
                         Case Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Bad_Message_Exception
@@ -133,9 +135,11 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
                             receivingAlive = False
                     End Select
                 End If
+
+                System.Threading.Thread.Sleep(10)
             End While
         Catch ex As Net.Sockets.SocketException
-            Client_Console.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an error while receiving a message to the Server. Client will now disconnect." +
+            Client_Console.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an error while receiving a message from the Server. Client will now disconnect." +
                                               Environment.NewLine + ex.ToString())
             sendingAlive = False
             receivingAlive = False
@@ -206,14 +210,14 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
 
                 '-----Draw Stars-----
                 For i As Integer = 0 To UBound(Stars) 'Loop through every star
-                    Stars(i).X += (Math.Cos(directions(clientIndex) + Math.PI) * clientSpeed.X * speedScale) 'Move the star
+                    Stars(i).X += (Math.Cos(directions(clientIndex) + Math.PI) * clientSpeed.X) 'Move the star
                     If Stars(i).X < 0 Then
                         Stars(i).X = displayBoxSideLength
                     ElseIf Stars(i).X > displayBoxSideLength Then
                         Stars(i).X = 0
                     End If
 
-                    Stars(i).Y += (Math.Sin(directions(clientIndex) + Math.PI) * clientSpeed.X * speedScale) 'Move the star
+                    Stars(i).Y += (Math.Sin(directions(clientIndex) + Math.PI) * clientSpeed.X) 'Move the star
                     If Stars(i).Y < 0 Then
                         Stars(i).Y = displayBoxSideLength
                     ElseIf Stars(i).Y > displayBoxSideLength Then
