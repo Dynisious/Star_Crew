@@ -90,11 +90,9 @@
 
             Case ServerCommands.bot_add.ToString()
                 Dim num As Integer = CInt(Mid(command, firstSpace + 1, (command.IndexOf(" ", firstSpace + 1) - firstSpace))) - 1
-                Dim temp(num) As AIShip 'An array of AI Ships
                 For i As Integer = 0 To num 'Loop through all indexes
-                    temp(i) = New AIShip() 'Create a new AI Ship
+                    Combat.adding.Add(New AIShip()) 'Add a new AI Ship
                 Next
-                Combat.adding.AddRange(temp) 'Add the Ships
             Case Else 'It was an invalid command
                 Console.WriteLine("INVALID COMMAND : Check spelling and try again")
         End Select
