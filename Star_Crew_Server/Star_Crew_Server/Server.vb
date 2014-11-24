@@ -45,7 +45,7 @@
 
         '-----Testing-----
         Combat.Ticker.Start()
-        For i As Integer = 0 To 9
+        For i As Integer = 1 To 3
             Combat.adding.Add(New AIShip)
         Next
         '-----------------
@@ -66,19 +66,20 @@
         clr 'Clears the console window
         save 'Saves the current game
         kick 'Kicks a specified client
+        bot_add 'Adds a specified number of AI Ships
     End Enum
     Public Function Receive_Server_Commands() As Boolean 'Runs console commands for the Server
-        Dim command As String = Mid(LCase(Console.ReadLine()), 2) + " " 'Get the entered command
-        Dim lastSpace As Integer = command.IndexOf(" ")
-        Select Case Left(command, lastSpace) 'Gets the command
+        Dim command As String = Mid(LCase(Console.ReadLine()), 1) + " " 'Get the entered command
+        Dim firstSpace As Integer = command.IndexOf(" ")
+        Select Case Left(command, firstSpace) 'Gets the command
             Case ServerCommands.help.ToString()
                 Console.WriteLine(Environment.NewLine +
-                    "/help:     Displays help for all commands" + Environment.NewLine +
-                    "/close:    Closes the Server" + Environment.NewLine +
-                    "/clr:      Clears the console of text" + Environment.NewLine +
-                    "/save:     Saves the current game" + Environment.NewLine +
-                    "/kick:     (e.g. /Kick b) kicks the connected Client at the specified station:" + Environment.NewLine +
-                    "           'b', 's' and 'e'")
+                    "help:              Displays help for all commands." + Environment.NewLine +
+                    "close:             Closes the Server." + Environment.NewLine +
+                    "clr:               Clears the console of text." + Environment.NewLine +
+                    "save:              !NOT IMPLIMENTED!" + Environment.NewLine +
+                    "kick:              !NOT IMPLIMENTED!" + Environment.NewLine +
+                    "bot_add <number>:  Adds the specified number of AI Ships.")
             Case ServerCommands.close.ToString()
                 Finalise_Server()
             Case ServerCommands.clr.ToString()
@@ -87,6 +88,13 @@
 
             Case ServerCommands.kick.ToString()
 
+            Case ServerCommands.bot_add.ToString()
+                Dim num As Integer = CInt(Mid(command, firstSpace + 1, (command.IndexOf(" ", firstSpace + 1) - firstSpace))) - 1
+                Dim temp(num) As AIShip 'An array of AI Ships
+                For i As Integer = 0 To num 'Loop through all indexes
+                    temp(i) = New AIShip() 'Create a new AI Ship
+                Next
+                Combat.adding.AddRange(temp) 'Add the Ships
             Case Else 'It was an invalid command
                 Console.WriteLine("INVALID COMMAND : Check spelling and try again")
         End Select
