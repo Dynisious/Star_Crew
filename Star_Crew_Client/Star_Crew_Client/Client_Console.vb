@@ -11,6 +11,8 @@
         Turn_Right 'The Key to turn the Ship right
         Turn_Left 'The Key to turn the Ship left
         Fire_Weapon 'The Key to fire the Ship's Weapon
+        Zoom_Out 'The Key to zoom out on the screen
+        Zoom_In 'The Key to zoom in on the screen
     End Enum
     Private ReadOnly settingNames() As String = {
         "Ship Name:",
@@ -18,14 +20,18 @@
         "Throttle Down:",
         "Turn Right:",
         "Turn Left:",
-        "Fire Weapon:"}
+        "Fire Weapon:",
+        "Zoom Out:",
+        "Zoom In:"}
     Public settingElements() As Object = {
         "VTC Unnamed Ship",
         Windows.Forms.Keys.W,
         Windows.Forms.Keys.S,
         Windows.Forms.Keys.A,
         Windows.Forms.Keys.D,
-        Windows.Forms.Keys.ControlKey}
+        Windows.Forms.Keys.ControlKey,
+        Windows.Forms.Keys.Z,
+        Windows.Forms.Keys.X}
 
     Sub Main()
         Console.WriteLine("-----Star Crew Client-----")
@@ -61,6 +67,10 @@
                 settingElements(4) = converter.ConvertFromString(text.Substring(index, (text.IndexOf(";", index) - index))) 'Set the setting
                 index = text.IndexOf(settingNames(5)) + settingNames(5).Length 'Get the starting index of the setting
                 settingElements(5) = converter.ConvertFromString(text.Substring(index, (text.IndexOf(";", index) - index))) 'Set the setting
+                index = text.IndexOf(settingNames(6)) + settingNames(6).Length 'Get the starting index of the setting
+                settingElements(6) = converter.ConvertFromString(text.Substring(index, (text.IndexOf(";", index) - index))) 'Set the setting
+                index = text.IndexOf(settingNames(7)) + settingNames(7).Length 'Get the starting index of the setting
+                settingElements(7) = converter.ConvertFromString(text.Substring(index, (text.IndexOf(";", index) - index))) 'Set the setting
             Catch ex As Exception
                 Console.WriteLine("ERROR : There was an error while loading user settings. Some settings may not have been loaded.")
                 Write_To_Error_Log(Environment.NewLine + "ERROR : There was an error while loading user settings. Some settings may not have been loaded." +
@@ -74,6 +84,8 @@
         Screen.SettingsScreen.txtTurnLeft.Text = "TURN LEFT: " + CType(settingElements(3), Windows.Forms.Keys).ToString()
         Screen.SettingsScreen.txtTurnRight.Text = "TURN RIGHT: " + CType(settingElements(4), Windows.Forms.Keys).ToString()
         Screen.SettingsScreen.txtFireWeapon.Text = "FIRE WEAPON: " + CType(settingElements(5), Windows.Forms.Keys).ToString()
+        Screen.SettingsScreen.txtZoomOut.Text = "ZOOM OUT: " + CType(settingElements(6), Windows.Forms.Keys).ToString()
+        Screen.SettingsScreen.txtZoomIn.Text = "ZOOM IN: " + CType(settingElements(7), Windows.Forms.Keys).ToString()
         '------------------------
         Console.WriteLine("Objects have been Initialised")
         Console.Title = "Star Crew Client Console"
@@ -90,7 +102,9 @@
                                        settingNames(2) + converter.ConvertToString(settingElements(2)) + ";" + Environment.NewLine +
                                        settingNames(3) + converter.ConvertToString(settingElements(3)) + ";" + Environment.NewLine +
                                        settingNames(4) + converter.ConvertToString(settingElements(4)) + ";" + Environment.NewLine +
-                                       settingNames(5) + converter.ConvertToString(settingElements(5)) + ";"), False)
+                                       settingNames(5) + converter.ConvertToString(settingElements(5)) + ";" + Environment.NewLine +
+                                       settingNames(6) + converter.ConvertToString(settingElements(6)) + ";" + Environment.NewLine +
+                                       settingNames(7) + converter.ConvertToString(settingElements(7)) + ";"), False)
     End Sub
 
     Sub Write_To_Error_Log(ByVal text As String)

@@ -14,6 +14,7 @@
         Pirate_Alliance
         Trade_Federation
         Contested
+        Environment
         nill
         max
     End Enum

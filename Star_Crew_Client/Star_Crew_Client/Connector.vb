@@ -30,6 +30,7 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
                                 New Point(Int(Rnd() * displayBoxSideLength), Int(Rnd() * displayBoxSideLength)),
                                 New Point(Int(Rnd() * displayBoxSideLength), Int(Rnd() * displayBoxSideLength))}
     Public values(4) As Boolean 'An array of Boolean values indicating which keys are down and which aren't
+    Public Scaler As Double = 1 'Scales what is displayed on the screen
 
     Public Sub New(ByVal nIP As String, ByVal nPort As Integer)
         MyBase.New(nIP, nPort, 300, -1, Client_Console.settingElements(0)) 'Attempts to connect to a Server and Set's the name etc of the Client
@@ -75,7 +76,6 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
                         errorList.RemoveAt(0)
                     Catch ex As Exception
                         Client_Console.Write_To_Error_Log(Environment.NewLine + errorList(0) + Environment.NewLine + ex.ToString()) 'Write to the error log
-                        End
                     End Try
                     accessSendList.ReleaseMutex()
                 Loop Until sendList.Count = 0 Or disconnecting 'Loop while there's messages to send
@@ -87,7 +87,6 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
             sendingAlive = False
             receivingAlive = False
             disconnecting = True
-            Screen.MenuScreen.Layout(Client_Console.OutputScreen)
         Catch ex As Exception
             Client_Console.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an unexpected and unhandled error while sending a message to the Server. Client will now close." +
                                               Environment.NewLine + ex.ToString())
@@ -98,41 +97,54 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
 
     Private Sub Receiving() 'Receives messages
         Dim dropped As Integer
+        Dim started As DateTime
         Try
             While receivingAlive 'Loop while comms are open
                 If Available <> 0 Then 'Theres data to receive
                     Select Case Receive_Header(Net.Sockets.SocketFlags.None) 'Decide what to do with the received header
                         Case Star_Crew_Shared_Libraries.Networking_Messages.Server_Message_Header.Ship_To_Ship
                             If waitingForMessage Then
-                                If dropped <> 0 Then Console.WriteLine("Dropped: " + CStr(dropped))
                                 receivedElements = Game_Library.Serialisation.FromBytes(Receive_ByteArray(Net.Sockets.SocketFlags.None)) 'Receive the message
                                 waitingForMessage = False
-                                dropped = 0
+                                If dropped <> 0 Then
+                                    Dim message As String = ("NETWORKING : " + CStr(dropped) + " messages where dropped between " +
+                                                             started.ToString() + " and " + Now.ToString())
+                                    Client_Console.Write_To_Error_Log(message)
+                                    Console.WriteLine(message)
+                                    started = Nothing
+                                    dropped = 0
+                                End If
                             Else
+                                If started = Nothing Then started = Now
                                 dropped += 1
                                 Receive_ByteArray(Net.Sockets.SocketFlags.None) 'Receive to clear the buffer
                             End If
+                        Case Star_Crew_Shared_Libraries.Networking_Messages.Server_Message_Header.Client_Lost 'The Client has lost
+                            sendingAlive = False
+                            receivingAlive = False
+                            disconnecting = True
+                            Console.WriteLine(Environment.NewLine + "Client : The Client has died and has disconnected.")
                         Case Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Bad_Message_Exception
                             receivingAlive = False 'Close the Client
                             sendingAlive = False 'Close the Client
                             disconnecting = True
                             Client_Console.Write_To_Error_Log(Environment.NewLine + "Client : The Server receieved a bad message from the Client.")
                         Case Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Server_Closed_Exception
-                            receivingAlive = False 'Close the Client
-                            sendingAlive = False 'Close the Client
-                            disconnecting = True
-                            Client_Console.Write_To_Error_Log(Environment.NewLine + "Client : The Server closed before disconnecting from the Client.")
+                                receivingAlive = False 'Close the Client
+                                sendingAlive = False 'Close the Client
+                                disconnecting = True
+                                Client_Console.Write_To_Error_Log(Environment.NewLine + "Client : The Server closed before disconnecting from the Client.")
                         Case Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Client_Kicked_Exception
-                            receivingAlive = False 'Close the Client
-                            sendingAlive = False 'Close the Client
-                            disconnecting = True
-                            Client_Console.Write_To_Error_Log(Environment.NewLine + "Client : The the Client was kicked from the Server.")
+                                receivingAlive = False 'Close the Client
+                                sendingAlive = False 'Close the Client
+                                disconnecting = True
+                                Client_Console.Write_To_Error_Log(Environment.NewLine + "Client : The the Client was kicked from the Server.")
                         Case Else
-                            Client_Console.Write_To_Error_Log(Environment.NewLine + "ERROR : The Server sent an unknown message header. Client will now disconnect.")
-                            Send_Message({BitConverter.GetBytes(Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Bad_Message_Exception)},
-                                         {"ERROR : There was an error sending the Bad_Message_Exception to the Server. Client will now close."})
-                            sendingAlive = False
-                            receivingAlive = False
+                                Client_Console.Write_To_Error_Log(Environment.NewLine + "ERROR : The Server sent an unknown message header. Client will now disconnect.")
+                                Send_Message({BitConverter.GetBytes(Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Bad_Message_Exception)},
+                                             {"ERROR : There was an error sending the Bad_Message_Exception to the Server. Client will now close."})
+                                sendingAlive = False
+                                receivingAlive = False
                     End Select
                 End If
 
@@ -160,7 +172,6 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
             If Client_Console.OutputScreen.Server IsNot Nothing Then
                 If Client_Console.OutputScreen.Server.HasExited = False Then Client_Console.OutputScreen.Server.CloseMainWindow() 'Make Sure the Server is not left open
             End If
-            Screen.MenuScreen.Layout(Client_Console.OutputScreen)
             Close()
             waitToClose.ReleaseMutex()
         Catch ex As Exception
@@ -179,17 +190,21 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
                 Dim allegiances() As Star_Crew_Shared_Libraries.Shared_Values.Allegiances = receivedElements(2) 'Get the Array of Allegiances values representing the objects' allegiances
                 Dim types() As Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes = receivedElements(3) 'Get the array of ObjectTypes values representing the objects' types
                 Dim hits() As Boolean = receivedElements(4) 'Get the Array of Boolean values representing the objects' hit states
-                Dim clientSpeed As New PointF(receivedElements(5), receivedElements(6)) 'Get the Speed of the Client
-                Dim clientIndex As Integer = receivedElements(7) 'Get the index of the Client
-                Dim clientFiring As Boolean = receivedElements(8) 'Get the Client's firing state
-                Dim clientHull As New Point(receivedElements(9), receivedElements(10)) 'Get the Client's hull
-                Dim clientAmmunition As New Point(receivedElements(11), receivedElements(12)) 'Get the Client's ammunition
+                Dim clientSpeed As Double = receivedElements(5) 'Get the Speed of the Client
+                Dim clientIndex As Integer = receivedElements(6) 'Get the index of the Client
+                Dim clientFiring As Boolean = receivedElements(7) 'Get the Client's firing state
+                Dim clientHull As New Point(receivedElements(8), receivedElements(9)) 'Get the Client's hull
+                Dim clientAmmunition As New Point(receivedElements(10), receivedElements(11)) 'Get the Client's ammunition
+                Dim targetIndex As Integer = receivedElements(12) 'Get the targeted index
+                Dim targetDistance As Integer = receivedElements(13) 'Get the targets range
                 waitingForMessage = True 'The message can now be updated
 
-                '-----Translate Positions-----
+                '-----Scale and Translate Positions-----
                 Dim xOffset As Integer = (75 * Math.Cos(directions(clientIndex) + Math.PI)) 'Get the x offset of the client
                 Dim yOffset As Integer = (75 * Math.Sin(directions(clientIndex) + Math.PI)) 'Get the y offset of the client
                 For i As Integer = 0 To UBound(positions) 'Loop through all positions
+                    positions(i).X *= Scaler 'Scale the x coord
+                    positions(i).Y *= Scaler 'Scale the y coord
                     positions(i).X += xOffset 'Translate the x coord
                     positions(i).Y += yOffset 'Translate the y coord
                 Next
@@ -198,11 +213,14 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
                 '-----Render Objects-----
                 '-----Render Text-----
                 Dim d As New Text_Setting(AddressOf Screen.GameScreen.lblHull_Set_Text) 'Create a delegate
-                Screen.GameScreen.lblHull.Invoke(d, {"HULL: " + (clientHull.X).ToString() + "/" + (clientHull.Y).ToString()}) 'Write the text to lblHull
+                Screen.GameScreen.lblHull.Invoke(d, {"HULL: " + CStr(clientHull.X) + "/" + CStr(clientHull.Y)}) 'Write the text to lblHull
                 d = New Text_Setting(AddressOf Screen.GameScreen.lblThrottle_Set_Text) 'Create a delegate
-                Screen.GameScreen.lblThrottle.Invoke(d, {"THROTTLE: " + FormatNumber(clientSpeed.X, 2).ToString() + "/" + FormatNumber(clientSpeed.Y, 2).ToString()}) 'Write the text to lblThrottle
+                Screen.GameScreen.lblThrottle.Invoke(d, {"THROTTLE: " + CStr(FormatNumber((2 * clientSpeed), 2)) + "m/sec"}) 'Write the text to lblThrottle
                 d = New Text_Setting(AddressOf Screen.GameScreen.lblAmmunition_Set_Text) 'Create a delegate
-                Screen.GameScreen.lblAmmunition.Invoke(d, {"AMMUNITION: " + (clientAmmunition.X).ToString() + "/" + (clientAmmunition.Y).ToString()}) 'Write the text to lblAmmunition
+                Screen.GameScreen.lblAmmunition.Invoke(d, {"AMMUNITION: " + If((clientAmmunition.Y = -1), "INF",
+                                                                               ((clientAmmunition.X).ToString() + "/" + (clientAmmunition.Y).ToString()))}) 'Write the text to lblAmmunition
+                d = New Text_Setting(AddressOf Screen.GameScreen.lblTargetDistance_Set_Text) 'Create a delegate
+                Screen.GameScreen.lblTargetDistance.Invoke(d, {"TARGET DISTANCE: " + If((targetIndex = -1), "N/A", (targetDistance.ToString() + "m"))}) 'Write the text to lblTargetDistance
                 '---------------------
 
                 Dim img As Bitmap = My.Resources.NormalSpace.Clone() 'Create a Bitmap to be drawn on
@@ -210,14 +228,14 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
 
                 '-----Draw Stars-----
                 For i As Integer = 0 To UBound(Stars) 'Loop through every star
-                    Stars(i).X += (Math.Cos(directions(clientIndex) + Math.PI) * clientSpeed.X) 'Move the star
+                    Stars(i).X += (Math.Cos(directions(clientIndex) + Math.PI) * clientSpeed * Scaler) 'Move the star
                     If Stars(i).X < 0 Then
                         Stars(i).X = displayBoxSideLength
                     ElseIf Stars(i).X > displayBoxSideLength Then
                         Stars(i).X = 0
                     End If
 
-                    Stars(i).Y += (Math.Sin(directions(clientIndex) + Math.PI) * clientSpeed.X) 'Move the star
+                    Stars(i).Y += (Math.Sin(directions(clientIndex) + Math.PI) * clientSpeed * Scaler) 'Move the star
                     If Stars(i).Y < 0 Then
                         Stars(i).Y = displayBoxSideLength
                     ElseIf Stars(i).Y > displayBoxSideLength Then
@@ -234,7 +252,7 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
                         Dim scale As Double = 200 / distance 'Calculate the scale of the distance against 200
                         positions(i).X = (scale * positions(i).X) + displayBoxCenter 'Calculate the scaled x coord
                         positions(i).Y = (scale * positions(i).Y) + displayBoxCenter 'Calculate the scaled y coord
-                        imgG.FillEllipse(Drawing.Brushes.Red, New Rectangle(New Point((positions(i).X - 5), (positions(i).Y - 5)),
+                        imgG.FillEllipse(If((i = targetIndex), Drawing.Brushes.Blue, Drawing.Brushes.Red), New Rectangle(New Point((positions(i).X - 5), (positions(i).Y - 5)),
                                                                          New Size(10, 10))) 'Draw a circle 200 pixels away from the center of the object
                     Else 'Draw the actual image of the object
                         Select Case types(i) 'Choose the type to draw
@@ -247,14 +265,17 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
                                                   CInt(yCoord + (5 * Math.Sin(directions(i))))) 'Draw the projectile
                                 End If
                             Case Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes.Ship
-                                Dim craftBmp As New Bitmap(CType(If((allegiances(i) = 1), My.Resources.FriendlyScreamer.Clone(),
+                                Dim craftBmp As New Bitmap(CType(If((allegiances(i) = Star_Crew_Shared_Libraries.Shared_Values.Allegiances.Emperial_Forces),
+                                                                    My.Resources.FriendlyScreamer.Clone(),
                                                                     My.Resources.PirateThunder.Clone()), Image)) 'Create a Bitmap to draw
                                 craftBmp.MakeTransparent() 'Clear the white space from the image
-                                Dim crossLength As Integer = Math.Sqrt((craftBmp.Width ^ 2) + (craftBmp.Height ^ 2)) 'Calculate the cross length of the bitmap to draw
+                                Dim crossLength As Integer = (Scaler * Math.Sqrt((craftBmp.Width ^ 2) + (craftBmp.Height ^ 2))) 'Calculate the cross length of the bitmap to draw
                                 Dim hlfCrossLength As Integer = crossLength / 2 'Get half of crossLength
                                 Dim bmp As New Bitmap(crossLength, crossLength) 'Create a bitmap to draw on that will always fit the image to draw
                                 Dim bmpG As Graphics = Graphics.FromImage(bmp) 'Create a graphics object from bmp
+                                If targetIndex = i Then bmpG.DrawRectangle(Pens.Blue, 1, 1, crossLength - 2, crossLength - 2)
                                 bmpG.TranslateTransform(hlfCrossLength, hlfCrossLength) 'Move the center of the image onto the pivot
+                                bmpG.ScaleTransform(Scaler, Scaler) 'Scale the image
                                 bmpG.RotateTransform(180 * directions(i) / Math.PI) 'Rotate the image
                                 bmpG.TranslateTransform(-hlfCrossLength, -hlfCrossLength) 'Move the center of the image back into the center of the box
                                 bmpG.DrawImage(craftBmp, CInt((crossLength - craftBmp.Width) / 2), CInt((crossLength - craftBmp.Height) / 2))

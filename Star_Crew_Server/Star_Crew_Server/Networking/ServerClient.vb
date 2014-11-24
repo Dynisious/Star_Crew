@@ -1,6 +1,6 @@
 ﻿Public Class ServerClient
     Inherits Game_Library.Networking.Client
-    Public Craft As Ship 'The Ship that this Client controls
+    Public Craft As PlayerShip 'The Ship that this Client controls
     Public receivingAlive As Boolean = True 'Keeps the receiving thread open
     Public sendingAlive As Boolean = True 'Keeps the sending thread open
     Private receiveThread As System.Threading.Thread 'A Thread object used to receive messages from the Client
@@ -80,7 +80,8 @@
             errorList.AddRange(errorMessages) 'Add the error messages to the List
             accessSendList.ReleaseMutex()
         Catch ex As Exception
-            Server.Write_To_Error_Log("ERROR : There was an error while calling Send_Message() in the " + Name + ". Server will now close.")
+            Server.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an error while calling Send_Message() in the " +
+                                      Name + ". Server will now close." + Environment.NewLine + ex.ToString())
             End
         End Try
     End Sub
@@ -95,11 +96,13 @@
                         Send(sendList(0), Net.Sockets.SocketFlags.None) 'Send the message
                         sendList.RemoveAt(0)
                         errorList.RemoveAt(0)
-                    Catch ex As Exception
-                        Server.Write_To_Error_Log(Environment.NewLine + errorList(0) + Environment.NewLine + ex.ToString()) 'Write to the error log
-                        End
+                        accessSendList.ReleaseMutex()
+                    Catch ex As Net.Sockets.SocketException
+                        Server.Write_To_Error_Log(Environment.NewLine + errorList(0) + Environment.NewLine + ex.ToString())
+                        sendingAlive = False
+                        receivingAlive = False
+                        disconnecting = True
                     End Try
-                    accessSendList.ReleaseMutex()
                 Loop Until sendList.Count = 0 Or disconnecting 'Loop while there's messages to send
             Loop While sendingAlive 'Loop while the sending is alive
             waitToClose.ReleaseMutex() 'The Send thread is closed
@@ -194,7 +197,8 @@
 
     Public Sub Generate_Message(ByVal objects As List(Of Ship)) 'Creates a message for the ServerClient to send
         If Craft.Dead And receivingAlive Then 'The craft is dead and the Client needs to disconnect
-            Send_Message({BitConverter.GetBytes(Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Client_Kicked_Exception)}, {"ERROR : There was an error while sending the Client_Kicked_Exception to the " + Name + ". Server will now close."}) 'Send the Disconnect message
+            Send_Message({BitConverter.GetBytes(Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Client_Kicked_Exception)},
+                         {"ERROR : There was an error while sending the Client_Kicked_Exception to the " + Name + ". The " + Name + " will now disconnect."}) 'Send the Disconnect message
             sendingAlive = False
             receivingAlive = False
         ElseIf Craft.CombatIndex <> -1 Then 'The craft is still alive and messages need to be sent
@@ -206,17 +210,17 @@
             For i As Integer = 0 To objects.Count - 1 'Loop through all Indexs
                 positions(i) = New System.Drawing.Point((objects(i).X - Craft.X), (objects(i).Y - Craft.Y)) 'Create a point object relative to the object
                 directions(i) = objects(i).Direction 'Set the object's direction
-                allegiances(i) = -1 'Set the object's allegiance
+                allegiances(i) = objects(i).Allegiance 'Set the object's allegiance
                 types(i) = objects(i).Type
                 hits(i) = objects(i).hit 'Set the object's hit state
             Next
-            allegiances(Craft.CombatIndex) = 1 'Set the craft's allegiance
             Dim message As Byte() = Game_Library.Serialisation.ToBytes({positions, directions, allegiances, types, hits, Craft.Throttle.Current,
-                                                                        Craft.Throttle.Maximum, Craft.CombatIndex, Craft.firing, Craft.Hull.Current,
-                                                                        Craft.Hull.Maximum, Craft.Primary.Ammunition.Current, Craft.Primary.Ammunition.Maximum}) 'Generate the message to send to the Client
-            Dim errorMessages() As String = {"ERROR : There was an error while sending the Ship_To_Ship header to the " + Name + ". Server will now close.",
-                                             "ERROR : There was an error while sending the Ship_To_Ship message length to the " + Name + ". Server will now close.",
-                                             "ERROR : There was an error while sending the Ship_To_Ship message to the " + Name + ". Server will now close."}
+                                                                        Craft.CombatIndex, Craft.firing, Craft.Hull.Current,
+                                                                        Craft.Hull.Maximum, Craft.Primary.Ammunition.Current,
+                                                                        Craft.Primary.Ammunition.Maximum, Craft.target, Craft.targetDistance}) 'Generate the message to send to the Client
+            Dim errorMessages() As String = {"ERROR : There was an error while sending the Ship_To_Ship header to the " + Name + ". The " + Name + " will now disconnect.",
+                                             "ERROR : There was an error while sending the Ship_To_Ship message length to the " + Name + ". The " + Name + " will now disconnect.",
+                                             "ERROR : There was an error while sending the Ship_To_Ship message to the " + Name + ". The " + Name + " will now disconnect."}
             Send_Message({BitConverter.GetBytes(Star_Crew_Shared_Libraries.Networking_Messages.Server_Message_Header.Ship_To_Ship),
                             BitConverter.GetBytes(message.Length), message}, errorMessages)
         End If

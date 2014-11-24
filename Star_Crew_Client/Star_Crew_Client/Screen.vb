@@ -34,7 +34,7 @@
             .Size = New System.Drawing.Size(400, 80), .FlatStyle = Windows.Forms.FlatStyle.Flat,
             .TextAlign = Drawing.ContentAlignment.MiddleCenter, .BackgroundImageLayout = Windows.Forms.ImageLayout.Center,
             .Cursor = Windows.Forms.Cursors.Hand, .Text = "Exit"} 'A Button object that when Clicked closes the program
-        Private Shared WithEvents btnBackToGame As New System.Windows.Forms.Button With {
+        Public Shared WithEvents btnBackToGame As New System.Windows.Forms.Button With {
             .Location = New System.Drawing.Point(1025, 623), .ForeColor = Drawing.Color.DarkTurquoise,
             .BackColor = Drawing.Color.Transparent,
             .Font = New System.Drawing.Font(New System.Drawing.Font("Consolas", 16, System.Drawing.FontStyle.Bold,
@@ -51,7 +51,12 @@
             scr.Controls.Add(btnJoin) 'Add btnJoin
             scr.Controls.Add(btnSettings) 'Add btnSettings
             scr.Controls.Add(btnExit) 'Add btnExit
-            If Client_Console.Client IsNot Nothing Then scr.Controls.Add(btnBackToGame) 'Add btnBackToGame
+            If Client_Console.Client IsNot Nothing Then
+                scr.Controls.Add(btnBackToGame) 'Add btnBackToGame
+                btnBackToGame.Enabled = True
+            Else
+                btnBackToGame.Enabled = False
+            End If
         End Sub
 
         Private Shared Sub btnHost_Click() Handles btnHost.Click 'Hosts a new Server
@@ -121,8 +126,9 @@
             Client_Console.OutputScreen.ActiveControl = Nothing
         End Sub
 
-        Private Shared Sub btnBackToGame_Click() Handles btnBackToGame.Click 'Opens the GameScreenLayout
+        Public Shared Sub btnBackToGame_Click() Handles btnBackToGame.Click 'Opens the GameScreenLayout
             GameScreen.Layout(Client_Console.OutputScreen)
+            btnBackToGame.Enabled = False
         End Sub
 
     End Class
@@ -214,7 +220,7 @@
 
     End Class
     Public Class GameScreen 'Objects displayed when the Client is in game
-        Private Shared WithEvents btnMenu As New System.Windows.Forms.Button With {
+        Public Shared WithEvents btnMenu As New System.Windows.Forms.Button With {
             .Size = New System.Drawing.Size(200, 45), .Location = New System.Drawing.Point(980, 635), .TabStop = False,
             .Text = "Main Menu", .FlatStyle = Windows.Forms.FlatStyle.Flat, .ForeColor = Drawing.Color.DarkTurquoise,
             .BackColor = Drawing.Color.Transparent, .Font = New System.Drawing.Font(
@@ -234,20 +240,28 @@
             .Text = "AMMUNITION: 0/0", .FlatStyle = Windows.Forms.FlatStyle.Flat, .ForeColor = Drawing.Color.DarkTurquoise,
             .BackColor = Drawing.Color.Transparent, .Font = New System.Drawing.Font(
                 "Consolas", 18, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel)}
+        Public Shared lblTargetDistance As New System.Windows.Forms.Label With {
+            .Size = New System.Drawing.Size(300, 45), .Location = New System.Drawing.Point(875, 160),
+            .Text = "TARGET DISTANCE: 0m", .FlatStyle = Windows.Forms.FlatStyle.Flat, .ForeColor = Drawing.Color.DarkTurquoise,
+            .BackColor = Drawing.Color.Transparent, .Font = New System.Drawing.Font(
+                "Consolas", 18, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel)}
 
         Public Shared Sub Layout(ByRef scr As Screen)
             scr.Controls.Clear() 'Clears the Screen of objects
             scr.Controls.Add(btnMenu) 'Add btnMenu to the Screen
+            btnMenu.Enabled = True
             scr.Controls.Add(lblHull) 'Add lblHull to the Screen
             scr.Controls.Add(lblThrottle) 'Add lblThrottle to the Screen
             scr.Controls.Add(lblAmmunition) 'Add lblAmmunition to the Screen
+            scr.Controls.Add(lblTargetDistance) 'Add lblTargetDistance to the Screen
             scr.ActiveControl = Nothing 'Clear the active control
             scr.sendKeys = True 'Send keystrokes to the Server
         End Sub
 
-        Private Shared Sub btnMenu_Click() Handles btnMenu.Click 'Handles btnMenu being Clicked
+        Public Shared Sub btnMenu_Click() Handles btnMenu.Click 'Handles btnMenu being Clicked
             MenuScreen.Layout(Client_Console.OutputScreen) 'Go to the menu screen
             Client_Console.OutputScreen.sendKeys = False 'Stop sending keys to the Server
+            btnMenu.Enabled = False
         End Sub
         Private Shared Sub btnMenu_MouseEnter() Handles btnMenu.MouseEnter 'Handles the mouse moving into btnMenu
             btnMenu.ForeColor = Drawing.Color.Turquoise 'Change the fore colour
@@ -266,6 +280,9 @@
         End Sub
         Public Shared Sub lblAmmunition_Set_Text(ByVal text As String)
             lblAmmunition.Text = text
+        End Sub
+        Public Shared Sub lblTargetDistance_Set_Text(ByVal text As String)
+            lblTargetDistance.Text = text
         End Sub
 
     End Class
@@ -298,6 +315,14 @@
             .Size = New System.Drawing.Size(225, 40), .Location = New System.Drawing.Point(10, 258),
             .Text = "SETTINGS ERROR", .Font = New System.Drawing.Font("Consolas", 14, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel),
             .ForeColor = Drawing.Color.FromArgb(55, 22, 95, 95), .BackColor = Drawing.Color.LightGray}
+        Public Shared WithEvents txtZoomOut As New System.Windows.Forms.TextBox With {
+            .Size = New System.Drawing.Size(225, 40), .Location = New System.Drawing.Point(10, 308),
+            .Text = "SETTINGS ERROR", .Font = New System.Drawing.Font("Consolas", 14, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel),
+            .ForeColor = Drawing.Color.FromArgb(55, 22, 95, 95), .BackColor = Drawing.Color.LightGray}
+        Public Shared WithEvents txtZoomIn As New System.Windows.Forms.TextBox With {
+            .Size = New System.Drawing.Size(225, 40), .Location = New System.Drawing.Point(10, 358),
+            .Text = "SETTINGS ERROR", .Font = New System.Drawing.Font("Consolas", 14, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel),
+            .ForeColor = Drawing.Color.FromArgb(55, 22, 95, 95), .BackColor = Drawing.Color.LightGray}
         Private Shared WithEvents btnMenu As New System.Windows.Forms.Button With {
             .Location = New System.Drawing.Point(1025, 623), .ForeColor = Drawing.Color.DarkTurquoise,
             .BackColor = Drawing.Color.Transparent,
@@ -318,6 +343,8 @@
             pnlSettings.Controls.Add(txtTurnLeft) 'Add txtTurnLeft
             pnlSettings.Controls.Add(txtTurnRight) 'Add txtTurnRight
             pnlSettings.Controls.Add(txtFireWeapon) 'Add txtFireWeapon
+            pnlSettings.Controls.Add(txtZoomOut) 'Add txtZoomOut
+            pnlSettings.Controls.Add(txtZoomIn) 'Add txtZoomIn
             scr.Controls.Add(btnMenu) 'Add btnMenu
         End Sub
 
@@ -365,6 +392,14 @@
             txtFireWeapon.Text = "FIRE WEAPON: " + e.KeyCode.ToString()
             Client_Console.settingElements(5) = e.KeyCode
         End Sub
+        Private Shared Sub txtZoomOut_KeyDown(ByVal sender As Object, ByVal e As System.Windows.Forms.KeyEventArgs) Handles txtZoomOut.KeyUp
+            txtZoomOut.Text = "ZOOM OUT: " + e.KeyCode.ToString()
+            Client_Console.settingElements(6) = e.KeyCode
+        End Sub
+        Private Shared Sub txtZoomIn_KeyDown(ByVal sender As Object, ByVal e As System.Windows.Forms.KeyEventArgs) Handles txtZoomIn.KeyUp
+            txtZoomIn.Text = "ZOOM IN: " + e.KeyCode.ToString()
+            Client_Console.settingElements(7) = e.KeyCode
+        End Sub
 
     End Class
 
@@ -378,27 +413,44 @@
         Windows.Forms.Application.Run(Me)
     End Sub
 
+    Private Delegate Sub Escape_Key()
     Private Sub Keys_Down(ByVal sender As Object, ByVal e As System.Windows.Forms.KeyEventArgs) Handles MyBase.KeyDown
-        If sendKeys Then
-            For i As Integer = 1 To Client_Console.settingElements.Length - 1 'Loop through all controls
-                If e.KeyCode = Client_Console.settingElements(i) Then 'The key has been found
-                    i -= 1 'Take one from i
-                    Dim shipControl As Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header =
-                        (Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.max + i) 'The header value for the message
-                    Dim temp As String = ("ERROR : There was an error while sending the " + shipControl.ToString() +
-                                          " KeyDown event to the Server. Client will now close.") 'The error message for if the send fails
-                    If Client_Console.Client.values(i) = False Then 'This will not be a repeat message
-                        Client_Console.Client.values(i) = True
-                        Client_Console.Client.Send_Message({BitConverter.GetBytes(shipControl), BitConverter.GetBytes(True)}, {temp, temp})
-                    End If
-                    Exit Sub 'The key has been handled
-                End If
-            Next
+        If sendKeys Then 'At the game screen
+            Select Case e.KeyCode
+                Case Windows.Forms.Keys.Escape
+                    Dim d As New Escape_Key(AddressOf GameScreen.btnMenu_Click)
+                    GameScreen.btnMenu.Invoke(d)
+                Case Client_Console.settingElements(6) 'Zoom Out Key
+                    If Client_Console.Client.Scaler < 1 Then Client_Console.Client.Scaler += 0.03
+                Case Client_Console.settingElements(7) 'Zoom In Key
+                    If Client_Console.Client.Scaler > 0.5 Then Client_Console.Client.Scaler -= 0.03
+                Case Else
+                    For i As Integer = 1 To 5 'Loop through all controls
+                        If e.KeyCode = Client_Console.settingElements(i) Then 'The key has been found
+                            i -= 1 'Take one from i
+                            Dim shipControl As Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header =
+                                (Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.max + i) 'The header value for the message
+                            Dim temp As String = ("ERROR : There was an error while sending the " + shipControl.ToString() +
+                                                  " KeyDown event to the Server. Client will now close.") 'The error message for if the send fails
+                            If Client_Console.Client.values(i) = False Then 'This will not be a repeat message
+                                Client_Console.Client.values(i) = True
+                                Client_Console.Client.Send_Message({BitConverter.GetBytes(shipControl), BitConverter.GetBytes(True)}, {temp, temp})
+                            End If
+                            Exit Sub 'The key has been handled
+                        End If
+                    Next
+            End Select
+        Else 'At the menu screen
+            Select Case e.KeyCode
+                Case Windows.Forms.Keys.Escape
+                    Dim d As New Escape_Key(AddressOf MenuScreen.btnBackToGame_Click)
+                    MenuScreen.btnBackToGame.Invoke(d)
+            End Select
         End If
     End Sub
-    Private Sub Keys_Up(ByVal sender As Object, ByVal e As System.Windows.Forms.KeyEventArgs) Handles Me.KeyUp
+    Private Sub Keys_Up(ByVal sender As Object, ByVal e As System.Windows.Forms.KeyEventArgs) Handles MyBase.KeyUp
         If sendKeys Then
-            For i As Integer = 1 To Client_Console.settingElements.Length - 1 'Loop through all controls
+            For i As Integer = 1 To 5 'Loop through all controls
                 If e.KeyCode = Client_Console.settingElements(i) Then 'The key has been found
                     i -= 1 'Take one from i
                     Dim shipControl As Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header =

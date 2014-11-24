@@ -31,8 +31,18 @@
                     Dim objY As Integer = (collisions(e).Y - collisions(i).Y) 'Get the y coord of the e index relative to the i index
                     Dim objDirection As Double = Math.Atan2(objY, objX) 'Get the direction in world space of the e index relative to the i index
                     If Math.Sqrt((objX ^ 2) + (objY ^ 2)) < (ShipList(i).Get_Collision_Radia(objDirection) + ShipList(e).Get_Collision_Radia(objDirection)) Then 'The two objects collide
-                        ShipList(i).Collide(ShipList(e).CollideDamage, objDirection, ShipList(e).CauseDeflect) 'Collide i index with e index
-                        ShipList(e).Collide(ShipList(i).CollideDamage, (objDirection + Math.PI), ShipList(i).CauseDeflect) 'Collide e index with i index
+                        If (ShipList(i).Allegiance <> ShipList(e).Allegiance) Then
+                            If ShipList(i).Type = Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes.Projectile Then 'It's a projectile
+                                ShipList(e).Take_Damage(CType(ShipList(i), Projectile).Damage) 'Deal damage to e
+                                ShipList(i).Collide() 'Destroy i
+                            ElseIf ShipList(e).Type = Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes.Projectile Then 'It's a projectile
+                                ShipList(i).Take_Damage(CType(ShipList(e), Projectile).Damage) 'Deal damage to i
+                                ShipList(e).Collide() 'Destroy e
+                            Else 'They are ships
+                                ShipList(i).Collide() 'Collide i
+                                ShipList(e).Collide() 'Collide e
+                            End If
+                        End If
                     End If
                 Next
             Next
@@ -57,11 +67,9 @@
             Next
             '----------------------
 
-            Server.Comms.InteractWithClients.WaitOne() 'Wait until the game has control of clientList
             For Each i As ServerClient In Server.Comms.clientList 'Loop through all ServerClients
                 i.Generate_Message(ShipList) 'Generate a message for the Server to send
             Next
-            Server.Comms.InteractWithClients.ReleaseMutex()
         Catch ex As Exception
             Server.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an error while executing the game. Server will now close." +
                                       Environment.NewLine + ex.ToString())

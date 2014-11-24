@@ -8,6 +8,7 @@
     End Enum
     Public Enum Server_Message_Header 'The types of messages sent to the Client
         Ship_To_Ship = General_Headers.max 'The message is a Ship to Ship message
+        Client_Lost 'The Client has lost and is now being disconnected
     End Enum
     Public Enum Ship_Control_Header 'An enumerator of message Types that are sent to control the Clients' Ship
         Throttle_Up = General_Headers.max 'Increase the Ship's throttle
