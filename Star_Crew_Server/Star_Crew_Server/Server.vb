@@ -89,10 +89,14 @@
             Case ServerCommands.kick.ToString()
 
             Case ServerCommands.bot_add.ToString()
-                Dim num As Integer = CInt(Mid(command, firstSpace + 1, (command.IndexOf(" ", firstSpace + 1) - firstSpace))) - 1
+                Try
+                    Dim num As Integer = CInt(Mid(command, firstSpace + 1, (command.IndexOf(" ", firstSpace + 1) - firstSpace))) - 1
                 For i As Integer = 0 To num 'Loop through all indexes
                     Combat.adding.Add(New AIShip()) 'Add a new AI Ship
-                Next
+                    Next
+                Catch ex As Exception
+                    Console.WriteLine("ERROR : Invalid value 'number'. Check input and try again.")
+                End Try
             Case Else 'It was an invalid command
                 Console.WriteLine("INVALID COMMAND : Check spelling and try again")
         End Select
