@@ -33,7 +33,7 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
     Public Scaler As Double = 1 'Scales what is displayed on the screen
 
     Public Sub New(ByVal nIP As String, ByVal nPort As Integer)
-        MyBase.New(nIP, nPort, 300, -1, Client_Console.settingElements(0)) 'Attempts to connect to a Server and Set's the name etc of the Client
+        MyBase.New(nIP, nPort, 3000, -1, Client_Console.settingElements(0)) 'Attempts to connect to a Server and Set's the name etc of the Client
         Dim buff() As Byte = System.Text.ASCIIEncoding.ASCII.GetBytes(Name) 'Get an array of Bytes to represent the Client's name
         Send(BitConverter.GetBytes(buff.Length), Net.Sockets.SocketFlags.None) 'Send an Integer representing the number of Bytes to be received
         Send(buff, Net.Sockets.SocketFlags.None) 'Send the array of Bytes representing the Clients name
@@ -58,14 +58,14 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
             errorList.AddRange(errorMessages) 'Add the error messages to the List
             accessSendList.ReleaseMutex()
         Catch ex As Exception
-            Client_Console.Write_To_Error_Log("ERROR : There was an error while calling Send_Message(). Client will now close." +
-                                              Environment.NewLine + ex.ToString())
+            Client_Console.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an error while calling Send_Message() in the " +
+                                      Name + ". Server will now close." + Environment.NewLine + ex.ToString())
             End
         End Try
     End Sub
     Private Sub Sending() 'Sends each of the elements in data
+        waitToClose.WaitOne() 'Hold the mutex until the Send thread is closed
         Try
-            waitToClose.WaitOne() 'Hold the mutex until the Send thread is closed
             Do
                 sendingSemaphore.WaitOne()
                 Do
@@ -74,25 +74,28 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
                         Send(sendList(0), Net.Sockets.SocketFlags.None) 'Send the message
                         sendList.RemoveAt(0)
                         errorList.RemoveAt(0)
-                    Catch ex As Exception
-                        Client_Console.Write_To_Error_Log(Environment.NewLine + errorList(0) + Environment.NewLine + ex.ToString()) 'Write to the error log
+                    Catch ex As Net.Sockets.SocketException
+                        Client_Console.Write_To_Error_Log(Environment.NewLine + errorList(0) + Environment.NewLine + ex.ToString())
+                        sendingAlive = False
+                        receivingAlive = False
+                        disconnecting = True
+                    Finally
+                        accessSendList.ReleaseMutex()
                     End Try
-                    accessSendList.ReleaseMutex()
                 Loop Until sendList.Count = 0 Or disconnecting 'Loop while there's messages to send
             Loop While sendingAlive 'Loop while the sending is alive
-            waitToClose.ReleaseMutex() 'The Send thread is closed
         Catch ex As Net.Sockets.SocketException
-            Client_Console.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an error while sending a message to the Server. Client will now disconnect." +
-                                              Environment.NewLine + ex.ToString())
+            Client_Console.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an error while sending a message to the " +
+                                      Name + ". The " + Name + " will now disconnect." + Environment.NewLine + ex.ToString())
             sendingAlive = False
             receivingAlive = False
             disconnecting = True
         Catch ex As Exception
-            Client_Console.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an unexpected and unhandled error while sending a message to the Server. Client will now close." +
-                                              Environment.NewLine + ex.ToString())
+            Client_Console.Write_To_Error_Log("ERROR : There was an unexpected and unhandled error while sending a message to the " + Name + ". Server will now close.")
             End
+        Finally
+            waitToClose.ReleaseMutex() 'The Send thread is closed
         End Try
-        Client_Console.OutputScreen.sendKeys = False 'Stop sending keys
     End Sub
 
     Private Sub Receiving() 'Receives messages
@@ -124,6 +127,8 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
                             receivingAlive = False
                             disconnecting = True
                             Console.WriteLine(Environment.NewLine + "Client : The Client has died and has disconnected.")
+                            Dim d As New Screen.Death(AddressOf Screen.DeathScreen.Layout)
+                            Client_Console.OutputScreen.Invoke(d, {Client_Console.OutputScreen})
                         Case Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Bad_Message_Exception
                             receivingAlive = False 'Close the Client
                             sendingAlive = False 'Close the Client
@@ -252,7 +257,11 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
                         Dim scale As Double = 200 / distance 'Calculate the scale of the distance against 200
                         positions(i).X = (scale * positions(i).X) + displayBoxCenter 'Calculate the scaled x coord
                         positions(i).Y = (scale * positions(i).Y) + displayBoxCenter 'Calculate the scaled y coord
-                        imgG.FillEllipse(If((i = targetIndex), Drawing.Brushes.Blue, Drawing.Brushes.Red), New Rectangle(New Point((positions(i).X - 5), (positions(i).Y - 5)),
+                        imgG.FillEllipse(If((allegiances(i) = allegiances(clientIndex)),
+                                            Brushes.Green,
+                                            If((i = targetIndex),
+                                               Drawing.Brushes.Blue,
+                                               Drawing.Brushes.Red)), New Rectangle(New Point((positions(i).X - 5), (positions(i).Y - 5)),
                                                                          New Size(10, 10))) 'Draw a circle 200 pixels away from the center of the object
                     Else 'Draw the actual image of the object
                         Select Case types(i) 'Choose the type to draw

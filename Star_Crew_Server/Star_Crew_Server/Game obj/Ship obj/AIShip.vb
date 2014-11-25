@@ -5,10 +5,10 @@
     Private targetDirection As Double 'A Double value indicating the direction to the target in object space
     Private ReadOnly Primary As New Rattler(Me) 'The Ships weapon
 
-    Public Sub New()
+    Public Sub New(ByVal nAllegiance As Star_Crew_Shared_Libraries.Shared_Values.Allegiances)
         MyBase.New(Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes.Ship, True, True,
                    New Game_Library.Game_Objects.StatDbl(0, 30, 30, True), New Game_Library.Game_Objects.StatDbl(1, 1, 10, True),
-                   1, (Math.PI / 30), 20, 20, Star_Crew_Shared_Libraries.Shared_Values.Allegiances.Pirate_Alliance)
+                   1, (Math.PI / 30), 20, 20, nAllegiance)
         X = Int(Rnd() * 6000) - 3000
         Y = Int(Rnd() * 6000) - 3000
     End Sub

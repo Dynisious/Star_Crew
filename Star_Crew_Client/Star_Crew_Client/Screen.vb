@@ -1,6 +1,8 @@
 ﻿Public Class Screen 'The object used as a GUI for the Client
     Public Server As System.Diagnostics.Process 'The Server that the Client hosts
     Public sendKeys As Boolean = False 'A Boolean value indicating whether the Client should send keystrokes to the Server
+    Public inMenu As Boolean = False 'A Boolean value indicating whether the Client is in the in game menu
+
     Public Class MenuScreen 'Objects displayed on the menu screen
         Private Shared WithEvents btnHost As New System.Windows.Forms.Button With {
             .Location = New System.Drawing.Point(400, 48), .ForeColor = Drawing.Color.DarkTurquoise,
@@ -61,16 +63,16 @@
 
         Private Shared Sub btnHost_Click() Handles btnHost.Click 'Hosts a new Server
             If Client_Console.Client IsNot Nothing Then 'There's a Connector from the last session
+                Client_Console.Client.Send_Message({BitConverter.GetBytes(Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Client_Disconnecting)},
+                                                   {"ERROR : There was an error sending the Client_Disconnecting message to the Server. Client will now close."})
                 If Client_Console.OutputScreen.Server IsNot Nothing Then
                     If Client_Console.OutputScreen.Server.HasExited = False Then Client_Console.OutputScreen.Server.CloseMainWindow() 'Make Sure the Server is not left open
                 End If
-                Client_Console.Client.Send_Message({BitConverter.GetBytes(Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Client_Disconnecting)},
-                                                   {"ERROR : There was an error sending the Client_Disconnecting message to the Server. Client will now close."})
                 Client_Console.Client.sendingAlive = False
                 Client_Console.Client.receivingAlive = False
             End If
             Client_Console.OutputScreen.Server = Process.Start("Server\Star_Crew_Server.exe")
-            Client_Console.Client = New Connector("127.0.0.1", Star_Crew_Shared_Libraries.Shared_Values.Values.ServicePort)
+            Client_Console.Client = New Connector("localhost", Star_Crew_Shared_Libraries.Shared_Values.Values.ServicePort)
         End Sub
         Private Shared Sub btnHost_MouseEnter() Handles btnHost.MouseEnter 'Changes btnHost's colour when it's moused over
             btnHost.ForeColor = Drawing.Color.Turquoise 'Change the ForeColour
@@ -84,11 +86,11 @@
         Private Shared Sub btnJoin_Click() Handles btnJoin.Click 'Joins an existing Server
             JoinScreen.Layout(Client_Console.OutputScreen) 'Go to the Join Screen
             If Client_Console.Client IsNot Nothing Then 'There's a Connector from the last session
+                Client_Console.Client.Send_Message({BitConverter.GetBytes(Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Client_Disconnecting)},
+                                                   {"ERROR : There was an error sending the Client_Disconnecting message to the Server. Client will now close."})
                 If Client_Console.OutputScreen.Server IsNot Nothing Then
                     If Client_Console.OutputScreen.Server.HasExited = False Then Client_Console.OutputScreen.Server.CloseMainWindow() 'Make Sure the Server is not left open
                 End If
-                Client_Console.Client.Send_Message({BitConverter.GetBytes(Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Client_Disconnecting)},
-                                                   {"ERROR : There was an error sending the Client_Disconnecting message to the Server. Client will now close."})
                 Client_Console.Client.sendingAlive = False
                 Client_Console.Client.receivingAlive = False
             End If
@@ -129,6 +131,7 @@
         Public Shared Sub btnBackToGame_Click() Handles btnBackToGame.Click 'Opens the GameScreenLayout
             GameScreen.Layout(Client_Console.OutputScreen)
             btnBackToGame.Enabled = False
+            Client_Console.OutputScreen.inMenu = False
         End Sub
 
     End Class
@@ -261,6 +264,7 @@
         Public Shared Sub btnMenu_Click() Handles btnMenu.Click 'Handles btnMenu being Clicked
             MenuScreen.Layout(Client_Console.OutputScreen) 'Go to the menu screen
             Client_Console.OutputScreen.sendKeys = False 'Stop sending keys to the Server
+            Client_Console.OutputScreen.inMenu = True
             btnMenu.Enabled = False
         End Sub
         Private Shared Sub btnMenu_MouseEnter() Handles btnMenu.MouseEnter 'Handles the mouse moving into btnMenu
@@ -402,6 +406,22 @@
         End Sub
 
     End Class
+    Public Delegate Sub Death(ByRef scr As Screen) 'Calls layout in DeathScreen
+    Public Class DeathScreen 'Objects displayed when the Client is going to join an existing game
+
+        Public Shared Sub Layout(ByRef scr As Screen) 'Set's the Screen to display the join screen
+            scr.Controls.Clear() 'Clear's the old display
+            scr.sendKeys = False 'Do not send keystrokes to the Server
+            Client_Console.Client = Nothing 'Clear the client
+            scr.inMenu = False 'The Screen is not in the in game menu
+            scr.BackgroundImage = My.Resources.Death 'Set the image
+            scr.Refresh() 'Force the form to refresh
+            System.Threading.Thread.Sleep(3000) 'Wait
+            scr.BackgroundImage = Nothing 'Clear the image
+            MenuScreen.Layout(scr) 'Bring up the menu
+        End Sub
+
+    End Class
 
     Public Sub New()
         InitializeComponent()
@@ -440,12 +460,9 @@
                         End If
                     Next
             End Select
-        Else 'At the menu screen
-            Select Case e.KeyCode
-                Case Windows.Forms.Keys.Escape
-                    Dim d As New Escape_Key(AddressOf MenuScreen.btnBackToGame_Click)
-                    MenuScreen.btnBackToGame.Invoke(d)
-            End Select
+        ElseIf (e.KeyCode = Windows.Forms.Keys.Escape) And Client_Console.OutputScreen.inMenu Then
+            Dim d As New Escape_Key(AddressOf MenuScreen.btnBackToGame_Click)
+            MenuScreen.btnBackToGame.Invoke(d)
         End If
     End Sub
     Private Sub Keys_Up(ByVal sender As Object, ByVal e As System.Windows.Forms.KeyEventArgs) Handles MyBase.KeyUp

@@ -45,12 +45,14 @@
 
         '-----Testing-----
         Combat.Ticker.Start()
-        For i As Integer = 1 To 3
-            Combat.adding.Add(New AIShip)
+        Combat.gameThread.Start()
+        For i As Integer = 1 To 2
+            Combat.adding.Add(New AIShip(Star_Crew_Shared_Libraries.Shared_Values.Allegiances.Pirate_Alliance))
         Next
         '-----------------
 
-        While Receive_Server_Commands() = True  'Continue to run the program
+        While True 'Continue to run the program
+            Receive_Server_Commands()
         End While
     End Sub
 
@@ -68,7 +70,7 @@
         kick 'Kicks a specified client
         bot_add 'Adds a specified number of AI Ships
     End Enum
-    Public Function Receive_Server_Commands() As Boolean 'Runs console commands for the Server
+    Public Sub Receive_Server_Commands() 'Runs console commands for the Server
         Dim command As String = Mid(LCase(Console.ReadLine()), 1) + " " 'Get the entered command
         Dim firstSpace As Integer = command.IndexOf(" ")
         Select Case Left(command, firstSpace) 'Gets the command
@@ -79,7 +81,9 @@
                     "clr:               Clears the console of text." + Environment.NewLine +
                     "save:              !NOT IMPLIMENTED!" + Environment.NewLine +
                     "kick:              !NOT IMPLIMENTED!" + Environment.NewLine +
-                    "bot_add <number>:  Adds the specified number of AI Ships.")
+                    "bot_add <number> <faction>:    Adds the specified" + Environment.NewLine +
+                    "                               number of AI Ships" + Environment.NewLine +
+                    "                               alligned to the specified faction.")
             Case ServerCommands.close.ToString()
                 Finalise_Server()
             Case ServerCommands.clr.ToString()
@@ -90,9 +94,11 @@
 
             Case ServerCommands.bot_add.ToString()
                 Try
-                    Dim num As Integer = CInt(Mid(command, firstSpace + 1, (command.IndexOf(" ", firstSpace + 1) - firstSpace))) - 1
-                For i As Integer = 0 To num 'Loop through all indexes
-                    Combat.adding.Add(New AIShip()) 'Add a new AI Ship
+                    Dim secondSpace As Integer = command.IndexOf(" ", firstSpace + 1) 'Get the index of the seconds space
+                    Dim num As Integer = CInt(Mid(command, firstSpace + 1, (secondSpace - firstSpace))) - 1
+                    Dim alleg As Integer = CInt(Mid(command, secondSpace + 1, (command.IndexOf(" ", secondSpace + 1) - secondSpace)))
+                    For i As Integer = 0 To num 'Loop through all indexes
+                        Combat.adding.Add(New AIShip(alleg)) 'Add a new AI Ship
                     Next
                 Catch ex As Exception
                     Console.WriteLine("ERROR : Invalid value 'number'. Check input and try again.")
@@ -100,8 +106,7 @@
             Case Else 'It was an invalid command
                 Console.WriteLine("INVALID COMMAND : Check spelling and try again")
         End Select
-        Return True
-    End Function
+    End Sub
 
     Public Function Normalise_Direction(ByVal nDirection As Double) As Double 'Returns a radian between the range of 0-2*Pi
         nDirection = nDirection Mod FullCircle 'Get the remaineder when the direction is divided by 2*Pi

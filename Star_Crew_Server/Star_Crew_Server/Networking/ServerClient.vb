@@ -43,14 +43,24 @@
     End Property
 
     Public Sub New(ByRef nSocket As System.Net.Sockets.Socket, ByVal index As Integer, ByRef successfulConnection As Boolean)
-        MyBase.New(nSocket, 300, -1, "Unnamed Client", index)
+        MyBase.New(nSocket, 3000, -1, "Unnamed Client", index)
         Console.WriteLine(Environment.NewLine + "Server : Connecting a new Client at '" + RemoteEndPoint.ToString() + "'...")
         successfulConnection = False 'The connection is not yet successful
         Try
             Name = Text.ASCIIEncoding.ASCII.GetString(Receive_ByteArray(Net.Sockets.SocketFlags.None)) 'Get the name of the Ship
+            successfulConnection = True 'The connection was successful
+        Catch ex As Game_Library.Networking.Client.ReceiveException
+            Server.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an exception while connecting a client at '" +
+                                      RemoteEndPoint.ToString() + Environment.NewLine + ex.ToString())
+            Console.WriteLine("Server : Connection of a new Client at '" + RemoteEndPoint.ToString() + "' failed.")
+            Close() 'Close the socket
+            Exit Sub
         Catch ex As Net.Sockets.SocketException
             Server.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an exception while connecting a client at '" +
                                       RemoteEndPoint.ToString() + Environment.NewLine + ex.ToString())
+            Console.WriteLine("Server : Connection of a new Client at '" + RemoteEndPoint.ToString() + "' failed.")
+            Close() 'Close the socket
+            Exit Sub
         Catch ex As Exception
             Server.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an unexpected and unhandled exception while connecting a client at '" +
                                       RemoteEndPoint.ToString() + ". Server will now close." + Environment.NewLine + ex.ToString())
@@ -63,13 +73,11 @@
         sendThread.Start()
         receiveThread = New System.Threading.Thread(AddressOf Receiving) 'Create a new Thread for receiving messages
         receiveThread.Start() 'Start the thread
-        successfulConnection = True 'The connection was successful
         Craft = New PlayerShip(Me)
         Dim temp As String = ("Server : The '" + Name + "' has been connected.")
         Server.Combat.adding.Add(Craft)
         Console.WriteLine(temp) 'Write that the Client is connected and the seconds for the ping
         Server.Write_To_Error_Log(Environment.NewLine + temp) 'Write that the Client is connected and the seconds for the ping
-        If successfulConnection = False Then Close() 'Close the socket
     End Sub
 
     Public Sub Send_Message(ByVal messages()() As Byte, ByVal errorMessages() As String)
@@ -86,8 +94,8 @@
         End Try
     End Sub
     Private Sub Sending() 'Sends each of the elements in data
+        waitToClose.WaitOne() 'Hold the mutex until the Send thread is closed
         Try
-            waitToClose.WaitOne() 'Hold the mutex until the Send thread is closed
             Do
                 sendingSemaphore.WaitOne()
                 Do
@@ -96,16 +104,16 @@
                         Send(sendList(0), Net.Sockets.SocketFlags.None) 'Send the message
                         sendList.RemoveAt(0)
                         errorList.RemoveAt(0)
-                        accessSendList.ReleaseMutex()
                     Catch ex As Net.Sockets.SocketException
                         Server.Write_To_Error_Log(Environment.NewLine + errorList(0) + Environment.NewLine + ex.ToString())
                         sendingAlive = False
                         receivingAlive = False
                         disconnecting = True
+                    Finally
+                        accessSendList.ReleaseMutex()
                     End Try
                 Loop Until sendList.Count = 0 Or disconnecting 'Loop while there's messages to send
             Loop While sendingAlive 'Loop while the sending is alive
-            waitToClose.ReleaseMutex() 'The Send thread is closed
         Catch ex As Net.Sockets.SocketException
             Server.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an error while sending a message to the " +
                                       Name + ". The " + Name + " will now disconnect." + Environment.NewLine + ex.ToString())
@@ -115,6 +123,8 @@
         Catch ex As Exception
             Server.Write_To_Error_Log("ERROR : There was an unexpected and unhandled error while sending a message to the " + Name + ". Server will now close.")
             End
+        Finally
+            waitToClose.ReleaseMutex() 'The Send thread is closed
         End Try
     End Sub
 
@@ -147,6 +157,8 @@
                             _turnLeft = BitConverter.ToBoolean(Receive_ByteArray(Net.Sockets.SocketFlags.None, 1), 0) 'Set the value
                         Case Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Turn_Right
                             _turnRight = BitConverter.ToBoolean(Receive_ByteArray(Net.Sockets.SocketFlags.None, 1), 0) 'Set the value
+                        Case Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Heal_Ship
+                            Craft.Hull.Current += Receive_Header(Net.Sockets.SocketFlags.None) 'Heal the Ship
                         Case Else
                             Server.Write_To_Error_Log(Environment.NewLine + "ERROR : The Client sent an unknown message header. The " + Name + " will now disconnect.")
                             Send_Message({BitConverter.GetBytes(Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Bad_Message_Exception)},

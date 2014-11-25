@@ -16,6 +16,7 @@
         Turn_Right 'Turn the Ship to the right
         Turn_Left 'Turn the Ship to the left
         Fire_Weapons 'Fire the Weapon
+        Heal_Ship 'Heals the Ship
     End Enum
 
     <Serializable()>

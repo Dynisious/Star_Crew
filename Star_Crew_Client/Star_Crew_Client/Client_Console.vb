@@ -1,6 +1,10 @@
 ﻿Module Client_Console 'Used to output messages to the console for error handling etc for the Client
-    Public WithEvents OutputScreen As New Screen 'A Screen object used as the GUI for the Client
+    Public WithEvents OutputScreen As Screen 'A Screen object used as the GUI for the Client
     Public Client As Connector 'A Connector object used to connect to a Server
+    Private ScreenThread As New System.Threading.Thread((Sub()
+                                                             OutputScreen = New Screen()
+                                                             OutputScreen.Give_Control()
+                                                         End Sub)) 'Give start the message loop for the form
     Private ReadOnly WorkingDirectory As String = "C:\Users\" + Environment.UserName + "\AppData\Roaming\Star Crew Client"
     Private ReadOnly ErrorLog As String = "Error Log.log" 'A String value representing the address of the game's error log
     Private ReadOnly SettingFile As String = "Settings.txt" 'A String value representing the address of the game's settings file
@@ -38,12 +42,12 @@
         Console.WriteLine("Initialising Objects...")
         Randomize() 'Set the random sequense of numbers
         Console.WriteLine("Checking Directories exist...")
-        If FileIO.FileSystem.DirectoryExists(workingDirectory) = False Then
+        If FileIO.FileSystem.DirectoryExists(WorkingDirectory) = False Then
             Console.WriteLine("The Working Directory does not exist. It will be created now.")
-            FileIO.FileSystem.CreateDirectory(workingDirectory) 'Create the working directory
+            FileIO.FileSystem.CreateDirectory(WorkingDirectory) 'Create the working directory
         End If
         Console.WriteLine("Setting working directory...")
-        FileIO.FileSystem.CurrentDirectory = workingDirectory 'Set the working directory of the game
+        FileIO.FileSystem.CurrentDirectory = WorkingDirectory 'Set the working directory of the game
         Console.WriteLine("Clearing last error log...")
         FileIO.FileSystem.WriteAllText(ErrorLog, "This error log contains all of the errors that occoured during the last session", False) 'Clear the error logs
         Console.WriteLine("Checking Settings exist...")
@@ -90,7 +94,44 @@
         Console.WriteLine("Objects have been Initialised")
         Console.Title = "Star Crew Client Console"
 
-        OutputScreen.Give_Control() 'Makes the Screen object visible and gives it control over this thread
+        ScreenThread.Start() 'Makes the Screen object visible and gives it control over this thread
+        While True
+            Receive_Console_Commands()
+        End While
+    End Sub
+
+    Public Enum ServerCommands 'An enumorator of console commands for the Server
+        help 'Displays all console commands
+        close 'Close the program
+        clr 'Clears the console window
+        heal 'Adds health to the Client's Ship
+    End Enum
+    Public Sub Receive_Console_Commands() 'Runs console commands for the Server
+        Dim command As String = Mid(LCase(Console.ReadLine()), 1) + " " 'Get the entered command
+        Dim firstSpace As Integer = command.IndexOf(" ")
+        Select Case Left(command, firstSpace) 'Gets the command
+            Case ServerCommands.help.ToString()
+                Console.WriteLine(Environment.NewLine +
+                    "help:          Displays help for all commands." + Environment.NewLine +
+                    "close:         Closes the Server." + Environment.NewLine +
+                    "clr:           Clears the console of text." + Environment.NewLine +
+                    "heal <number>: Adds the specified number of hitpoints to the Client Ship.")
+            Case ServerCommands.close.ToString()
+                End
+            Case ServerCommands.clr.ToString()
+                Console.Clear()
+            Case ServerCommands.heal.ToString()
+                Try
+                    Dim num As Integer = CInt(Mid(command, firstSpace + 1, (command.IndexOf(" ", firstSpace + 1) - firstSpace))) - 1
+                    Client.Send_Message({BitConverter.GetBytes(Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Heal_Ship), BitConverter.GetBytes(num)},
+                                        {"ERROR : There was an error sending the Heal_Ship message header to the Server. Client will now disconnect.",
+                                         "ERROR : There was an error sending the value for the Heal_Ship message to the Server. Client will now disconnect."})
+                Catch ex As Exception
+                    Console.WriteLine("ERROR : Invalid value 'number'. Check input and try again.")
+                End Try
+            Case Else 'It was an invalid command
+                Console.WriteLine("INVALID COMMAND : Check spelling and try again")
+        End Select
     End Sub
 
     Sub Save_Settings()
@@ -108,7 +149,7 @@
     End Sub
 
     Sub Write_To_Error_Log(ByVal text As String)
-        FileIO.FileSystem.WriteAllText(errorLog, (Environment.NewLine + text), True)
+        FileIO.FileSystem.WriteAllText(ErrorLog, (Environment.NewLine + text), True)
     End Sub
 
     Sub Close_Client() Handles OutputScreen.FormClosing
