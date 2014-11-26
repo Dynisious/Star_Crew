@@ -38,6 +38,7 @@
         Windows.Forms.Keys.X}
 
     Sub Main()
+        Console.WriteLine(Drawing.Pens.AliceBlue.Color.ToArgb())
         Console.WriteLine("-----Star Crew Client-----")
         Console.WriteLine("Initialising Objects...")
         Randomize() 'Set the random sequense of numbers

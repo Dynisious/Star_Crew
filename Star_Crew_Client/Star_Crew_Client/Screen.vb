@@ -229,22 +229,27 @@
             .BackColor = Drawing.Color.Transparent, .Font = New System.Drawing.Font(
                 New System.Drawing.Font("Consolas", 18, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel), Drawing.FontStyle.Underline)}
         Public Shared lblHull As New System.Windows.Forms.Label With {
-            .Size = New System.Drawing.Size(300, 45), .Location = New System.Drawing.Point(875, 5),
+            .Size = New System.Drawing.Size(300, 45), .Location = New System.Drawing.Point(855, 15),
             .Text = "HULL: 0/0", .FlatStyle = Windows.Forms.FlatStyle.Flat, .ForeColor = Drawing.Color.DarkTurquoise,
             .BackColor = Drawing.Color.Transparent, .Font = New System.Drawing.Font(
                 "Consolas", 18, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel)}
+        Public Shared lblShield As New System.Windows.Forms.Label With {
+            .Size = New System.Drawing.Size(300, 45), .Location = New System.Drawing.Point(855, 70),
+            .Text = "SHIELD: 0% CAPACITY", .FlatStyle = Windows.Forms.FlatStyle.Flat, .ForeColor = Drawing.Color.DarkTurquoise,
+            .BackColor = Drawing.Color.Transparent, .Font = New System.Drawing.Font(
+                "Consolas", 18, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel)}
         Public Shared lblThrottle As New System.Windows.Forms.Label With {
-            .Size = New System.Drawing.Size(300, 45), .Location = New System.Drawing.Point(875, 60),
+            .Size = New System.Drawing.Size(300, 45), .Location = New System.Drawing.Point(855, 125),
             .Text = "THROTTLE: 0/0", .FlatStyle = Windows.Forms.FlatStyle.Flat, .ForeColor = Drawing.Color.DarkTurquoise,
             .BackColor = Drawing.Color.Transparent, .Font = New System.Drawing.Font(
                 "Consolas", 18, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel)}
         Public Shared lblAmmunition As New System.Windows.Forms.Label With {
-            .Size = New System.Drawing.Size(300, 45), .Location = New System.Drawing.Point(875, 115),
+            .Size = New System.Drawing.Size(300, 45), .Location = New System.Drawing.Point(855, 170),
             .Text = "AMMUNITION: 0/0", .FlatStyle = Windows.Forms.FlatStyle.Flat, .ForeColor = Drawing.Color.DarkTurquoise,
             .BackColor = Drawing.Color.Transparent, .Font = New System.Drawing.Font(
                 "Consolas", 18, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel)}
         Public Shared lblTargetDistance As New System.Windows.Forms.Label With {
-            .Size = New System.Drawing.Size(300, 45), .Location = New System.Drawing.Point(875, 160),
+            .Size = New System.Drawing.Size(300, 45), .Location = New System.Drawing.Point(855, 215),
             .Text = "TARGET DISTANCE: 0m", .FlatStyle = Windows.Forms.FlatStyle.Flat, .ForeColor = Drawing.Color.DarkTurquoise,
             .BackColor = Drawing.Color.Transparent, .Font = New System.Drawing.Font(
                 "Consolas", 18, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel)}
@@ -254,6 +259,7 @@
             scr.Controls.Add(btnMenu) 'Add btnMenu to the Screen
             btnMenu.Enabled = True
             scr.Controls.Add(lblHull) 'Add lblHull to the Screen
+            scr.Controls.Add(lblShield) 'Add lblShield to the Screen
             scr.Controls.Add(lblThrottle) 'Add lblThrottle to the Screen
             scr.Controls.Add(lblAmmunition) 'Add lblAmmunition to the Screen
             scr.Controls.Add(lblTargetDistance) 'Add lblTargetDistance to the Screen
@@ -278,6 +284,9 @@
 
         Public Shared Sub lblHull_Set_Text(ByVal text As String)
             lblHull.Text = text
+        End Sub
+        Public Shared Sub lblShield_Set_Text(ByVal text As String)
+            lblShield.Text = text
         End Sub
         Public Shared Sub lblThrottle_Set_Text(ByVal text As String)
             lblThrottle.Text = text

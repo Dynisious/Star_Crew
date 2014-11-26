@@ -6,9 +6,12 @@
     Private ReadOnly Primary As New Rattler(Me) 'The Ships weapon
 
     Public Sub New(ByVal nAllegiance As Star_Crew_Shared_Libraries.Shared_Values.Allegiances)
-        MyBase.New(Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes.Ship, True, True,
+        MyBase.New(If((nAllegiance = Star_Crew_Shared_Libraries.Shared_Values.Allegiances.Emperial_Forces),
+                      Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes.Screamer,
+                      Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes.Thunder), True, True,
                    New Game_Library.Game_Objects.StatDbl(0, 30, 30, True), New Game_Library.Game_Objects.StatDbl(1, 1, 10, True),
-                   1, (Math.PI / 30), 20, 20, nAllegiance)
+                   1, (Math.PI / 30), 20, 20, nAllegiance, New Game_Library.Game_Objects.StatInt(0, 40, 40, True),
+                   New Game_Library.Game_Objects.StatDbl(0, 30, 30, True))
         X = Int(Rnd() * 6000) - 3000
         Y = Int(Rnd() * 6000) - 3000
     End Sub
@@ -42,7 +45,7 @@
                 targetDistance = obj(1)(i) 'Get the target distance for the Ship
                 targetDirection = Server.Normalise_Direction(tarDirection - Direction) 'Get the direction to the target in object space
                 If (tar.Allegiance <> Allegiance) And If((tarDirection < Math.PI), (TurnSpeed > tarDirection),
-                                                         (TurnSpeed > -(tarDirection - (2 * Math.PI)))) Then Primary.Fire() 'Fire the weapon
+                                                         (-TurnSpeed < -tarDirection)) Then Primary.Fire() 'Fire the weapon
                 Steering(collision) 'Steer the Ship
                 Exit For
             End If

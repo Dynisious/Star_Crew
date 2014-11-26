@@ -72,12 +72,26 @@
         End Get
     End Property
     Public Shared ReadOnly CollisionDamage As Double = 0.1 'The damage done when two ships collide
+    Private _ShieldRecharge As Game_Library.Game_Objects.StatInt 'The actual value of ShieldRecharge
+    Public ReadOnly Property ShieldRecharge As Game_Library.Game_Objects.StatInt 'A StatInt object that is used to only let the Shield regenerate outside of combat
+        Get
+            Return _ShieldRecharge
+        End Get
+    End Property
+    Private _Shield As Game_Library.Game_Objects.StatDbl 'The actual value of Shield
+    Public ReadOnly Property Shield As Game_Library.Game_Objects.StatDbl 'A StatDbl object used to represent the Shield
+        Get
+            Return _Shield
+        End Get
+    End Property
 
     Public Sub New(ByVal nType As Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes, ByVal nTrackable As Boolean,
                    ByVal nPhysics As Boolean, ByVal nHull As Game_Library.Game_Objects.StatDbl,
                    ByVal nThrottle As Game_Library.Game_Objects.StatDbl, ByVal nAcceleration As Double,
                    ByVal nTurnSpeed As Double, ByVal nHitBoxXDistance As Integer, ByVal nHitBoxYDistance As Integer,
-                   ByVal nAllegiance As Star_Crew_Shared_Libraries.Shared_Values.Allegiances)
+                   ByVal nAllegiance As Star_Crew_Shared_Libraries.Shared_Values.Allegiances,
+                   ByVal nShieldRecharge As Game_Library.Game_Objects.StatInt,
+                   ByVal nShield As Game_Library.Game_Objects.StatDbl)
         _Type = nType
         _Trackable = nTrackable
         _Physics = nPhysics
@@ -92,10 +106,19 @@
         HitboxAngles = {Math.Atan2(HitboxYDistance, HitboxXDistance),
                         Math.Atan2(HitboxYDistance, -HitboxXDistance)}
         Allegiance = nAllegiance
+        _ShieldRecharge = nShieldRecharge
+        _Shield = nShield
     End Sub
 
     Public Sub Take_Damage(ByVal incomingDamage As Double)
-        Hull.Current -= incomingDamage
+        If Shield.Current >= incomingDamage Then 'The Shields can absorbe the damage
+            Shield.Current -= incomingDamage 'Take the damage away from the Shield
+        Else 'The Shields cannot absorbe all the damage
+            incomingDamage -= Shield.Current 'Remove the damage from the Shield
+            Shield.Current = 0 'Set the Shields to 0
+            Hull.Current -= incomingDamage 'Remove the damage from the hull
+        End If
+        ShieldRecharge.Current = 0 'Set the recharge to 0
         hit = True
         If Hull.Current = 0 Then
             Dead = True
@@ -106,6 +129,11 @@
         _Hull = Nothing
         _Throttle = Nothing
         Name = "Wreckage"
+        CombatIndex = -1
+        Allegiance = -1
+        _Type = -1
+        _ShieldRecharge = Nothing
+        _Shield = Nothing
     End Sub
 
     Public Function Get_Collision_Radia(ByVal objectDirection As Double) As Integer 'Returns the distance of the edge of the collision box in the direction of the calling object
@@ -151,6 +179,10 @@
         hit = False 'The Ship has not been hit this update
         X = X + (Speed * Math.Cos(Direction)) 'Update the Ship's X position
         Y = Y + (Speed * Math.Sin(Direction)) 'Update the Ship's Y position
+        ShieldRecharge.Current += 1 'Add one
+        If ShieldRecharge.Current = ShieldRecharge.Maximum Then 'The shields can recharge
+            Shield.Current += (1 / 20) 'Add a point to the Shield
+        End If
     End Sub
 
 End Class

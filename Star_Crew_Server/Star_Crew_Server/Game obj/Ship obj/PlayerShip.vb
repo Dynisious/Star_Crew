@@ -11,9 +11,10 @@
     Public targetDistance As Integer = -1 'An Integer indicating the distance to the target
 
     Public Sub New(ByRef nClient As ServerClient)
-        MyBase.New(Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes.Ship, True, True,
+        MyBase.New(Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes.Screamer, True, True,
                    New Game_Library.Game_Objects.StatDbl(0, 100, 100, True), New Game_Library.Game_Objects.StatDbl(1, 1, 20, True),
-                   0.5, (Math.PI / 30), 20, 20, Star_Crew_Shared_Libraries.Shared_Values.Allegiances.Emperial_Forces)
+                   0.5, (Math.PI / 30), 20, 20, Star_Crew_Shared_Libraries.Shared_Values.Allegiances.Emperial_Forces,
+                  New Game_Library.Game_Objects.StatInt(0, 40, 40, True), New Game_Library.Game_Objects.StatDbl(0, 30, 30, True))
         Client = nClient
         _Primary = New Rattler(Me)
     End Sub

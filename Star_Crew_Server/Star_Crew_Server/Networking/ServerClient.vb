@@ -219,17 +219,19 @@
             Dim allegiances(objects.Count - 1) As Star_Crew_Shared_Libraries.Shared_Values.Allegiances 'An array of alleiances values to be sent to the Client
             Dim types(objects.Count - 1) As Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes 'An array of ObjectType values to be sent to the Client
             Dim hits(objects.Count - 1) As Boolean 'An array of Boolean values to be sent to the Client
+            Dim shields(objects.Count - 1) As Integer 'An array of Integer values to be sent to the Client
             For i As Integer = 0 To objects.Count - 1 'Loop through all Indexs
                 positions(i) = New System.Drawing.Point((objects(i).X - Craft.X), (objects(i).Y - Craft.Y)) 'Create a point object relative to the object
                 directions(i) = objects(i).Direction 'Set the object's direction
                 allegiances(i) = objects(i).Allegiance 'Set the object's allegiance
                 types(i) = objects(i).Type
                 hits(i) = objects(i).hit 'Set the object's hit state
+                shields(i) = If((objects(i).Type <> Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes.Projectile), (100 - (100 * objects(i).Shield.Current / objects(i).Shield.Maximum)), 0) 'Set the inverse percentage of the Ships Shields
             Next
             Dim message As Byte() = Game_Library.Serialisation.ToBytes({positions, directions, allegiances, types, hits, Craft.Throttle.Current,
                                                                         Craft.CombatIndex, Craft.firing, Craft.Hull.Current,
                                                                         Craft.Hull.Maximum, Craft.Primary.Ammunition.Current,
-                                                                        Craft.Primary.Ammunition.Maximum, Craft.target, Craft.targetDistance}) 'Generate the message to send to the Client
+                                                                        Craft.Primary.Ammunition.Maximum, Craft.target, Craft.targetDistance, shields}) 'Generate the message to send to the Client
             Dim errorMessages() As String = {"ERROR : There was an error while sending the Ship_To_Ship header to the " + Name + ". The " + Name + " will now disconnect.",
                                              "ERROR : There was an error while sending the Ship_To_Ship message length to the " + Name + ". The " + Name + " will now disconnect.",
                                              "ERROR : There was an error while sending the Ship_To_Ship message to the " + Name + ". The " + Name + " will now disconnect."}

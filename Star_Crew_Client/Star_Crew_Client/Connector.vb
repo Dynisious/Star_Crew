@@ -31,6 +31,7 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
                                 New Point(Int(Rnd() * displayBoxSideLength), Int(Rnd() * displayBoxSideLength))}
     Public values(4) As Boolean 'An array of Boolean values indicating which keys are down and which aren't
     Public Scaler As Double = 1 'Scales what is displayed on the screen
+    Private Images() As Bitmap = {My.Resources.FriendlyScreamer, My.Resources.PirateThunder}
 
     Public Sub New(ByVal nIP As String, ByVal nPort As Integer)
         MyBase.New(nIP, nPort, 3000, -1, Client_Console.settingElements(0)) 'Attempts to connect to a Server and Set's the name etc of the Client
@@ -155,6 +156,12 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
 
                 System.Threading.Thread.Sleep(10)
             End While
+        Catch ex As Game_Library.Networking.Client.ReceiveException
+            Client_Console.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an error while receiving a message from the Server. Client will now disconnect." +
+                                              Environment.NewLine + ex.ToString())
+            sendingAlive = False
+            receivingAlive = False
+            disconnecting = True
         Catch ex As Net.Sockets.SocketException
             Client_Console.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an error while receiving a message from the Server. Client will now disconnect." +
                                               Environment.NewLine + ex.ToString())
@@ -162,8 +169,8 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
             receivingAlive = False
             disconnecting = True
         Catch ex As Exception
-            Client_Console.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an unexpected and unhandled error while receiving a message from the " + Name + ". The Server will now close." +
-                                      Environment.NewLine + ex.ToString())
+            Client_Console.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an unexpected and unhandled error while receiving a message from the Server. The Client will now close." +
+                                              Environment.NewLine + ex.ToString())
             End
         End Try
 
@@ -202,6 +209,7 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
                 Dim clientAmmunition As New Point(receivedElements(10), receivedElements(11)) 'Get the Client's ammunition
                 Dim targetIndex As Integer = receivedElements(12) 'Get the targeted index
                 Dim targetDistance As Integer = receivedElements(13) 'Get the targets range
+                Dim shields() As Integer = receivedElements(14) 'Get the Shields
                 waitingForMessage = True 'The message can now be updated
 
                 '-----Scale and Translate Positions-----
@@ -219,6 +227,8 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
                 '-----Render Text-----
                 Dim d As New Text_Setting(AddressOf Screen.GameScreen.lblHull_Set_Text) 'Create a delegate
                 Screen.GameScreen.lblHull.Invoke(d, {"HULL: " + CStr(clientHull.X) + "/" + CStr(clientHull.Y)}) 'Write the text to lblHull
+                d = New Text_Setting(AddressOf Screen.GameScreen.lblShield_Set_Text) 'Create a delegate
+                Screen.GameScreen.lblHull.Invoke(d, {"SHIELD: " + CStr(shields(clientIndex)) + "% CAPACITY"}) 'Write the text to lblShield
                 d = New Text_Setting(AddressOf Screen.GameScreen.lblThrottle_Set_Text) 'Create a delegate
                 Screen.GameScreen.lblThrottle.Invoke(d, {"THROTTLE: " + CStr(FormatNumber((2 * clientSpeed), 2)) + "m/sec"}) 'Write the text to lblThrottle
                 d = New Text_Setting(AddressOf Screen.GameScreen.lblAmmunition_Set_Text) 'Create a delegate
@@ -273,16 +283,15 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
                                                   CInt(xCoord + (5 * Math.Cos(directions(i)))),
                                                   CInt(yCoord + (5 * Math.Sin(directions(i))))) 'Draw the projectile
                                 End If
-                            Case Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes.Ship
-                                Dim craftBmp As New Bitmap(CType(If((allegiances(i) = Star_Crew_Shared_Libraries.Shared_Values.Allegiances.Emperial_Forces),
-                                                                    My.Resources.FriendlyScreamer.Clone(),
-                                                                    My.Resources.PirateThunder.Clone()), Image)) 'Create a Bitmap to draw
+                            Case Else
+                                Dim craftBmp As Bitmap = Images(types(i) - Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes.ShipsStart).Clone() 'Create a Bitmap to draw
                                 craftBmp.MakeTransparent() 'Clear the white space from the image
                                 Dim crossLength As Integer = (Scaler * Math.Sqrt((craftBmp.Width ^ 2) + (craftBmp.Height ^ 2))) 'Calculate the cross length of the bitmap to draw
-                                Dim hlfCrossLength As Integer = crossLength / 2 'Get half of crossLength
+                                Dim hlfCrossLength As Integer = crossLength / 2 'Get half of crossLengthreceiving
                                 Dim bmp As New Bitmap(crossLength, crossLength) 'Create a bitmap to draw on that will always fit the image to draw
                                 Dim bmpG As Graphics = Graphics.FromImage(bmp) 'Create a graphics object from bmp
                                 If targetIndex = i Then bmpG.DrawRectangle(Pens.Blue, 1, 1, crossLength - 2, crossLength - 2)
+                                bmpG.DrawArc(New Drawing.Pen(Drawing.Color.FromArgb((shields(i) * 255 / 100), Color.Red), 1), 1, 1, crossLength - 2, crossLength - 2, 0, 360)
                                 bmpG.TranslateTransform(hlfCrossLength, hlfCrossLength) 'Move the center of the image onto the pivot
                                 bmpG.ScaleTransform(Scaler, Scaler) 'Scale the image
                                 bmpG.RotateTransform(180 * directions(i) / Math.PI) 'Rotate the image
