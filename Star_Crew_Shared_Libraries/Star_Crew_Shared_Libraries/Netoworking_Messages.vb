@@ -15,8 +15,10 @@
         Throttle_Down 'Decrease the Ship's throttle
         Turn_Right 'Turn the Ship to the right
         Turn_Left 'Turn the Ship to the left
-        Fire_Weapons 'Fire the Weapon
+        Fire_Primary 'Fire the Weapon
+        Fire_Secondary 'Fire the Weapon
         Heal_Ship 'Heals the Ship
+        Re_Arm 'Rearms the Ship
     End Enum
 
     <Serializable()>

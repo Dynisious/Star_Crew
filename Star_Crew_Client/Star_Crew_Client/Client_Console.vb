@@ -24,7 +24,8 @@
         "Throttle Down:",
         "Turn Right:",
         "Turn Left:",
-        "Fire Weapon:",
+        "Fire Primary:",
+        "Fire Secondary:",
         "Zoom Out:",
         "Zoom In:"}
     Public settingElements() As Object = {
@@ -34,8 +35,9 @@
         Windows.Forms.Keys.A,
         Windows.Forms.Keys.D,
         Windows.Forms.Keys.ControlKey,
-        Windows.Forms.Keys.Z,
-        Windows.Forms.Keys.X}
+        Windows.Forms.Keys.OemQuestion,
+        Windows.Forms.Keys.Oemcomma,
+        Windows.Forms.Keys.OemPeriod}
 
     Sub Main()
         Console.WriteLine(Drawing.Pens.AliceBlue.Color.ToArgb())
@@ -76,6 +78,8 @@
                 settingElements(6) = converter.ConvertFromString(text.Substring(index, (text.IndexOf(";", index) - index))) 'Set the setting
                 index = text.IndexOf(settingNames(7)) + settingNames(7).Length 'Get the starting index of the setting
                 settingElements(7) = converter.ConvertFromString(text.Substring(index, (text.IndexOf(";", index) - index))) 'Set the setting
+                index = text.IndexOf(settingNames(8)) + settingNames(8).Length 'Get the starting index of the setting
+                settingElements(8) = converter.ConvertFromString(text.Substring(index, (text.IndexOf(";", index) - index))) 'Set the setting
             Catch ex As Exception
                 Console.WriteLine("ERROR : There was an error while loading user settings. Some settings may not have been loaded.")
                 Write_To_Error_Log(Environment.NewLine + "ERROR : There was an error while loading user settings. Some settings may not have been loaded." +
@@ -88,9 +92,10 @@
         Screen.SettingsScreen.txtThrottleDown.Text = "THROTTLE DOWN: " + CType(settingElements(2), Windows.Forms.Keys).ToString()
         Screen.SettingsScreen.txtTurnLeft.Text = "TURN LEFT: " + CType(settingElements(3), Windows.Forms.Keys).ToString()
         Screen.SettingsScreen.txtTurnRight.Text = "TURN RIGHT: " + CType(settingElements(4), Windows.Forms.Keys).ToString()
-        Screen.SettingsScreen.txtFireWeapon.Text = "FIRE WEAPON: " + CType(settingElements(5), Windows.Forms.Keys).ToString()
-        Screen.SettingsScreen.txtZoomOut.Text = "ZOOM OUT: " + CType(settingElements(6), Windows.Forms.Keys).ToString()
-        Screen.SettingsScreen.txtZoomIn.Text = "ZOOM IN: " + CType(settingElements(7), Windows.Forms.Keys).ToString()
+        Screen.SettingsScreen.txtFirePrimary.Text = "FIRE PRIMARY: " + CType(settingElements(5), Windows.Forms.Keys).ToString()
+        Screen.SettingsScreen.txtFireSecondary.Text = "FIRE SECONDARY: " + CType(settingElements(6), Windows.Forms.Keys).ToString()
+        Screen.SettingsScreen.txtZoomOut.Text = "ZOOM OUT: " + CType(settingElements(7), Windows.Forms.Keys).ToString()
+        Screen.SettingsScreen.txtZoomIn.Text = "ZOOM IN: " + CType(settingElements(8), Windows.Forms.Keys).ToString()
         '------------------------
         Console.WriteLine("Objects have been Initialised")
         Console.Title = "Star Crew Client Console"
@@ -106,6 +111,7 @@
         close 'Close the program
         clr 'Clears the console window
         heal 'Adds health to the Client's Ship
+        rearm 'Refills ammunition on the Client's Ship
     End Enum
     Public Sub Receive_Console_Commands() 'Runs console commands for the Server
         Dim command As String = Mid(LCase(Console.ReadLine()), 1) + " " 'Get the entered command
@@ -116,20 +122,32 @@
                     "help:          Displays help for all commands." + Environment.NewLine +
                     "close:         Closes the Server." + Environment.NewLine +
                     "clr:           Clears the console of text." + Environment.NewLine +
-                    "heal <number>: Adds the specified number of hitpoints to the Client Ship.")
+                    "heal <number>: Adds the specified number of hitpoints to the Client's Ship." + Environment.NewLine +
+                    "rearm:         Refills all ammunition on the Client's Ship.")
             Case ServerCommands.close.ToString()
                 End
             Case ServerCommands.clr.ToString()
                 Console.Clear()
             Case ServerCommands.heal.ToString()
                 Try
-                    Dim num As Integer = CInt(Mid(command, firstSpace + 1, (command.IndexOf(" ", firstSpace + 1) - firstSpace))) - 1
-                    Client.Send_Message({BitConverter.GetBytes(Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Heal_Ship), BitConverter.GetBytes(num)},
-                                        {"ERROR : There was an error sending the Heal_Ship message header to the Server. Client will now disconnect.",
-                                         "ERROR : There was an error sending the value for the Heal_Ship message to the Server. Client will now disconnect."})
+                    If Client IsNot Nothing Then
+                        Dim num As Integer = CInt(Mid(command, firstSpace + 1, (command.IndexOf(" ", firstSpace + 1) - firstSpace))) - 1
+                        Client.Send_Message({BitConverter.GetBytes(Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Heal_Ship), BitConverter.GetBytes(num)},
+                                            {"ERROR : There was an error sending the Heal_Ship message header to the Server. Client will now disconnect.",
+                                             "ERROR : There was an error sending the value for the Heal_Ship message to the Server. Client will now disconnect."})
+                    Else
+                        Console.WriteLine("ERROR : The Client is not connected to a Server. Connect and try again.")
+                    End If
                 Catch ex As Exception
                     Console.WriteLine("ERROR : Invalid value 'number'. Check input and try again.")
                 End Try
+            Case ServerCommands.rearm.ToString()
+                If Client IsNot Nothing Then
+                    Client.Send_Message({BitConverter.GetBytes(Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Re_Arm)},
+                                        {"ERROR : There was an error sending the Re_Arm message header to the Server. Client will now disconnect."})
+                Else
+                    Console.WriteLine("ERROR : The Client is not connected to a Server. Connect and try again.")
+                End If
             Case Else 'It was an invalid command
                 Console.WriteLine("INVALID COMMAND : Check spelling and try again")
         End Select
@@ -146,7 +164,8 @@
                                        settingNames(4) + converter.ConvertToString(settingElements(4)) + ";" + Environment.NewLine +
                                        settingNames(5) + converter.ConvertToString(settingElements(5)) + ";" + Environment.NewLine +
                                        settingNames(6) + converter.ConvertToString(settingElements(6)) + ";" + Environment.NewLine +
-                                       settingNames(7) + converter.ConvertToString(settingElements(7)) + ";"), False)
+                                       settingNames(7) + converter.ConvertToString(settingElements(7)) + ";" + Environment.NewLine +
+                                       settingNames(8) + converter.ConvertToString(settingElements(8)) + ";"), False)
     End Sub
 
     Sub Write_To_Error_Log(ByVal text As String)

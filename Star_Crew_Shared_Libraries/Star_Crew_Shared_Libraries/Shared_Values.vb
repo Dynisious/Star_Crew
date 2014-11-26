@@ -20,6 +20,7 @@
     End Enum
     Public Enum ObjectTypes 'The different Types of objects in the game
         Projectile
+        Missile
         ShipsStart
         Screamer = ShipsStart
         Thunder

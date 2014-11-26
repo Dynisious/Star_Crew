@@ -36,21 +36,13 @@
                 Next
                 For i As Integer = 0 To (collisions.Count - 2) 'Loop through all the collision indexes but the last one
                     For e As Integer = (i + 1) To (collisions.Count - 1) 'Loop through all the collision indexes that haven't collided with this one yet that aren't itself
-                        Dim objX As Integer = (collisions(e).X - collisions(i).X) 'Get the x coord of the e index relative to the i index
-                        Dim objY As Integer = (collisions(e).Y - collisions(i).Y) 'Get the y coord of the e index relative to the i index
-                        Dim objDirection As Double = Math.Atan2(objY, objX) 'Get the direction in world space of the e index relative to the i index
-                        If Math.Sqrt((objX ^ 2) + (objY ^ 2)) < (ShipList(i).Get_Collision_Radia(objDirection) + ShipList(e).Get_Collision_Radia(objDirection)) Then 'The two objects collide
-                            If (ShipList(i).Allegiance <> ShipList(e).Allegiance) Then
-                                If ShipList(i).Type = Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes.Projectile Then 'It's a projectile
-                                    ShipList(e).Take_Damage(CType(ShipList(i), Projectile).Damage) 'Deal damage to e
-                                    ShipList(i).Collide() 'Destroy i
-                                ElseIf ShipList(e).Type = Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes.Projectile Then 'It's a projectile
-                                    ShipList(i).Take_Damage(CType(ShipList(e), Projectile).Damage) 'Deal damage to i
-                                    ShipList(e).Collide() 'Destroy e
-                                Else 'They are ships
-                                    ShipList(i).Collide() 'Collide i
-                                    ShipList(e).Collide() 'Collide e
-                                End If
+                        If ShipList(i).Allegiance <> ShipList(e).Allegiance Then 'They can collide
+                            Dim objX As Integer = (collisions(e).X - collisions(i).X) 'Get the x coord of the e index relative to the i index
+                            Dim objY As Integer = (collisions(e).Y - collisions(i).Y) 'Get the y coord of the e index relative to the i index
+                            Dim objDirection As Double = Math.Atan2(objY, objX) 'Get the direction in world space of the e index relative to the i index
+                            If Math.Sqrt((objX ^ 2) + (objY ^ 2)) < (ShipList(i).Get_Collision_Radia(objDirection) + ShipList(e).Get_Collision_Radia(objDirection)) Then 'The two objects collide
+                                ShipList(i).Collide(ShipList(e)) 'Collide i
+                                ShipList(e).Collide(ShipList(i)) 'Collide e
                             End If
                         End If
                     Next

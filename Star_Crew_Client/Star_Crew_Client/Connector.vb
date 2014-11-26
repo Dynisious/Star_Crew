@@ -29,7 +29,7 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
                                 New Point(Int(Rnd() * displayBoxSideLength), Int(Rnd() * displayBoxSideLength)),
                                 New Point(Int(Rnd() * displayBoxSideLength), Int(Rnd() * displayBoxSideLength)),
                                 New Point(Int(Rnd() * displayBoxSideLength), Int(Rnd() * displayBoxSideLength))}
-    Public values(4) As Boolean 'An array of Boolean values indicating which keys are down and which aren't
+    Public values(5) As Boolean 'An array of Boolean values indicating which keys are down and which aren't
     Public Scaler As Double = 1 'Scales what is displayed on the screen
     Private Images() As Bitmap = {My.Resources.FriendlyScreamer, My.Resources.PirateThunder}
 
@@ -181,6 +181,7 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
         Try
             waitToClose.WaitOne() 'Wait till the send thread is done before closing
             Client_Console.Client = Nothing
+            Client_Console.OutputScreen.sendKeys = False
             If Client_Console.OutputScreen.Server IsNot Nothing Then
                 If Client_Console.OutputScreen.Server.HasExited = False Then Client_Console.OutputScreen.Server.CloseMainWindow() 'Make Sure the Server is not left open
             End If
@@ -206,10 +207,11 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
                 Dim clientIndex As Integer = receivedElements(6) 'Get the index of the Client
                 Dim clientFiring As Boolean = receivedElements(7) 'Get the Client's firing state
                 Dim clientHull As New Point(receivedElements(8), receivedElements(9)) 'Get the Client's hull
-                Dim clientAmmunition As New Point(receivedElements(10), receivedElements(11)) 'Get the Client's ammunition
-                Dim targetIndex As Integer = receivedElements(12) 'Get the targeted index
-                Dim targetDistance As Integer = receivedElements(13) 'Get the targets range
-                Dim shields() As Integer = receivedElements(14) 'Get the Shields
+                Dim clientPrimary As New Point(receivedElements(10), receivedElements(11)) 'Get the Client's primary ammunition
+                Dim clientSecondary As New Point(receivedElements(12), receivedElements(13)) 'Get the Client's secondary ammunition
+                Dim targetIndex As Integer = receivedElements(14) 'Get the targeted index
+                Dim targetDistance As Integer = receivedElements(15) 'Get the targets range
+                Dim shields() As Integer = receivedElements(16) 'Get the Shields
                 waitingForMessage = True 'The message can now be updated
 
                 '-----Scale and Translate Positions-----
@@ -231,9 +233,12 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
                 Screen.GameScreen.lblHull.Invoke(d, {"SHIELD: " + CStr(shields(clientIndex)) + "% CAPACITY"}) 'Write the text to lblShield
                 d = New Text_Setting(AddressOf Screen.GameScreen.lblThrottle_Set_Text) 'Create a delegate
                 Screen.GameScreen.lblThrottle.Invoke(d, {"THROTTLE: " + CStr(FormatNumber((2 * clientSpeed), 2)) + "m/sec"}) 'Write the text to lblThrottle
-                d = New Text_Setting(AddressOf Screen.GameScreen.lblAmmunition_Set_Text) 'Create a delegate
-                Screen.GameScreen.lblAmmunition.Invoke(d, {"AMMUNITION: " + If((clientAmmunition.Y = -1), "INF",
-                                                                               ((clientAmmunition.X).ToString() + "/" + (clientAmmunition.Y).ToString()))}) 'Write the text to lblAmmunition
+                d = New Text_Setting(AddressOf Screen.GameScreen.lblPrimaryAmmunition_Set_Text) 'Create a delegate
+                Screen.GameScreen.lblPrimaryAmmunition.Invoke(d, {"PRIMARY: " + If((clientPrimary.Y = -1), "INF",
+                                                                               ((clientPrimary.X).ToString() + "/" + (clientPrimary.Y).ToString()))}) 'Write the text to lblAmmunition
+                d = New Text_Setting(AddressOf Screen.GameScreen.lblSecondaryAmmunition_Set_Text) 'Create a delegate
+                Screen.GameScreen.lblSecondaryAmmunition.Invoke(d, {"SECONDARY: " + If((clientSecondary.Y = -1), "INF",
+                                                                               ((clientSecondary.X).ToString() + "/" + (clientSecondary.Y).ToString()))}) 'Write the text to lblAmmunition
                 d = New Text_Setting(AddressOf Screen.GameScreen.lblTargetDistance_Set_Text) 'Create a delegate
                 Screen.GameScreen.lblTargetDistance.Invoke(d, {"TARGET DISTANCE: " + If((targetIndex = -1), "N/A", (targetDistance.ToString() + "m"))}) 'Write the text to lblTargetDistance
                 '---------------------
@@ -263,7 +268,9 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
                 '-----Draw Objects-----
                 For i As Integer = 0 To positions.Length - 1 'Loop through all values
                     Dim distance As Integer = Math.Sqrt((positions(i).X ^ 2) + (positions(i).Y ^ 2)) 'Get the distance of the object from the Client's craft
-                    If distance > 200 And types(i) <> Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes.Projectile Then 'Draw them on the edge of the circle
+                    If distance > 200 And
+                        types(i) <> Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes.Projectile And
+                        types(i) <> Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes.Missile Then 'Draw them on the edge of the circle
                         Dim scale As Double = 200 / distance 'Calculate the scale of the distance against 200
                         positions(i).X = (scale * positions(i).X) + displayBoxCenter 'Calculate the scaled x coord
                         positions(i).Y = (scale * positions(i).Y) + displayBoxCenter 'Calculate the scaled y coord
@@ -282,6 +289,14 @@ Public Class Connector 'The object used to connect to and communicate with a Ser
                                     imgG.DrawLine(Pens.Yellow, xCoord, yCoord,
                                                   CInt(xCoord + (5 * Math.Cos(directions(i)))),
                                                   CInt(yCoord + (5 * Math.Sin(directions(i))))) 'Draw the projectile
+                                End If
+                            Case Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes.Missile
+                                If Math.Sqrt((positions(i).X ^ 2) + (positions(i).Y ^ 2)) < 200 Then 'Render Missile
+                                    Dim xCoord As Integer = (displayBoxCenter + positions(i).X) 'The x coord of the projectile on the screen
+                                    Dim yCoord As Integer = (displayBoxCenter + positions(i).Y) 'The y coord of the projectile on the screen
+                                    imgG.DrawLine(New Drawing.Pen(Brushes.Silver, 3), xCoord, yCoord,
+                                                  CInt(xCoord + (3 * Math.Cos(directions(i)))),
+                                                  CInt(yCoord + (3 * Math.Sin(directions(i))))) 'Draw the projectile
                                 End If
                             Case Else
                                 Dim craftBmp As Bitmap = Images(types(i) - Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes.ShipsStart).Clone() 'Create a Bitmap to draw

@@ -186,6 +186,7 @@
                                                       ":" + CStr(Star_Crew_Shared_Libraries.Shared_Values.Values.ServicePort) + ". Check address and try again." +
                                                       Environment.NewLine + ex.ToString())
                     Client_Console.Client = Nothing
+                    Client_Console.OutputScreen.sendKeys = False
                 Catch ex As Exception
                     Console.WriteLine(Environment.NewLine + "ERROR : There was an unecpected and unhandled exception while connecting to the Sever located at " +
                                       txtIP.Text + ":" + CStr(Star_Crew_Shared_Libraries.Shared_Values.Values.ServicePort) + ". Client will now close.")
@@ -193,6 +194,7 @@
                                                       ":" + CStr(Star_Crew_Shared_Libraries.Shared_Values.Values.ServicePort) + ". Client will now close." +
                                                       Environment.NewLine + ex.ToString())
                     Client_Console.Client = Nothing
+                    Client_Console.OutputScreen.sendKeys = False
                 End Try
                 If Client_Console.Client Is Nothing Then Beep()
             Else
@@ -243,13 +245,18 @@
             .Text = "THROTTLE: 0/0", .FlatStyle = Windows.Forms.FlatStyle.Flat, .ForeColor = Drawing.Color.DarkTurquoise,
             .BackColor = Drawing.Color.Transparent, .Font = New System.Drawing.Font(
                 "Consolas", 18, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel)}
-        Public Shared lblAmmunition As New System.Windows.Forms.Label With {
+        Public Shared lblPrimaryAmmunition As New System.Windows.Forms.Label With {
             .Size = New System.Drawing.Size(300, 45), .Location = New System.Drawing.Point(855, 170),
-            .Text = "AMMUNITION: 0/0", .FlatStyle = Windows.Forms.FlatStyle.Flat, .ForeColor = Drawing.Color.DarkTurquoise,
+            .Text = "PRIMARY: 0/0", .FlatStyle = Windows.Forms.FlatStyle.Flat, .ForeColor = Drawing.Color.DarkTurquoise,
+            .BackColor = Drawing.Color.Transparent, .Font = New System.Drawing.Font(
+                "Consolas", 18, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel)}
+        Public Shared lblSecondaryAmmunition As New System.Windows.Forms.Label With {
+            .Size = New System.Drawing.Size(300, 45), .Location = New System.Drawing.Point(855, 215),
+            .Text = "SECONDARY: 0/0", .FlatStyle = Windows.Forms.FlatStyle.Flat, .ForeColor = Drawing.Color.DarkTurquoise,
             .BackColor = Drawing.Color.Transparent, .Font = New System.Drawing.Font(
                 "Consolas", 18, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel)}
         Public Shared lblTargetDistance As New System.Windows.Forms.Label With {
-            .Size = New System.Drawing.Size(300, 45), .Location = New System.Drawing.Point(855, 215),
+            .Size = New System.Drawing.Size(300, 45), .Location = New System.Drawing.Point(855, 270),
             .Text = "TARGET DISTANCE: 0m", .FlatStyle = Windows.Forms.FlatStyle.Flat, .ForeColor = Drawing.Color.DarkTurquoise,
             .BackColor = Drawing.Color.Transparent, .Font = New System.Drawing.Font(
                 "Consolas", 18, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel)}
@@ -261,7 +268,8 @@
             scr.Controls.Add(lblHull) 'Add lblHull to the Screen
             scr.Controls.Add(lblShield) 'Add lblShield to the Screen
             scr.Controls.Add(lblThrottle) 'Add lblThrottle to the Screen
-            scr.Controls.Add(lblAmmunition) 'Add lblAmmunition to the Screen
+            scr.Controls.Add(lblPrimaryAmmunition) 'Add lblPrimaryAmmunition to the Screen
+            scr.Controls.Add(lblSecondaryAmmunition) 'Add lblSecondaryAmmunition to the Screen
             scr.Controls.Add(lblTargetDistance) 'Add lblTargetDistance to the Screen
             scr.ActiveControl = Nothing 'Clear the active control
             scr.sendKeys = True 'Send keystrokes to the Server
@@ -291,8 +299,11 @@
         Public Shared Sub lblThrottle_Set_Text(ByVal text As String)
             lblThrottle.Text = text
         End Sub
-        Public Shared Sub lblAmmunition_Set_Text(ByVal text As String)
-            lblAmmunition.Text = text
+        Public Shared Sub lblPrimaryAmmunition_Set_Text(ByVal text As String)
+            lblPrimaryAmmunition.Text = text
+        End Sub
+        Public Shared Sub lblSecondaryAmmunition_Set_Text(ByVal text As String)
+            lblSecondaryAmmunition.Text = text
         End Sub
         Public Shared Sub lblTargetDistance_Set_Text(ByVal text As String)
             lblTargetDistance.Text = text
@@ -324,16 +335,20 @@
             .Size = New System.Drawing.Size(225, 40), .Location = New System.Drawing.Point(10, 208),
             .Text = "SETTINGS ERROR", .Font = New System.Drawing.Font("Consolas", 14, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel),
             .ForeColor = Drawing.Color.FromArgb(55, 22, 95, 95), .BackColor = Drawing.Color.LightGray}
-        Public Shared WithEvents txtFireWeapon As New System.Windows.Forms.TextBox With {
+        Public Shared WithEvents txtFirePrimary As New System.Windows.Forms.TextBox With {
             .Size = New System.Drawing.Size(225, 40), .Location = New System.Drawing.Point(10, 258),
             .Text = "SETTINGS ERROR", .Font = New System.Drawing.Font("Consolas", 14, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel),
             .ForeColor = Drawing.Color.FromArgb(55, 22, 95, 95), .BackColor = Drawing.Color.LightGray}
-        Public Shared WithEvents txtZoomOut As New System.Windows.Forms.TextBox With {
+        Public Shared WithEvents txtFireSecondary As New System.Windows.Forms.TextBox With {
             .Size = New System.Drawing.Size(225, 40), .Location = New System.Drawing.Point(10, 308),
             .Text = "SETTINGS ERROR", .Font = New System.Drawing.Font("Consolas", 14, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel),
             .ForeColor = Drawing.Color.FromArgb(55, 22, 95, 95), .BackColor = Drawing.Color.LightGray}
-        Public Shared WithEvents txtZoomIn As New System.Windows.Forms.TextBox With {
+        Public Shared WithEvents txtZoomOut As New System.Windows.Forms.TextBox With {
             .Size = New System.Drawing.Size(225, 40), .Location = New System.Drawing.Point(10, 358),
+            .Text = "SETTINGS ERROR", .Font = New System.Drawing.Font("Consolas", 14, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel),
+            .ForeColor = Drawing.Color.FromArgb(55, 22, 95, 95), .BackColor = Drawing.Color.LightGray}
+        Public Shared WithEvents txtZoomIn As New System.Windows.Forms.TextBox With {
+            .Size = New System.Drawing.Size(225, 40), .Location = New System.Drawing.Point(10, 408),
             .Text = "SETTINGS ERROR", .Font = New System.Drawing.Font("Consolas", 14, Drawing.FontStyle.Bold, Drawing.GraphicsUnit.Pixel),
             .ForeColor = Drawing.Color.FromArgb(55, 22, 95, 95), .BackColor = Drawing.Color.LightGray}
         Private Shared WithEvents btnMenu As New System.Windows.Forms.Button With {
@@ -355,7 +370,8 @@
             pnlSettings.Controls.Add(txtThrottleDown) 'Add txtThrottleDown
             pnlSettings.Controls.Add(txtTurnLeft) 'Add txtTurnLeft
             pnlSettings.Controls.Add(txtTurnRight) 'Add txtTurnRight
-            pnlSettings.Controls.Add(txtFireWeapon) 'Add txtFireWeapon
+            pnlSettings.Controls.Add(txtFirePrimary) 'Add txtFireWeapon
+            pnlSettings.Controls.Add(txtFireSecondary) 'Add txtFireSecondary
             pnlSettings.Controls.Add(txtZoomOut) 'Add txtZoomOut
             pnlSettings.Controls.Add(txtZoomIn) 'Add txtZoomIn
             scr.Controls.Add(btnMenu) 'Add btnMenu
@@ -401,17 +417,21 @@
             txtTurnRight.Text = "TURN RIGHT: " + e.KeyCode.ToString()
             Client_Console.settingElements(3) = e.KeyCode
         End Sub
-        Private Shared Sub txtFireWeapon_KeyDown(ByVal sender As Object, ByVal e As System.Windows.Forms.KeyEventArgs) Handles txtFireWeapon.KeyUp
-            txtFireWeapon.Text = "FIRE WEAPON: " + e.KeyCode.ToString()
+        Private Shared Sub txtFirePrimary_KeyDown(ByVal sender As Object, ByVal e As System.Windows.Forms.KeyEventArgs) Handles txtFirePrimary.KeyUp
+            txtFirePrimary.Text = "FIRE PRIMARY: " + e.KeyCode.ToString()
             Client_Console.settingElements(5) = e.KeyCode
+        End Sub
+        Private Shared Sub txtFireSecondary_KeyDown(ByVal sender As Object, ByVal e As System.Windows.Forms.KeyEventArgs) Handles txtFireSecondary.KeyUp
+            txtFireSecondary.Text = "FIRE SECONDARY: " + e.KeyCode.ToString()
+            Client_Console.settingElements(6) = e.KeyCode
         End Sub
         Private Shared Sub txtZoomOut_KeyDown(ByVal sender As Object, ByVal e As System.Windows.Forms.KeyEventArgs) Handles txtZoomOut.KeyUp
             txtZoomOut.Text = "ZOOM OUT: " + e.KeyCode.ToString()
-            Client_Console.settingElements(6) = e.KeyCode
+            Client_Console.settingElements(7) = e.KeyCode
         End Sub
         Private Shared Sub txtZoomIn_KeyDown(ByVal sender As Object, ByVal e As System.Windows.Forms.KeyEventArgs) Handles txtZoomIn.KeyUp
             txtZoomIn.Text = "ZOOM IN: " + e.KeyCode.ToString()
-            Client_Console.settingElements(7) = e.KeyCode
+            Client_Console.settingElements(8) = e.KeyCode
         End Sub
 
     End Class
@@ -422,6 +442,7 @@
             scr.Controls.Clear() 'Clear's the old display
             scr.sendKeys = False 'Do not send keystrokes to the Server
             Client_Console.Client = Nothing 'Clear the client
+            Client_Console.OutputScreen.sendKeys = False
             scr.inMenu = False 'The Screen is not in the in game menu
             scr.BackgroundImage = My.Resources.Death 'Set the image
             scr.Refresh() 'Force the form to refresh
@@ -449,12 +470,12 @@
                 Case Windows.Forms.Keys.Escape
                     Dim d As New Escape_Key(AddressOf GameScreen.btnMenu_Click)
                     GameScreen.btnMenu.Invoke(d)
-                Case Client_Console.settingElements(6) 'Zoom Out Key
+                Case Client_Console.settingElements(8) 'Zoom In Key
                     If Client_Console.Client.Scaler < 1 Then Client_Console.Client.Scaler += 0.03
-                Case Client_Console.settingElements(7) 'Zoom In Key
+                Case Client_Console.settingElements(7) 'Zoom Out Key
                     If Client_Console.Client.Scaler > 0.5 Then Client_Console.Client.Scaler -= 0.03
                 Case Else
-                    For i As Integer = 1 To 5 'Loop through all controls
+                    For i As Integer = 1 To 6 'Loop through all controls
                         If e.KeyCode = Client_Console.settingElements(i) Then 'The key has been found
                             i -= 1 'Take one from i
                             Dim shipControl As Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header =
@@ -476,7 +497,7 @@
     End Sub
     Private Sub Keys_Up(ByVal sender As Object, ByVal e As System.Windows.Forms.KeyEventArgs) Handles MyBase.KeyUp
         If sendKeys Then
-            For i As Integer = 1 To 5 'Loop through all controls
+            For i As Integer = 1 To 6 'Loop through all controls
                 If e.KeyCode = Client_Console.settingElements(i) Then 'The key has been found
                     i -= 1 'Take one from i
                     Dim shipControl As Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header =

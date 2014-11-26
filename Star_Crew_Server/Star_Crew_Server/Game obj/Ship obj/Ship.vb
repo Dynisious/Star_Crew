@@ -84,6 +84,7 @@
             Return _Shield
         End Get
     End Property
+    Public target As Ship 'A reference to a Ship to target
 
     Public Sub New(ByVal nType As Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes, ByVal nTrackable As Boolean,
                    ByVal nPhysics As Boolean, ByVal nHull As Game_Library.Game_Objects.StatDbl,
@@ -147,7 +148,7 @@
         Return Math.Sqrt((xCoord ^ 2) + (yCoord ^ 2)) 'Return the distance to the edge of the hitbox in the direction of the calling object
     End Function
 
-    Public Overridable Sub Collide() 'Handles the Ship colliding with another Ship
+    Public Overridable Sub Collide(ByRef Collider As Ship) 'Handles the Ship colliding with another Ship
         Take_Damage(CollisionDamage) 'Take 0.1 damage
     End Sub
 
@@ -164,11 +165,6 @@
                 Loop
                 ships.Insert(index, i) 'Insert the object at this index
                 distances.Insert(index, distance) 'Insert the distance at this index
-                'Dim text As String = "List : "
-                'For Each e As Integer In distances
-                '    text += "|" + CStr(e) + "|"
-                'Next
-                'Console.WriteLine(text)
             End If
         Next
         Return {ships.ToArray(), distances.ToArray()} 'Return the arrays

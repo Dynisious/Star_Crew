@@ -76,11 +76,13 @@
     <Import Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Game obj\Ship obj\Weapons\Lance.vb" />
+    <Compile Include="Game obj\Ship obj\Weapons\Missile.vb" />
     <Compile Include="Networking\Communications.vb" />
     <Compile Include="Game obj\CombatSpace.vb" />
     <Compile Include="Game obj\Ship obj\AIShip.vb" />
     <Compile Include="Game obj\Ship obj\PlayerShip.vb" />
-    <Compile Include="Game obj\Ship obj\Projectile.vb" />
+    <Compile Include="Game obj\Ship obj\Weapons\Projectile.vb" />
     <Compile Include="Game obj\Ship obj\Weapons\Rattler.vb" />
     <Compile Include="Game obj\Ship obj\Weapons\Weapon.vb" />
     <Compile Include="Server.vb" />
@@ -121,9 +123,7 @@
       <LastGenOutput>Settings.Designer.vb</LastGenOutput>
     </None>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Game obj\Ship obj\Ship Types\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

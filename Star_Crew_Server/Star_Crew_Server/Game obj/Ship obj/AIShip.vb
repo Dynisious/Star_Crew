@@ -1,6 +1,5 @@
 ﻿Public Class AIShip
     Inherits Ship
-    Private target As Ship 'A reference to a Ship indicating the closest target to the Player
     Private targetDistance As Integer = -1 'An Integer indicating the distance to the target
     Private targetDirection As Double 'A Double value indicating the direction to the target in object space
     Private ReadOnly Primary As New Rattler(Me) 'The Ships weapon
@@ -9,8 +8,8 @@
         MyBase.New(If((nAllegiance = Star_Crew_Shared_Libraries.Shared_Values.Allegiances.Emperial_Forces),
                       Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes.Screamer,
                       Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes.Thunder), True, True,
-                   New Game_Library.Game_Objects.StatDbl(0, 30, 30, True), New Game_Library.Game_Objects.StatDbl(1, 1, 10, True),
-                   1, (Math.PI / 30), 20, 20, nAllegiance, New Game_Library.Game_Objects.StatInt(0, 40, 40, True),
+                   New Game_Library.Game_Objects.StatDbl(0, 30, 30, True), New Game_Library.Game_Objects.StatDbl(1, 1, 15, True),
+                   0.4, (Math.PI / 30), 20, 20, nAllegiance, New Game_Library.Game_Objects.StatInt(0, 40, 40, True),
                    New Game_Library.Game_Objects.StatDbl(0, 30, 30, True))
         X = Int(Rnd() * 6000) - 3000
         Y = Int(Rnd() * 6000) - 3000

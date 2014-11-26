@@ -5,12 +5,6 @@
             Return _Parent
         End Get
     End Property
-    Private _Damage As Double 'The actual value of Damage
-    Public ReadOnly Property Damage As Double 'A Double value which represents the damage the Weapon does
-        Get
-            Return _Damage
-        End Get
-    End Property
     Private _Ammunition As Game_Library.Game_Objects.StatInt 'The actual value of Ammunition
     Public ReadOnly Property Ammunition As Game_Library.Game_Objects.StatInt 'A StatInt object which represents the ammunition available to the Weapon
         Get
@@ -24,9 +18,8 @@
         End Get
     End Property
 
-    Public Sub New(ByRef nParent As Ship, ByVal nDamage As Double, ByVal nAmmunition As Game_Library.Game_Objects.StatInt, ByVal nReload As Integer)
+    Public Sub New(ByRef nParent As Ship, ByVal nAmmunition As Game_Library.Game_Objects.StatInt, ByVal nReload As Integer)
         _Parent = nParent
-        _Damage = nDamage
         _Ammunition = nAmmunition
         _Reload = New Game_Library.Game_Objects.StatInt(0, 0, nReload, True)
     End Sub

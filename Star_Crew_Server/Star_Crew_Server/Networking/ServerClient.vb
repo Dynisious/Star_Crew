@@ -35,10 +35,16 @@
             Return _turnLeft
         End Get
     End Property
-    Private _fireWeapons As Boolean = False 'The actual value of fireWeapons
-    Public ReadOnly Property fireWeapons As Boolean 'A Boolean value indicating whether the Ship needs to fire Weapons
+    Private _firePrimary As Boolean = False 'The actual value of fireWeapons
+    Public ReadOnly Property firePrimary As Boolean 'A Boolean value indicating whether the Ship needs to fire Weapons
         Get
-            Return _fireWeapons
+            Return _firePrimary
+        End Get
+    End Property
+    Private _fireSecondary As Boolean = False 'The actual value of fireWeapons
+    Public ReadOnly Property fireSecondary As Boolean 'A Boolean value indicating whether the Ship needs to fire Weapons
+        Get
+            Return _fireSecondary
         End Get
     End Property
 
@@ -147,8 +153,10 @@
                             Dim temp As String = (Environment.NewLine + "Server : The " + Name + " is disconnecting from the Server.")
                             Console.WriteLine(temp)
                             Server.Write_To_Error_Log(temp)
-                        Case Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Fire_Weapons
-                            _fireWeapons = BitConverter.ToBoolean(Receive_ByteArray(Net.Sockets.SocketFlags.None, 1), 0) 'Set the value
+                        Case Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Fire_Primary
+                            _firePrimary = BitConverter.ToBoolean(Receive_ByteArray(Net.Sockets.SocketFlags.None, 1), 0) 'Set the value
+                        Case Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Fire_Secondary
+                            _fireSecondary = BitConverter.ToBoolean(Receive_ByteArray(Net.Sockets.SocketFlags.None, 1), 0) 'Set the value
                         Case Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Throttle_Down
                             _throttleDown = BitConverter.ToBoolean(Receive_ByteArray(Net.Sockets.SocketFlags.None, 1), 0) 'Set the value
                         Case Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Throttle_Up
@@ -159,6 +167,9 @@
                             _turnRight = BitConverter.ToBoolean(Receive_ByteArray(Net.Sockets.SocketFlags.None, 1), 0) 'Set the value
                         Case Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Heal_Ship
                             Craft.Hull.Current += Receive_Header(Net.Sockets.SocketFlags.None) 'Heal the Ship
+                        Case Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Re_Arm
+                            Craft.Primary.Ammunition.Current = Craft.Primary.Ammunition.Maximum 'Set the Primary ammunition to the Maximum
+                            Craft.Secondary.Ammunition.Current = Craft.Secondary.Ammunition.Maximum 'Set the Secondary ammunition to the Maximum
                         Case Else
                             Server.Write_To_Error_Log(Environment.NewLine + "ERROR : The Client sent an unknown message header. The " + Name + " will now disconnect.")
                             Send_Message({BitConverter.GetBytes(Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Bad_Message_Exception)},
@@ -226,12 +237,21 @@
                 allegiances(i) = objects(i).Allegiance 'Set the object's allegiance
                 types(i) = objects(i).Type
                 hits(i) = objects(i).hit 'Set the object's hit state
-                shields(i) = If((objects(i).Type <> Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes.Projectile), (100 - (100 * objects(i).Shield.Current / objects(i).Shield.Maximum)), 0) 'Set the inverse percentage of the Ships Shields
+                shields(i) = If(((objects(i).Type <> Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes.Projectile) And
+                                 (objects(i).Type <> Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes.Missile)),
+                             (100 - (100 * objects(i).Shield.Current / objects(i).Shield.Maximum)),
+                             0) 'Set the inverse percentage of the Ships Shields
             Next
             Dim message As Byte() = Game_Library.Serialisation.ToBytes({positions, directions, allegiances, types, hits, Craft.Throttle.Current,
                                                                         Craft.CombatIndex, Craft.firing, Craft.Hull.Current,
                                                                         Craft.Hull.Maximum, Craft.Primary.Ammunition.Current,
-                                                                        Craft.Primary.Ammunition.Maximum, Craft.target, Craft.targetDistance, shields}) 'Generate the message to send to the Client
+                                                                        Craft.Primary.Ammunition.Maximum,
+                                                                        Craft.Secondary.Ammunition.Current, Craft.Secondary.Ammunition.Maximum,
+                                                                        If((Craft.target IsNot Nothing),
+                                                                           If((Craft.target.CombatIndex <> -1),
+                                                                              Craft.target.CombatIndex, -1),
+                                                                          -1),
+                                                                        Craft.targetDistance, shields}) 'Generate the message to send to the Client
             Dim errorMessages() As String = {"ERROR : There was an error while sending the Ship_To_Ship header to the " + Name + ". The " + Name + " will now disconnect.",
                                              "ERROR : There was an error while sending the Ship_To_Ship message length to the " + Name + ". The " + Name + " will now disconnect.",
                                              "ERROR : There was an error while sending the Ship_To_Ship message to the " + Name + ". The " + Name + " will now disconnect."}
