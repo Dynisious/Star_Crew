@@ -10,14 +10,14 @@
                       Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes.Thunder), True, True,
                    New Game_Library.Game_Objects.StatDbl(0, 30, 30, True), New Game_Library.Game_Objects.StatDbl(1, 1, 15, True),
                    0.4, (Math.PI / 30), 20, 20, nAllegiance, New Game_Library.Game_Objects.StatInt(0, 40, 40, True),
-                   New Game_Library.Game_Objects.StatDbl(0, 30, 30, True))
+                   New Game_Library.Game_Objects.StatDbl(0, 30, 30, True), (1 / 20))
         X = Int(Rnd() * 6000) - 3000
         Y = Int(Rnd() * 6000) - 3000
     End Sub
 
     Private Sub Steering(ByVal evade As Boolean)
         If evade Then 'Evade the target
-            Throttle.Current += If((Server.Normalise_Direction(targetDirection + (Math.PI / 2)) > Math.PI), Acceleration, -Acceleration) 'Increment the throttle
+            Throttle.Current += If((Server.Normalise_Direction(targetDirection + Server.QuarterCircle) > Math.PI), Acceleration, -Acceleration) 'Increment the throttle
             Direction += If((targetDirection < Math.PI), -TurnSpeed, TurnSpeed) 'Turn away from the target
         Else 'Charge the target
             Throttle.Current += Acceleration 'Increase the throttle
@@ -36,7 +36,7 @@
             Dim tar As Ship = obj(0)(i) 'Get the current Ship object
             Dim tarDirection As Double = Math.Atan2((tar.Y - Y), (tar.X - X)) 'Get the direction to the target in world space
             Dim closingSpeed As Integer = ((Speed * Math.Cos(tarDirection - Direction)) - (tar.Speed * Math.Cos(tar.Direction - Direction))) 'Get the speed at which the target is approaching
-            If closingSpeed < 0 And (Direction > (Math.PI / 2)) And (Direction < (3 * Math.PI / 2)) Then closingSpeed = -closingSpeed 'Make sure the 
+            If closingSpeed < 0 And (Direction > Server.QuarterCircle) And (Direction < (3 * Math.PI / 2)) Then closingSpeed = -closingSpeed 'Make sure the 
             Dim collision As Boolean = If((closingSpeed > 0), (((obj(1)(i) - Get_Collision_Radia(tarDirection) - tar.Get_Collision_Radia(tarDirection + Math.PI)) / closingSpeed) < EvadeTime), False) 'Get a Boolean indicating whether a collision is incomming
 
             If collision Or (target Is Nothing And (tar.Allegiance <> Allegiance)) Then 'Select this target

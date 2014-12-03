@@ -1,4 +1,4 @@
-﻿Public MustInherit Class Weapon
+﻿Public MustInherit Class WeaponBase
     Private _Parent As Ship 'The Actual value of Parent
     Public ReadOnly Property Parent As Ship 'A reference to the Ship object that the Weapon is mounted on
         Get

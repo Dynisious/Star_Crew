@@ -71,8 +71,17 @@
                 Client_Console.Client.sendingAlive = False
                 Client_Console.Client.receivingAlive = False
             End If
-            Client_Console.OutputScreen.Server = Process.Start("Server\Star_Crew_Server.exe")
-            Client_Console.Client = New Connector("localhost", Star_Crew_Shared_Libraries.Shared_Values.Values.ServicePort)
+            Try
+                Client_Console.OutputScreen.Server = Process.Start("Star_Crew_Server.exe")
+                Client_Console.Client = New Connector("localhost", Star_Crew_Shared_Libraries.Shared_Values.Values.ServicePort)
+            Catch ex As Exception
+                Dim message As String = (Environment.NewLine + "ERROR : There was an error while starting up the Server. It will now Close.")
+                Console.WriteLine(message)
+                Client_Console.Write_To_Error_Log(message + Environment.NewLine + ex.ToString())
+                If Client_Console.OutputScreen.Server IsNot Nothing Then
+                    If Client_Console.OutputScreen.Server.HasExited = False Then Client_Console.OutputScreen.Server.CloseMainWindow() 'Make Sure the Server is not left open
+                End If
+            End Try
         End Sub
         Private Shared Sub btnHost_MouseEnter() Handles btnHost.MouseEnter 'Changes btnHost's colour when it's moused over
             btnHost.ForeColor = Drawing.Color.Turquoise 'Change the ForeColour

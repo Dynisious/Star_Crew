@@ -85,6 +85,7 @@
         End Get
     End Property
     Public target As Ship 'A reference to a Ship to target
+    Private RechargeValue As Double 'How much the Shield recharges each tick
 
     Public Sub New(ByVal nType As Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes, ByVal nTrackable As Boolean,
                    ByVal nPhysics As Boolean, ByVal nHull As Game_Library.Game_Objects.StatDbl,
@@ -92,7 +93,7 @@
                    ByVal nTurnSpeed As Double, ByVal nHitBoxXDistance As Integer, ByVal nHitBoxYDistance As Integer,
                    ByVal nAllegiance As Star_Crew_Shared_Libraries.Shared_Values.Allegiances,
                    ByVal nShieldRecharge As Game_Library.Game_Objects.StatInt,
-                   ByVal nShield As Game_Library.Game_Objects.StatDbl)
+                   ByVal nShield As Game_Library.Game_Objects.StatDbl, ByVal nRechargeValue As Double)
         _Type = nType
         _Trackable = nTrackable
         _Physics = nPhysics
@@ -109,6 +110,7 @@
         Allegiance = nAllegiance
         _ShieldRecharge = nShieldRecharge
         _Shield = nShield
+        RechargeValue = nRechargeValue
     End Sub
 
     Public Sub Take_Damage(ByVal incomingDamage As Double)
@@ -177,7 +179,7 @@
         Y = Y + (Speed * Math.Sin(Direction)) 'Update the Ship's Y position
         ShieldRecharge.Current += 1 'Add one
         If ShieldRecharge.Current = ShieldRecharge.Maximum Then 'The shields can recharge
-            Shield.Current += (1 / 20) 'Add a point to the Shield
+            Shield.Current += RechargeValue 'Add a point to the Shield
         End If
     End Sub
 

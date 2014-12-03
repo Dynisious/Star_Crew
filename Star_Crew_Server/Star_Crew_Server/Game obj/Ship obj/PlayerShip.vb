@@ -1,14 +1,14 @@
 ﻿Public Class PlayerShip
     Inherits Ship
     Private Client As ServerClient 'A reference to the ServerClient object in control of the Ship
-    Private _Primary As Weapon 'The actual value of Primary
-    Public ReadOnly Property Primary As Weapon 'A Weapon object for the Ship
+    Private _Primary As WeaponBase 'The actual value of Primary
+    Public ReadOnly Property Primary As WeaponBase 'A Weapon object for the Ship
         Get
             Return _Primary
         End Get
     End Property
-    Private _Secondary As Weapon 'The actual value of Secondary
-    Public ReadOnly Property Secondary As Weapon 'A Secondary Weapon object for the Ship
+    Private _Secondary As WeaponBase 'The actual value of Secondary
+    Public ReadOnly Property Secondary As WeaponBase 'A Secondary Weapon object for the Ship
         Get
             Return _Secondary
         End Get
@@ -19,7 +19,7 @@
         MyBase.New(Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes.Screamer, True, True,
                    New Game_Library.Game_Objects.StatDbl(0, 100, 100, True), New Game_Library.Game_Objects.StatDbl(1, 1, 20, True),
                    0.5, (Math.PI / 30), 20, 20, Star_Crew_Shared_Libraries.Shared_Values.Allegiances.Emperial_Forces,
-                  New Game_Library.Game_Objects.StatInt(0, 40, 40, True), New Game_Library.Game_Objects.StatDbl(0, 30, 30, True))
+                  New Game_Library.Game_Objects.StatInt(0, 40, 40, True), New Game_Library.Game_Objects.StatDbl(0, 30, 30, True), (1 / 20))
         Client = nClient
         _Primary = New Rattler(Me)
         _Secondary = New Lance(Me)

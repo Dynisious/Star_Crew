@@ -1,8 +1,8 @@
-﻿Public Class Lance
+﻿Public Class MissileLauncher
     Inherits WeaponBase
 
-    Public Sub New(ByRef nParent As Ship)
-        MyBase.New(nParent, New Game_Library.Game_Objects.StatInt(0, 16, 16, True), 80)
+    Public Sub New(ByRef nParent As Ship, ByVal nAmmunition As Game_Library.Game_Objects.StatInt, ByVal nReloadTicks As Integer)
+        MyBase.New(nParent, nAmmunition, nReloadTicks)
     End Sub
 
     Protected Overrides Sub Fire_Weapon()

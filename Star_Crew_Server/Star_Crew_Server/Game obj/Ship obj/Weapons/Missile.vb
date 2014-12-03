@@ -8,7 +8,7 @@
     Public Sub New(ByRef nTarget As Ship, ByVal nAccleration As Double, ByVal nRange As Integer, ByVal nRadius As Integer, ByVal nSpeed As Double, ByVal nMaxSpeed As Double, ByVal nDirection As Double, ByVal nDamage As Double, ByVal nX As Integer, ByVal nY As Integer, ByVal nAllegiance As Star_Crew_Shared_Libraries.Shared_Values.Allegiances)
         MyBase.New(Star_Crew_Shared_Libraries.Shared_Values.ObjectTypes.Missile, False, True,
                    Nothing, New Game_Library.Game_Objects.StatDbl(0, nSpeed, nMaxSpeed, True), nAccleration, (Math.PI / 50), 0, 0, nAllegiance,
-                  New Game_Library.Game_Objects.StatInt(0, 0, 0, True), New Game_Library.Game_Objects.StatDbl(0, 0, 0, True))
+                  New Game_Library.Game_Objects.StatInt(0, 0, 0, True), New Game_Library.Game_Objects.StatDbl(0, 0, 0, True), (1 / 20))
         Target = nTarget
         Range = New Game_Library.Game_Objects.StatDbl(0, 0, nRange, True)
         _Direction = nDirection

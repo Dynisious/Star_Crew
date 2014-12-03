@@ -1,4 +1,4 @@
-﻿Public NotInheritable Class Rattler
+﻿Public NotInheritable Class ProjectileWeapon
     Inherits WeaponBase
 
     Public Sub New(ByRef nParent As Ship)

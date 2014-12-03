@@ -5,9 +5,9 @@
                                                              OutputScreen = New Screen()
                                                              OutputScreen.Give_Control()
                                                          End Sub)) 'Give start the message loop for the form
-    Private ReadOnly WorkingDirectory As String = "C:\Users\" + Environment.UserName + "\AppData\Roaming\Star Crew Client"
-    Private ReadOnly ErrorLog As String = "Error Log.log" 'A String value representing the address of the game's error log
-    Private ReadOnly SettingFile As String = "Settings.txt" 'A String value representing the address of the game's settings file
+    Private ReadOnly WorkingDirectory As String = "C:\Users\" + Environment.UserName + "\AppData\Roaming\Star Crew"
+    Private ReadOnly ErrorLog As String = "Client Error Log.log" 'A String value representing the address of the game's error log
+    Private ReadOnly SettingFile As String = "Client Settings.txt" 'A String value representing the address of the game's settings file
     Public Enum Settings 'An enumerator of Settings
         Ship_Name 'The Name of the Ship
         Throttle_Up 'The Key to throttle up the Ship
