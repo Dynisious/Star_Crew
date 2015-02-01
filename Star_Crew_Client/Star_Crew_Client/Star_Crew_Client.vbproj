@@ -80,8 +80,9 @@
     <Import Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Connector.vb" />
+    <Compile Include="Client.vb" />
     <Compile Include="Client_Console.vb" />
+    <Compile Include="MessageRendering.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
       <AutoGen>True</AutoGen>
@@ -141,9 +142,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Graphics\FriendlyThunder.bmp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Graphics\NormalSpace.bmp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Audio\The Pounce Extended.wav" />

@@ -4,26 +4,16 @@
 
     End Structure
 
-    Public Enum GalaxyStates 'The different states of the Server's Galaxy
-        Sector_Transit = Networking_Messages.General_Headers.max 'Starts at the maximum for the General headers
-        Ship_To_Ship
-        Shop_Interface
+    Public Enum GameStates 'The different states the game can be in
+        Ship_To_Ship_Combat = Networking_Messages.General_Headers.max 'The Player is engaged in Ship to Ship combat
+        Fleet_Transit 'The Player is flying their Fleet about
+        Trading 'The Player is engaged in trade
     End Enum
-    Public Enum Allegiances 'The different allegiances in the Galaxy
-        Emperial_Forces
-        Pirate_Alliance
-        Trade_Federation
-        Contested
-        Environment
-        nill
+    Public Enum Allegiances 'The different allegiances inside the game
+        Federation
+        Empire
+        Neutral
         max
-    End Enum
-    Public Enum ObjectTypes 'The different Types of objects in the game
-        Projectile
-        Missile
-        ShipsStart
-        Screamer = ShipsStart
-        Thunder
     End Enum
 
 End Namespace

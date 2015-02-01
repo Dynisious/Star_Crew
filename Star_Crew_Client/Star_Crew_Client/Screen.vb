@@ -53,7 +53,7 @@
             scr.Controls.Add(btnJoin) 'Add btnJoin
             scr.Controls.Add(btnSettings) 'Add btnSettings
             scr.Controls.Add(btnExit) 'Add btnExit
-            If Client_Console.Client IsNot Nothing Then
+            If Client_Console.serverConnection IsNot Nothing Then
                 scr.Controls.Add(btnBackToGame) 'Add btnBackToGame
                 btnBackToGame.Enabled = True
             Else
@@ -62,24 +62,23 @@
         End Sub
 
         Private Shared Sub btnHost_Click() Handles btnHost.Click 'Hosts a new Server
-            If Client_Console.Client IsNot Nothing Then 'There's a Connector from the last session
-                Client_Console.Client.Send_Message({BitConverter.GetBytes(Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Client_Disconnecting)},
+            If Client_Console.serverConnection IsNot Nothing Then 'There's a Connector from the last session
+                Client_Console.serverConnection.Send_Message({BitConverter.GetBytes(Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Client_Disconnecting)},
                                                    {"ERROR : There was an error sending the Client_Disconnecting message to the Server. Client will now close."})
-                If Client_Console.OutputScreen.Server IsNot Nothing Then
-                    If Client_Console.OutputScreen.Server.HasExited = False Then Client_Console.OutputScreen.Server.CloseMainWindow() 'Make Sure the Server is not left open
+                If Client_Console.outputScreen.Server IsNot Nothing Then
+                    If Client_Console.outputScreen.Server.HasExited = False Then Client_Console.outputScreen.Server.CloseMainWindow() 'Make Sure the Server is not left open
                 End If
-                Client_Console.Client.sendingAlive = False
-                Client_Console.Client.receivingAlive = False
+                Client_Console.serverConnection.runClient = False 'Allow the Client to begin to close
             End If
             Try
-                Client_Console.OutputScreen.Server = Process.Start("Star_Crew_Server.exe")
-                Client_Console.Client = New Connector("localhost", Star_Crew_Shared_Libraries.Shared_Values.Values.ServicePort)
+                Client_Console.outputScreen.Server = Process.Start("Star_Crew_Server.exe")
+                Client_Console.serverConnection = New Client("localhost", Star_Crew_Shared_Libraries.Shared_Values.Values.ServicePort)
             Catch ex As Exception
                 Dim message As String = (Environment.NewLine + "ERROR : There was an error while starting up the Server. It will now Close.")
                 Console.WriteLine(message)
-                Client_Console.Write_To_Error_Log(message + Environment.NewLine + ex.ToString())
-                If Client_Console.OutputScreen.Server IsNot Nothing Then
-                    If Client_Console.OutputScreen.Server.HasExited = False Then Client_Console.OutputScreen.Server.CloseMainWindow() 'Make Sure the Server is not left open
+                Client_Console.Write_To_Log(message + Environment.NewLine + ex.ToString())
+                If Client_Console.outputScreen.Server IsNot Nothing Then
+                    If Client_Console.outputScreen.Server.HasExited = False Then Client_Console.outputScreen.Server.CloseMainWindow() 'Make Sure the Server is not left open
                 End If
             End Try
         End Sub
@@ -89,19 +88,18 @@
         End Sub
         Private Shared Sub btnHost_MouseLeave() Handles btnHost.MouseLeave 'Changes btnHost's colour when the mouse leaves it
             btnHost.ForeColor = Drawing.Color.DarkTurquoise 'Change the ForeColour
-            Client_Console.OutputScreen.ActiveControl = Nothing
+            Client_Console.outputScreen.ActiveControl = Nothing
         End Sub
 
         Private Shared Sub btnJoin_Click() Handles btnJoin.Click 'Joins an existing Server
-            JoinScreen.Layout(Client_Console.OutputScreen) 'Go to the Join Screen
-            If Client_Console.Client IsNot Nothing Then 'There's a Connector from the last session
-                Client_Console.Client.Send_Message({BitConverter.GetBytes(Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Client_Disconnecting)},
-                                                   {"ERROR : There was an error sending the Client_Disconnecting message to the Server. Client will now close."})
-                If Client_Console.OutputScreen.Server IsNot Nothing Then
-                    If Client_Console.OutputScreen.Server.HasExited = False Then Client_Console.OutputScreen.Server.CloseMainWindow() 'Make Sure the Server is not left open
+            JoinScreen.Layout(Client_Console.outputScreen) 'Go to the Join Screen
+            If Client_Console.serverConnection IsNot Nothing Then 'There's a Connector from the last session
+                Client_Console.serverConnection.Send_Message({BitConverter.GetBytes(Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Client_Disconnecting)},
+                                                             {"ERROR : There was an error sending the Client_Disconnecting message to the Server. Client will now close."})
+                If Client_Console.outputScreen.Server IsNot Nothing Then
+                    If Client_Console.outputScreen.Server.HasExited = False Then Client_Console.outputScreen.Server.CloseMainWindow() 'Make Sure the Server is not left open
                 End If
-                Client_Console.Client.sendingAlive = False
-                Client_Console.Client.receivingAlive = False
+                Client_Console.serverConnection.runClient = False 'Allow the Client to begin to close
             End If
         End Sub
         Private Shared Sub btnJoin_MouseEnter() Handles btnJoin.MouseEnter 'Changes btnJoin's colour when it's moused over
@@ -110,11 +108,11 @@
         End Sub
         Private Shared Sub btnJoin_MouseLeave() Handles btnJoin.MouseLeave 'Changes btnJoin's colour when the mouse leaves it
             btnHost.ForeColor = Drawing.Color.DarkTurquoise 'Change the ForeColour
-            Client_Console.OutputScreen.ActiveControl = Nothing
+            Client_Console.outputScreen.ActiveControl = Nothing
         End Sub
 
         Private Shared Sub btnSettings_Click() Handles btnSettings.Click 'Opens the Settings screen
-            SettingsScreen.Layout(Client_Console.OutputScreen)
+            SettingsScreen.Layout(Client_Console.outputScreen)
         End Sub
         Private Shared Sub btnSettings_MouseEnter() Handles btnSettings.MouseEnter 'Changes btnJoin's colour when it's moused over
             btnSettings.ForeColor = Drawing.Color.Turquoise 'Change the ForeColour
@@ -122,10 +120,13 @@
         End Sub
         Private Shared Sub btnSettings_MouseLeave() Handles btnSettings.MouseLeave 'Changes btnJoin's colour when the mouse leaves it
             btnSettings.ForeColor = Drawing.Color.DarkTurquoise 'Change the ForeColour
-            Client_Console.OutputScreen.ActiveControl = Nothing
+            Client_Console.outputScreen.ActiveControl = Nothing
         End Sub
 
         Private Shared Sub btnExit_Click() Handles btnExit.Click 'Closes the program
+            If Client_Console.serverConnection IsNot Nothing Then Client_Console.serverConnection.Send_Message(
+                {BitConverter.GetBytes(Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.Client_Disconnecting)},
+                {"ERROR : There was an error while sending the Client_Disconnecting to the server. The client will now disconnect."})
             Client_Console.Close_Client()
         End Sub
         Private Shared Sub btnExit_MouseEnter() Handles btnExit.MouseEnter 'Changes btnExit's colour when it's moused over
@@ -134,13 +135,13 @@
         End Sub
         Private Shared Sub btnExit_MouseLeave() Handles btnExit.MouseLeave 'Changes btnExit's colour when the mouse leaves it
             btnHost.ForeColor = Drawing.Color.DarkTurquoise 'Change the ForeColour
-            Client_Console.OutputScreen.ActiveControl = Nothing
+            Client_Console.outputScreen.ActiveControl = Nothing
         End Sub
 
         Public Shared Sub btnBackToGame_Click() Handles btnBackToGame.Click 'Opens the GameScreenLayout
-            GameScreen.Layout(Client_Console.OutputScreen)
+            GameScreen.Layout(Client_Console.outputScreen)
             btnBackToGame.Enabled = False
-            Client_Console.OutputScreen.inMenu = False
+            Client_Console.outputScreen.inMenu = False
         End Sub
 
     End Class
@@ -177,39 +178,24 @@
         End Sub
 
         Private Shared Sub btnConnect_Click() Handles btnConnect.Click 'Handles btnConnect being Clicked
-            txtIP.ForeColor = Drawing.Color.DarkTurquoise 'Reset the fore colour
-            Dim count As Integer 'A count of how many "."s are in the string
-            Dim nextIndex As Integer 'The last index where a "." was found
-            For i As Integer = 1 To 3
-                If nextIndex = txtIP.Text.Length Then Exit For 'There are no more spaces in the string
-                nextIndex = txtIP.Text.IndexOf(".", nextIndex) + 1 'Find the next instance and record the index
-                count = count + 1
-            Next
-            If count = 3 Then 'It's a valid IP
-                Try
-                    Client_Console.Client = New Connector(txtIP.Text, Star_Crew_Shared_Libraries.Shared_Values.Values.ServicePort) 'Create a new Connector and connect to the Server
-                Catch ex As System.Net.Sockets.SocketException
-                    Console.WriteLine(Environment.NewLine + "ERROR : There was an error while connecting to the Server located at " +
-                                      txtIP.Text + ":" + CStr(Star_Crew_Shared_Libraries.Shared_Values.Values.ServicePort) + ". Check address and try again.")
-                    Client_Console.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an error while connecting to the Server located at " + txtIP.Text +
-                                                      ":" + CStr(Star_Crew_Shared_Libraries.Shared_Values.Values.ServicePort) + ". Check address and try again." +
-                                                      Environment.NewLine + ex.ToString())
-                    Client_Console.Client = Nothing
-                    Client_Console.OutputScreen.sendKeys = False
-                Catch ex As Exception
-                    Console.WriteLine(Environment.NewLine + "ERROR : There was an unecpected and unhandled exception while connecting to the Sever located at " +
-                                      txtIP.Text + ":" + CStr(Star_Crew_Shared_Libraries.Shared_Values.Values.ServicePort) + ". Client will now close.")
-                    Client_Console.Write_To_Error_Log(Environment.NewLine + "ERROR : There was an unecpected and unhandled exception while connecting to the Sever located at " + txtIP.Text +
-                                                      ":" + CStr(Star_Crew_Shared_Libraries.Shared_Values.Values.ServicePort) + ". Client will now close." +
-                                                      Environment.NewLine + ex.ToString())
-                    Client_Console.Client = Nothing
-                    Client_Console.OutputScreen.sendKeys = False
-                End Try
-                If Client_Console.Client Is Nothing Then Beep()
-            Else
-                Beep() 'Make a tone to alert the player
-                txtIP.ForeColor = Drawing.Color.Red 'Change the fore colour of the bad IP
-            End If
+            Try
+                Client_Console.serverConnection = New Client(txtIP.Text, Star_Crew_Shared_Libraries.Shared_Values.Values.ServicePort) 'Create a new Connector and connect to the Server
+                GameScreen.Layout(Client_Console.outputScreen) 'Render the game screen
+                txtIP.ForeColor = Drawing.Color.DarkTurquoise 'Reset the fore colour
+            Catch ex As Net.Sockets.SocketException
+                Dim message As String = Environment.NewLine + "ERROR : There was an error while trying to connect to the host located at '" +
+                    txtIP.Text + ":" + Star_Crew_Shared_Libraries.Shared_Values.Values.ServicePort.ToString() + "'. Please check address and try again."
+                Console.WriteLine(message)
+                Client_Console.Write_To_Log(message)
+                txtIP.ForeColor = Drawing.Color.Red 'Change the fore colour of the IP
+                Beep()
+            Catch ex As Exception
+                Dim message As String = Environment.NewLine + "ERROR : There was an unexpected and unhandled exception while trying to connect to the server located at '" +
+                    txtIP.Text + ":" + Star_Crew_Shared_Libraries.Shared_Values.Values.ServicePort.ToString() + "'. The client will now close."
+                Console.WriteLine(message)
+                Client_Console.Write_To_Log(message)
+                End
+            End Try
         End Sub
         Private Shared Sub btnConnect_MouseEnter() Handles btnConnect.MouseEnter 'Handles the mouse moving into btnConnect
             btnConnect.ForeColor = Drawing.Color.Turquoise 'Change the fore colour
@@ -217,11 +203,11 @@
         End Sub
         Private Shared Sub btnConnect_MouseLeave() Handles btnConnect.MouseLeave 'Handles the mouse moving out of btnConnect
             btnConnect.ForeColor = Drawing.Color.DarkTurquoise 'Change the fore colour
-            Client_Console.OutputScreen.ActiveControl = Nothing
+            Client_Console.outputScreen.ActiveControl = Nothing
         End Sub
 
         Private Shared Sub btnMenu_Click() Handles btnMenu.Click 'Handles btnMenu being Clicked
-            MenuScreen.Layout(Client_Console.OutputScreen) 'Go to the menu screen
+            MenuScreen.Layout(Client_Console.outputScreen) 'Go to the menu screen
         End Sub
         Private Shared Sub btnMenu_MouseEnter() Handles btnMenu.MouseEnter 'Handles the mouse moving into btnMenu
             btnMenu.ForeColor = Drawing.Color.Turquoise 'Change the fore colour
@@ -229,7 +215,7 @@
         End Sub
         Private Shared Sub btnMenu_MouseLeave() Handles btnMenu.MouseLeave 'Handles the mouse moving out of btnMenu
             btnMenu.ForeColor = Drawing.Color.DarkTurquoise 'Change the fore colour
-            Client_Console.OutputScreen.ActiveControl = Nothing
+            Client_Console.outputScreen.ActiveControl = Nothing
         End Sub
 
     End Class
@@ -285,9 +271,9 @@
         End Sub
 
         Public Shared Sub btnMenu_Click() Handles btnMenu.Click 'Handles btnMenu being Clicked
-            MenuScreen.Layout(Client_Console.OutputScreen) 'Go to the menu screen
-            Client_Console.OutputScreen.sendKeys = False 'Stop sending keys to the Server
-            Client_Console.OutputScreen.inMenu = True
+            MenuScreen.Layout(Client_Console.outputScreen) 'Go to the menu screen
+            Client_Console.outputScreen.sendKeys = False 'Stop sending keys to the Server
+            Client_Console.outputScreen.inMenu = True
             btnMenu.Enabled = False
         End Sub
         Private Shared Sub btnMenu_MouseEnter() Handles btnMenu.MouseEnter 'Handles the mouse moving into btnMenu
@@ -296,7 +282,7 @@
         End Sub
         Private Shared Sub btnMenu_MouseLeave() Handles btnMenu.MouseLeave 'Handles the mouse moving out of btnMenu
             btnMenu.ForeColor = Drawing.Color.DarkTurquoise 'Change the fore colour
-            Client_Console.OutputScreen.ActiveControl = Nothing
+            Client_Console.outputScreen.ActiveControl = Nothing
         End Sub
 
         Public Shared Sub lblHull_Set_Text(ByVal text As String)
@@ -387,7 +373,7 @@
         End Sub
 
         Private Shared Sub btnMenu_Click() Handles btnMenu.Click 'Handles btnMenu being Clicked
-            MenuScreen.Layout(Client_Console.OutputScreen) 'Go to the menu screen
+            MenuScreen.Layout(Client_Console.outputScreen) 'Go to the menu screen
             Client_Console.Save_Settings() 'Saves the Settings
         End Sub
         Private Shared Sub btnMenu_MouseEnter() Handles btnMenu.MouseEnter 'Handles the mouse moving into btnMenu
@@ -396,7 +382,7 @@
         End Sub
         Private Shared Sub btnMenu_MouseLeave() Handles btnMenu.MouseLeave 'Handles the mouse moving out of btnMenu
             btnMenu.ForeColor = Drawing.Color.DarkTurquoise 'Change the fore colour
-            Client_Console.OutputScreen.ActiveControl = Nothing
+            Client_Console.outputScreen.ActiveControl = Nothing
         End Sub
 
         Private Shared Sub txtShipName_TextChanged() Handles txtShipName.TextChanged
@@ -450,8 +436,8 @@
         Public Shared Sub Layout(ByRef scr As Screen) 'Set's the Screen to display the join screen
             scr.Controls.Clear() 'Clear's the old display
             scr.sendKeys = False 'Do not send keystrokes to the Server
-            Client_Console.Client = Nothing 'Clear the client
-            Client_Console.OutputScreen.sendKeys = False
+            Client_Console.serverConnection = Nothing 'Clear the client
+            Client_Console.outputScreen.sendKeys = False
             scr.inMenu = False 'The Screen is not in the in game menu
             scr.BackgroundImage = My.Resources.Death 'Set the image
             scr.Refresh() 'Force the form to refresh
@@ -480,9 +466,9 @@
                     Dim d As New Escape_Key(AddressOf GameScreen.btnMenu_Click)
                     GameScreen.btnMenu.Invoke(d)
                 Case Client_Console.settingElements(8) 'Zoom In Key
-                    If Client_Console.Client.Scaler < 1 Then Client_Console.Client.Scaler += 0.03
+                    If MessageRendering.scaler < 1 Then MessageRendering.scaler += 0.03
                 Case Client_Console.settingElements(7) 'Zoom Out Key
-                    If Client_Console.Client.Scaler > 0.5 Then Client_Console.Client.Scaler -= 0.03
+                    If MessageRendering.scaler > 0.5 Then MessageRendering.scaler -= 0.03
                 Case Else
                     For i As Integer = 1 To 6 'Loop through all controls
                         If e.KeyCode = Client_Console.settingElements(i) Then 'The key has been found
@@ -490,16 +476,16 @@
                             Dim shipControl As Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header =
                                 (Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.max + i) 'The header value for the message
                             Dim temp As String = ("ERROR : There was an error while sending the " + shipControl.ToString() +
-                                                  " KeyDown event to the Server. Client will now close.") 'The error message for if the send fails
-                            If Client_Console.Client.values(i) = False Then 'This will not be a repeat message
-                                Client_Console.Client.values(i) = True
-                                Client_Console.Client.Send_Message({BitConverter.GetBytes(shipControl), BitConverter.GetBytes(True)}, {temp, temp})
+                                                  " KeyDown event to the Server. The client will now disconnect.") 'The error message for if the send fails
+                            If Client_Console.serverConnection.values(i) = False Then 'This will not be a repeat message
+                                Client_Console.serverConnection.values(i) = True
+                                Client_Console.serverConnection.Send_Message({BitConverter.GetBytes(shipControl), BitConverter.GetBytes(True)}, {temp, temp})
                             End If
                             Exit Sub 'The key has been handled
                         End If
                     Next
             End Select
-        ElseIf (e.KeyCode = Windows.Forms.Keys.Escape) And Client_Console.OutputScreen.inMenu Then
+        ElseIf (e.KeyCode = Windows.Forms.Keys.Escape) And Client_Console.outputScreen.inMenu Then
             Dim d As New Escape_Key(AddressOf MenuScreen.btnBackToGame_Click)
             MenuScreen.btnBackToGame.Invoke(d)
         End If
@@ -512,10 +498,10 @@
                     Dim shipControl As Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header =
                         (Star_Crew_Shared_Libraries.Networking_Messages.General_Headers.max + i) 'The header value for the message
                     Dim temp As String = ("ERROR : There was an error while sending the " + shipControl.ToString() +
-                                          " KeyUp event to the Server. Client will now close.") 'The error message for if the send fails
-                    Client_Console.Client.values(i) = False
-                    Client_Console.Client.Send_Message({BitConverter.GetBytes(shipControl),
-                                                        BitConverter.GetBytes(False)}, {temp, temp})
+                                          " KeyUp event to the Server. The client will now close.") 'The error message for if the send fails
+                    Client_Console.serverConnection.values(i) = False
+                    Client_Console.serverConnection.Send_Message({BitConverter.GetBytes(shipControl),
+                                                                  BitConverter.GetBytes(False)}, {temp, temp})
                     Exit Sub 'The key has been handled
                 End If
             Next

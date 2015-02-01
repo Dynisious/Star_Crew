@@ -1,12 +1,13 @@
 ﻿Module Client_Console 'Used to output messages to the console for error handling etc for the Client
-    Public WithEvents OutputScreen As Screen 'A Screen object used as the GUI for the Client
-    Public Client As Connector 'A Connector object used to connect to a Server
-    Private ScreenThread As New System.Threading.Thread((Sub()
-                                                             OutputScreen = New Screen()
-                                                             OutputScreen.Give_Control()
+    Public WithEvents outputScreen As Screen 'A Screen object used as the GUI for the Client
+    Public serverConnection As Client 'A Client object used to connect to a server
+    Public runningApplication As Boolean = True 'A Boolean value to keep the application running
+    Private screenThread As New System.Threading.Thread((Sub()
+                                                             outputScreen = New Screen()
+                                                             outputScreen.Give_Control()
                                                          End Sub)) 'Give start the message loop for the form
-    Private ReadOnly WorkingDirectory As String = "C:\Users\" + Environment.UserName + "\AppData\Roaming\Star Crew"
-    Private ReadOnly ErrorLog As String = "Client Error Log.log" 'A String value representing the address of the game's error log
+    Private ReadOnly WorkingDirectory As String = "C:\Users\" + Environment.UserName + "\AppData\Roaming\Star Crew\Client"
+    Private ReadOnly Log As String = "Log.log" 'A String value representing the address of the game's error log
     Private ReadOnly SettingFile As String = "Client Settings.txt" 'A String value representing the address of the game's settings file
     Public Enum Settings 'An enumerator of Settings
         Ship_Name 'The Name of the Ship
@@ -40,9 +41,7 @@
         Windows.Forms.Keys.OemPeriod}
 
     Sub Main()
-        Console.WriteLine(Drawing.Pens.AliceBlue.Color.ToArgb())
         Console.WriteLine("-----Star Crew Client-----")
-        Console.WriteLine("Initialising Objects...")
         Randomize() 'Set the random sequense of numbers
         Console.WriteLine("Checking Directories exist...")
         If FileIO.FileSystem.DirectoryExists(WorkingDirectory) = False Then
@@ -51,8 +50,8 @@
         End If
         Console.WriteLine("Setting working directory...")
         FileIO.FileSystem.CurrentDirectory = WorkingDirectory 'Set the working directory of the game
-        Console.WriteLine("Clearing last error log...")
-        FileIO.FileSystem.WriteAllText(ErrorLog, "This error log contains all of the errors that occoured during the last session", False) 'Clear the error logs
+        Console.WriteLine("Clearing last log...")
+        FileIO.FileSystem.WriteAllText(Log, "This log contains all of the events that occoured during the last session", False) 'Clear the error logs
         Console.WriteLine("Checking Settings exist...")
         If FileIO.FileSystem.FileExists(SettingFile) = False Then 'The settings file does not exist
             Console.WriteLine("The Settings file does not exist. It will be created now.")
@@ -82,7 +81,7 @@
                 settingElements(8) = converter.ConvertFromString(text.Substring(index, (text.IndexOf(";", index) - index))) 'Set the setting
             Catch ex As Exception
                 Console.WriteLine("ERROR : There was an error while loading user settings. Some settings may not have been loaded.")
-                Write_To_Error_Log(Environment.NewLine + "ERROR : There was an error while loading user settings. Some settings may not have been loaded." +
+                Write_To_Log(Environment.NewLine + "ERROR : There was an error while loading user settings. Some settings may not have been loaded." +
                                    Environment.NewLine + ex.ToString())
             End Try
         End If
@@ -97,16 +96,32 @@
         Screen.SettingsScreen.txtZoomOut.Text = "ZOOM OUT: " + CType(settingElements(7), Windows.Forms.Keys).ToString()
         Screen.SettingsScreen.txtZoomIn.Text = "ZOOM IN: " + CType(settingElements(8), Windows.Forms.Keys).ToString()
         '------------------------
-        Console.WriteLine("Objects have been Initialised")
+        Console.WriteLine("Initialising Graphics...")
+        MessageRendering.Initialise() 'Initialise the graphics renderer
+        Console.WriteLine("Graphics have been Initialised")
         Console.Title = "Star Crew Client Console"
 
-        ScreenThread.Start() 'Makes the Screen object visible and gives it control over this thread
-        While True
+        screenThread.Start() 'Makes the Screen object visible and gives it control over this thread
+        While runningApplication
             Receive_Console_Commands()
         End While
+
+        Close_Client()
     End Sub
 
-    Public Enum ServerCommands 'An enumorator of console commands for the Server
+    Public Sub Close_Client() 'Closes the Client
+        If serverConnection IsNot Nothing Then 'Close the connection to the Server
+            serverConnection.runClient = False 'Allow the client to close
+            While serverConnection.clientAlive 'Wait for the connection to close
+            End While
+        End If
+        If Client_Console.outputScreen.Server IsNot Nothing Then
+            If Client_Console.outputScreen.Server.HasExited = False Then Client_Console.outputScreen.Server.CloseMainWindow() 'Make Sure the Server is not left open
+        End If
+        End
+    End Sub
+
+    Public Enum ClientCommands 'An enumorator of console commands for the Server
         help 'Displays all console commands
         close 'Close the program
         clr 'Clears the console window
@@ -117,37 +132,25 @@
         Dim command As String = Mid(LCase(Console.ReadLine()), 1) + " " 'Get the entered command
         Dim firstSpace As Integer = command.IndexOf(" ")
         Select Case Left(command, firstSpace) 'Gets the command
-            Case ServerCommands.help.ToString()
+            Case ClientCommands.help.ToString()
                 Console.WriteLine(Environment.NewLine +
                     "help:          Displays help for all commands." + Environment.NewLine +
                     "close:         Closes the Server." + Environment.NewLine +
                     "clr:           Clears the console of text." + Environment.NewLine +
                     "heal <number>: Adds the specified number of hitpoints to the Client's Ship." + Environment.NewLine +
                     "rearm:         Refills all ammunition on the Client's Ship.")
-            Case ServerCommands.close.ToString()
+            Case ClientCommands.close.ToString()
                 End
-            Case ServerCommands.clr.ToString()
+            Case ClientCommands.clr.ToString()
                 Console.Clear()
-            Case ServerCommands.heal.ToString()
-                Try
-                    If Client IsNot Nothing Then
-                        Dim num As Integer = CInt(Mid(command, firstSpace + 1, (command.IndexOf(" ", firstSpace + 1) - firstSpace))) - 1
-                        Client.Send_Message({BitConverter.GetBytes(Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Heal_Ship), BitConverter.GetBytes(num)},
-                                            {"ERROR : There was an error sending the Heal_Ship message header to the Server. Client will now disconnect.",
-                                             "ERROR : There was an error sending the value for the Heal_Ship message to the Server. Client will now disconnect."})
-                    Else
-                        Console.WriteLine("ERROR : The Client is not connected to a Server. Connect and try again.")
-                    End If
-                Catch ex As Exception
-                    Console.WriteLine("ERROR : Invalid value 'number'. Check input and try again.")
-                End Try
-            Case ServerCommands.rearm.ToString()
-                If Client IsNot Nothing Then
-                    Client.Send_Message({BitConverter.GetBytes(Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Re_Arm)},
-                                        {"ERROR : There was an error sending the Re_Arm message header to the Server. Client will now disconnect."})
-                Else
-                    Console.WriteLine("ERROR : The Client is not connected to a Server. Connect and try again.")
-                End If
+            Case ClientCommands.heal.ToString()
+                serverConnection.Send_Message({BitConverter.GetBytes(Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Heal_Ship),
+                                               BitConverter.GetBytes(Val(Mid(command, firstSpace + 1, command.IndexOf(" ", firstSpace + 1))))},
+                                              {Environment.NewLine + "ERROR : There was an error while sending the Heal_Ship command to the server. The client will now disconnect.",
+                                               Environment.NewLine + "ERROR : There was an error while sending the Heal_Ship value to the server. The client will now disconnect."})
+            Case ClientCommands.rearm.ToString()
+                serverConnection.Send_Message({BitConverter.GetBytes(Star_Crew_Shared_Libraries.Networking_Messages.Ship_Control_Header.Re_Arm)},
+                                              {Environment.NewLine + "ERROR : There was an error while sending the Re_Arm command to the server. The client will now disconnect."})
             Case Else 'It was an invalid command
                 Console.WriteLine("INVALID COMMAND : Check spelling and try again")
         End Select
@@ -168,15 +171,8 @@
                                        settingNames(8) + converter.ConvertToString(settingElements(8)) + ";"), False)
     End Sub
 
-    Sub Write_To_Error_Log(ByVal text As String)
-        FileIO.FileSystem.WriteAllText(ErrorLog, (Environment.NewLine + text), True)
-    End Sub
-
-    Sub Close_Client() Handles OutputScreen.FormClosing
-        If Client_Console.OutputScreen.Server IsNot Nothing Then
-            If Client_Console.OutputScreen.Server.HasExited = False Then Client_Console.OutputScreen.Server.CloseMainWindow() 'Make Sure the Server is not left open
-        End If
-        End 'Close the Program
+    Sub Write_To_Log(ByVal text As String)
+        FileIO.FileSystem.WriteAllText(Log, (Environment.NewLine + text), True)
     End Sub
 
 End Module
